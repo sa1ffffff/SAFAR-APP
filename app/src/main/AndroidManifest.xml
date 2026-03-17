@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- GPS / Location permissions (Fix #1) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Notifications -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SAFAR"
+        android:usesCleartextTraffic="false">
+
+        <!-- Google Maps API Key — replace with your key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAVFulcpH7WG2-7yJ_T0keOdIJBvar1m3M" />
+
+        <!-- Splash -->
+        <activity
+            android:name=".views.activities.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SAFAR.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Login (unified: phone + email + google) -->
+        <activity
+            android:name=".views.activities.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- OTP -->
+        <activity
+            android:name=".views.activities.OtpVerifyActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Phone Auth (used by LoginActivity) -->
+        <activity
+            android:name=".views.activities.PhoneAuthActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Safety guidelines -->
+        <activity
+            android:name=".views.activities.SafetyActivity"
+            android:exported="false" />
+
+        <!-- Main (holds Map, List, Inbox fragments) -->
+        <activity
+            android:name=".views.activities.MainActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+
+        <!-- Post a Ride -->
+        <activity
+            android:name=".views.activities.PostAdActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Location picker (used by PostAdActivity) -->
+        <activity
+            android:name=".views.activities.LocationPickerActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan" />
+
+        <!-- Ad Detail -->
+        <activity
+            android:name=".views.activities.AdDetailActivity"
+            android:exported="false" />
+
+        <!-- Chat -->
+        <activity
+            android:name=".views.activities.ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- My Rides -->
+        <activity
+            android:name=".views.activities.MyAdsActivity"
+            android:exported="false" />
+
+        <!-- Profile / More -->
+        <activity
+            android:name=".views.activities.ProfileActivity"
+            android:exported="false" />
+
+        <!-- Firebase Cloud Messaging -->
+        <service
+            android:name=".firebase.SafarMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+    </application>
+</manifest>

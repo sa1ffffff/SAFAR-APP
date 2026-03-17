@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SAFAR</string>
+    <string name="tagline">Community Carpool, Made Easy</string>
+    <string name="safety_title">Safety First 🛡️</string>
+    <string name="safety_body">Before you join the SAFAR community, please read and acknowledge:</string>
+    <string name="safety_1"> Meet at a well-lit, public location for initial pickup</string>
+    <string name="safety_2"> Negotiate a fair fuel/cost contribution before the trip</string>
+    <string name="safety_3"> Verify the identity of the person you are traveling with</string>
+    <string name="safety_4">️ Never pay in advance via untrusted channels</string>
+    <string name="safety_5"> Do not share personal information before you feel comfortable</string>
+    <string name="safety_agree">I understand and agree to the community guidelines</string>
+    <string name="i_understand">Let\'s Go!</string>
+    <string name="chat_disclaimer"> Keep transactions safe. Meet in public. Never pay in advance.</string>
+    <string name="no_rides">No rides found.\nBe the first to post one! 🚗</string>
+    <string name="no_requests">No join requests yet.</string>
+    <string name="report">Report</string>
+    <string name="post_ride">Post Ride</string>
+    <string name="request_join">Request to Join</string>
+    <string name="default_web_client_id">684922450543-rc78r81qq19i3hcitgl5i04s8r8ss4bk.apps.googleusercontent.com</string>
+</resources>

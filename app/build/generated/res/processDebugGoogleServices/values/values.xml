@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="firebase_database_url" translatable="false">https://safarbysaif-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+    <string name="gcm_defaultSenderId" translatable="false">684922450543</string>
+    <string name="google_api_key" translatable="false">AIzaSyD8INyM6rtB70o4KilyozuZButsnfiKUWQ</string>
+    <string name="google_app_id" translatable="false">1:684922450543:android:b3424fa3c647214d08139a</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyD8INyM6rtB70o4KilyozuZButsnfiKUWQ</string>
+    <string name="google_storage_bucket" translatable="false">safarbysaif.firebasestorage.app</string>
+    <string name="project_id" translatable="false">safarbysaif</string>
+</resources>

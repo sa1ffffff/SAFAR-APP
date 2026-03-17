@@ -1,26 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  MAIN ACTIVITY (Refactored to Exact Requested UI)
+  ─────────────
+  • High-contrast dark aesthetic.
+  • BottomNavigationView with labels REMOVED (unlabeled).
+  • Fragment container respects the bottom nav height.
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/md_background"
+    android:fitsSystemWindows="false">
 
+    <!-- Fragment host -->
     <FrameLayout
         android:id="@+id/fragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_bottom_toTopOf="@id/bottomNav"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="64dp" />
 
+    <!-- Exact UI Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?android:attr/windowBackground"
-        app:layout_bottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_height="64dp"
+        android:layout_gravity="bottom"
+        android:background="#1A1A1A"
+        app:elevation="16dp"
+        app:itemIconSize="24dp"
+        app:itemIconTint="@color/nav_item_color"
+        app:itemTextColor="@color/nav_item_color"
+        app:itemActiveIndicatorStyle="@style/Widget.SAFAR.BottomNav.Indicator"
+        app:labelVisibilityMode="unlabeled"
         app:menu="@menu/bottom_nav_menu" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Yellow Indicator Line at top of BottomNav -->
+    <View
+        android:layout_width="48dp"
+        android:layout_height="2dp"
+        android:layout_gravity="bottom|start"
+        android:layout_marginBottom="62dp"
+        android:layout_marginStart="24dp"
+        android:background="@color/md_primary" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

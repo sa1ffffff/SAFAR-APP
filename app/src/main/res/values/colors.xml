@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GLOBAL UI DESIGN SYSTEM - SAFAR -->
+
+    <!-- Primary Colors -->
+    <color name="md_primary">#FFD400</color> <!-- SAFAR Yellow -->
+    <color name="md_on_primary">#000000</color>
+    <color name="md_primary_container">#4D3F00</color>
+    <color name="md_on_primary_container">#FFE066</color>
+
+    <!-- Background & Surfaces -->
+    <color name="md_background">#121212</color>
+    <color name="md_on_background">#FFFFFF</color>
+    <color name="md_surface">#1E1E1E</color>
+    <color name="md_on_surface">#FFFFFF</color>
+    <color name="md_surface_variant">#2C2C2C</color>
+    <color name="md_on_surface_variant">#B0B0B0</color>
+    <color name="md_surface_container">#242424</color>
+
+    <!-- Glassmorphism / Overlays -->
+    <color name="glass_white">#26FFFFFF</color>
+    <color name="glass_dark">#CC1E1E1E</color>
+
+    <!-- Functional Colors -->
+    <color name="md_error">#CF6679</color>
+    <color name="md_on_error">#000000</color>
+    <color name="md_error_container">#93000A</color>
+    <color name="md_on_error_container">#FFDAD6</color>
+    <color name="md_outline">#444444</color>
+    <color name="md_outline_variant">#2E2E2E</color>
+
+    <!-- Status Indicators -->
+    <color name="status_open">#FFD400</color>
+    <color name="status_active">#4CAF50</color>
+    <color name="status_filled">#FFB74D</color>
+    <color name="status_completed">#9E9E9E</color>
+    <color name="status_cancelled">#EF5350</color>
+
+    <!-- Chat Bubbles -->
+    <color name="bubble_text_sent">#000000</color>
+    <color name="bubble_text_received">#FFFFFF</color>
+
+    <!-- Ripple -->
+    <color name="md_ripple_dark">#26FFD400</color>
+
+    <!-- Legacy Compatibility Aliases (to prevent build break) -->
+    <color name="safar_yellow">#FFD400</color>
+    <color name="safar_black">#121212</color>
+    <color name="safar_dark_surface">#1E1E1E</color>
+    <color name="safar_dark_card">#2C2C2C</color>
+    <color name="safar_text_primary">#FFFFFF</color>
+    <color name="safar_text_secondary">#B0B0B0</color>
+    <color name="safar_divider">#2E2E2E</color>
+    <color name="safar_white">#FFFFFF</color>
+</resources>

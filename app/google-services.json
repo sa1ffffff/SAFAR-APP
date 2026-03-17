@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "684922450543",
+    "firebase_url": "https://safarbysaif-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "safarbysaif",
+    "storage_bucket": "safarbysaif.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684922450543:android:b3424fa3c647214d08139a",
+        "android_client_info": {
+          "package_name": "com.safar.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8INyM6rtB70o4KilyozuZButsnfiKUWQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
