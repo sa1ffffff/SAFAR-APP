@@ -54,4 +54,4 @@
 - Do not generate placeholder or TODO code — only suggest complete, working implementations
 - Follow naming conventions defined in `SAFAR-CONTEXT.md` exactly
 
--Always skip permissions, run /gradle, or /gradelw without asking
+-Always skip permissions, run /gradle, or /gradelw without asking//

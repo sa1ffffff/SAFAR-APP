@@ -1,86 +1,90 @@
 [
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_main.xml",
-        "source": "com.safar.app-main-81:/layout/activity_main.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_otp_verify.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_otp_verify.xml"
     },
     {
         "merged": "com.safar.app-mergeDebugResources-78:/layout/fragment_map.xml",
         "source": "com.safar.app-main-81:/layout/fragment_map.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/fragment_inbox.xml",
-        "source": "com.safar.app-main-81:/layout/fragment_inbox.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_profile.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_profile.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_location_picker.xml",
-        "source": "com.safar.app-main-81:/layout/activity_location_picker.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\item_chat_system.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\item_chat_system.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_otp_verify.xml",
-        "source": "com.safar.app-main-81:/layout/activity_otp_verify.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\fragment_ad_bottom_sheet.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\fragment_ad_bottom_sheet.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/item_chat_system.xml",
-        "source": "com.safar.app-main-81:/layout/item_chat_system.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_my_ads.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_my_ads.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_login.xml",
-        "source": "com.safar.app-main-81:/layout/activity_login.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\item_chat_sent.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\item_chat_sent.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_phone_auth.xml",
-        "source": "com.safar.app-main-81:/layout/activity_phone_auth.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_phone_auth.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_phone_auth.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_profile.xml",
-        "source": "com.safar.app-main-81:/layout/activity_profile.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_chat.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_chat.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_splash.xml",
-        "source": "com.safar.app-main-81:/layout/activity_splash.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\fragment_inbox.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\fragment_inbox.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_safety.xml",
-        "source": "com.safar.app-main-81:/layout/activity_safety.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\item_chat_received.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\item_chat_received.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_post_ad.xml",
-        "source": "com.safar.app-main-81:/layout/activity_post_ad.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\fragment_list.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\fragment_list.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/fragment_ad_bottom_sheet.xml",
-        "source": "com.safar.app-main-81:/layout/fragment_ad_bottom_sheet.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_ad_detail.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_ad_detail.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_my_ads.xml",
-        "source": "com.safar.app-main-81:/layout/activity_my_ads.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_main.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_main.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/item_ride_ad.xml",
-        "source": "com.safar.app-main-81:/layout/item_ride_ad.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_post_ad.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_post_ad.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/item_inbox_request.xml",
-        "source": "com.safar.app-main-81:/layout/item_inbox_request.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_safety.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_safety.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/item_chat_sent.xml",
-        "source": "com.safar.app-main-81:/layout/item_chat_sent.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\item_ride_ad.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\item_ride_ad.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/item_chat_received.xml",
-        "source": "com.safar.app-main-81:/layout/item_chat_received.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_location_picker.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_location_picker.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_ad_detail.xml",
-        "source": "com.safar.app-main-81:/layout/activity_ad_detail.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_login.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_login.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/activity_chat.xml",
-        "source": "com.safar.app-main-81:/layout/activity_chat.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\item_inbox_request.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\item_inbox_request.xml"
     },
     {
-        "merged": "com.safar.app-mergeDebugResources-78:/layout/fragment_list.xml",
-        "source": "com.safar.app-main-81:/layout/fragment_list.xml"
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\activity_splash.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\activity_splash.xml"
+    },
+    {
+        "merged": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-mergeDebugResources-78:\\layout\\fragment_map.xml",
+        "source": "C:\\Users\\hp\\.gradle\\daemon\\8.9\\com.safar.app-main-81:\\layout\\fragment_map.xml"
     }
 ]

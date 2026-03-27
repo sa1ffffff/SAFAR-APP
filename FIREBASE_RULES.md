@@ -78,16 +78,13 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    match /profile_pictures/{userId}.jpg {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null 
-                   && request.auth.uid == userId
-                   && request.resource.size < 5 * 1024 * 1024;
+    match /profile_pictures/{allFiles=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
     }
     
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
   }
 }
 ```
@@ -112,6 +109,14 @@ After publishing both:
 
 ## 🔍 Troubleshooting
 
+**Error: "user does not have permission to access this object"**
+1. Make sure you're logged in to the app
+2. Go to Firebase Console → **Storage** → **Rules** tab
+3. Copy and paste the Storage rules exactly as shown above
+4. Click **Publish** and wait 30-60 seconds
+5. Close and restart the app
+6. Try uploading again
+
 **Error: Missing match keyword**
 → You pasted Realtime Database rules into Storage (or vice versa)
 
@@ -122,3 +127,5 @@ After publishing both:
 1. Clear app data: Settings → Apps → SAFAR → Clear Data
 2. Re-login to the app
 3. Check you are logged in: Firebase Console → Authentication → Users
+4. Check file size is under 5MB
+5. Make sure you're uploading an image file (jpg, png, etc.)

@@ -4250,7 +4250,6 @@ int id tilDestination 0x7f080290
 int id tilOrigin 0x7f080291
 int id tilOtp 0x7f080292
 int id tilPhone 0x7f080293
-int id tileExplore 0x7f080294
 int id tileMyRides 0x7f080295
 int id tilePostRide 0x7f080296
 int id time 0x7f080297

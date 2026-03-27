@@ -69,9 +69,6 @@ public final class FragmentMapBinding implements ViewBinding {
   public final MaterialCardView rideRow2;
 
   @NonNull
-  public final MaterialCardView tileExplore;
-
-  @NonNull
   public final MaterialCardView tileMyRides;
 
   @NonNull
@@ -102,11 +99,10 @@ public final class FragmentMapBinding implements ViewBinding {
       @NonNull TextView etSearch, @NonNull ShapeableImageView ivUser1,
       @NonNull ShapeableImageView ivUser2, @NonNull MapView mapView,
       @NonNull ProgressBar progressBar, @NonNull MaterialCardView rideRow1,
-      @NonNull MaterialCardView rideRow2, @NonNull MaterialCardView tileExplore,
-      @NonNull MaterialCardView tileMyRides, @NonNull MaterialCardView tilePostRide,
-      @NonNull RelativeLayout topBar, @NonNull TextView tvRide1Meta, @NonNull TextView tvRide1Route,
-      @NonNull TextView tvRide2Meta, @NonNull TextView tvRide2Route,
-      @NonNull TextView tvSafarLogo) {
+      @NonNull MaterialCardView rideRow2, @NonNull MaterialCardView tileMyRides,
+      @NonNull MaterialCardView tilePostRide, @NonNull RelativeLayout topBar,
+      @NonNull TextView tvRide1Meta, @NonNull TextView tvRide1Route, @NonNull TextView tvRide2Meta,
+      @NonNull TextView tvRide2Route, @NonNull TextView tvSafarLogo) {
     this.rootView = rootView;
     this.bottomSheet = bottomSheet;
     this.btnMyLocation = btnMyLocation;
@@ -122,7 +118,6 @@ public final class FragmentMapBinding implements ViewBinding {
     this.progressBar = progressBar;
     this.rideRow1 = rideRow1;
     this.rideRow2 = rideRow2;
-    this.tileExplore = tileExplore;
     this.tileMyRides = tileMyRides;
     this.tilePostRide = tilePostRide;
     this.topBar = topBar;
@@ -244,12 +239,6 @@ public final class FragmentMapBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.tileExplore;
-      MaterialCardView tileExplore = ViewBindings.findChildViewById(rootView, id);
-      if (tileExplore == null) {
-        break missingId;
-      }
-
       id = R.id.tileMyRides;
       MaterialCardView tileMyRides = ViewBindings.findChildViewById(rootView, id);
       if (tileMyRides == null) {
@@ -300,8 +289,8 @@ public final class FragmentMapBinding implements ViewBinding {
 
       return new FragmentMapBinding((CoordinatorLayout) rootView, bottomSheet, btnMyLocation,
           btnNotification, btnOpen1, btnOpen2, btnSeeAllRides, cardSearch, etSearch, ivUser1,
-          ivUser2, mapView, progressBar, rideRow1, rideRow2, tileExplore, tileMyRides, tilePostRide,
-          topBar, tvRide1Meta, tvRide1Route, tvRide2Meta, tvRide2Route, tvSafarLogo);
+          ivUser2, mapView, progressBar, rideRow1, rideRow2, tileMyRides, tilePostRide, topBar,
+          tvRide1Meta, tvRide1Route, tvRide2Meta, tvRide2Route, tvSafarLogo);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

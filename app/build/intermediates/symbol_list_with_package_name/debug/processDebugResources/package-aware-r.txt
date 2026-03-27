@@ -4251,7 +4251,6 @@ id tilDestination
 id tilOrigin
 id tilOtp
 id tilPhone
-id tileExplore
 id tileMyRides
 id tilePostRide
 id time
