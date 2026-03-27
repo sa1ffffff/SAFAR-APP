@@ -15,7 +15,7 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash);
+        SplashBridgeKt.setupComposeUI(this);
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             SessionManager session = new SessionManager(this);
@@ -29,6 +29,6 @@ public class SplashActivity extends AppCompatActivity {
                 startActivity(new Intent(this, MainActivity.class));
             }
             finish();
-        }, 1800);
+        }, 3000); // Netflix-style timing for letter animation
     }
 }

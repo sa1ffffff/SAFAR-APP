@@ -4,16 +4,13 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.safar.app.databinding.ActivityAdDetailBinding;
 import com.safar.app.firebase.FirebaseManager;
 import com.safar.app.models.JoinRequest;
 import com.safar.app.models.RideAd;
@@ -22,39 +19,31 @@ import com.safar.app.presenters.RequestPresenter;
 import com.safar.app.utils.AppConstants;
 import com.safar.app.utils.DateUtils;
 import com.safar.app.utils.SessionManager;
-import com.safar.app.views.adapters.RequestsAdapter;
+import com.safar.app.views.ui.screens.JoinRequestUiModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AdDetailActivity extends AppCompatActivity implements
-        AdsPresenter.AdsView, RequestPresenter.RequestView,
-        RequestsAdapter.OnRequestActionListener {
+        AdsPresenter.AdsView, RequestPresenter.RequestView {
 
-    private ActivityAdDetailBinding binding;
     private AdsPresenter adsPresenter;
     private RequestPresenter requestPresenter;
     private RideAd currentAd;
     private String adId;
     private String currentUid;
-    private boolean isOwner = false;
     private SessionManager session;
-    private RequestsAdapter requestsAdapter;
+    private AdDetailStateHolder stateHolder;
+    private List<JoinRequest> rawRequests = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // CRITICAL FIX: Enable edge-to-edge layout
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
-        binding = ActivityAdDetailBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-
-        setSupportActionBar(binding.toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
+        stateHolder = new AdDetailStateHolder();
+        AdDetailBridgeKt.setupComposeUI(this, stateHolder);
 
         adId = getIntent().getStringExtra(AppConstants.KEY_AD_ID);
         currentUid = FirebaseAuth.getInstance().getCurrentUser() != null
@@ -64,89 +53,43 @@ public class AdDetailActivity extends AppCompatActivity implements
         adsPresenter = new AdsPresenter(this);
         requestPresenter = new RequestPresenter(this);
 
-        requestsAdapter = new RequestsAdapter(new ArrayList<>(), this);
-        binding.rvRequests.setLayoutManager(new LinearLayoutManager(this));
-        binding.rvRequests.setAdapter(requestsAdapter);
-
         loadAdDetail();
     }
 
     private void loadAdDetail() {
-        binding.progressBar.setVisibility(View.VISIBLE);
+        if (adId == null) return;
+        stateHolder.setLoading(true);
         FirebaseManager.getInstance().getAdRef(adId).get()
                 .addOnSuccessListener(snapshot -> {
-                    binding.progressBar.setVisibility(View.GONE);
+                    stateHolder.setLoading(false);
+                    if (!snapshot.exists()) {
+                        finish();
+                        return;
+                    }
                     currentAd = snapshot.getValue(RideAd.class);
                     if (currentAd == null) { finish(); return; }
                     currentAd.setAdId(adId);
-                    isOwner = currentAd.getCreatorUid().equals(currentUid);
+                    boolean isOwner = currentAd.getCreatorUid().equals(currentUid);
+                    stateHolder.setIsOwner(isOwner);
+                    
                     populateUi();
                     if (isOwner) loadRequests();
                     else checkMyRequest();
+                })
+                .addOnFailureListener(e -> {
+                    stateHolder.setLoading(false);
                 });
     }
 
     private void populateUi() {
-        if (getSupportActionBar() != null)
-            getSupportActionBar().setTitle(currentAd.getOrigin() + " → " + currentAd.getDestination());
-
-        binding.tvOrigin.setText(currentAd.getOrigin());
-        binding.tvDestination.setText(currentAd.getDestination());
-        binding.tvDepartureTime.setText(DateUtils.formatDeparture(currentAd.getDepartureTime()));
-        binding.tvSeats.setText(currentAd.getAvailableSeats() + " seat(s) available");
-        binding.tvPostedBy.setText(currentAd.getCreatorName());
-        binding.tvStatus.setText(currentAd.getStatus());
-
-        if (currentAd.getVehicleDetails() != null && !currentAd.getVehicleDetails().isEmpty()) {
-            binding.tvVehicle.setText(currentAd.getVehicleDetails());
-        }
-        if (currentAd.getNotes() != null && !currentAd.getNotes().isEmpty()) {
-            binding.tvNotes.setText(currentAd.getNotes());
-            binding.cardNotes.setVisibility(View.VISIBLE);
-        }
-
-        // Setup Call button (available for both owner and requester viewing the ride)
-        View.OnClickListener callListener = v -> {
-            String phone = currentAd.getCreatorPhone();
-            if (phone != null && !phone.isEmpty()) {
-                Intent intent = new Intent(Intent.ACTION_DIAL);
-                intent.setData(Uri.parse("tel:" + phone));
-                startActivity(intent);
-            } else {
-                Toast.makeText(this, "Phone number not available", Toast.LENGTH_SHORT).show();
-            }
-        };
-        binding.btnCallDetail.setOnClickListener(callListener);
-
-        if (isOwner) {
-            binding.layoutOwnerActions.setVisibility(View.VISIBLE);
-            binding.layoutRequesterActions.setVisibility(View.GONE);
-            binding.tvRequestsHeader.setVisibility(View.VISIBLE);
-            binding.rvRequests.setVisibility(View.VISIBLE);
-
-            binding.btnMarkFilled.setOnClickListener(v ->
-                    adsPresenter.updateAdStatus(adId, RideAd.STATUS_FILLED));
-            binding.btnDeleteAd.setOnClickListener(v -> {
-                new android.app.AlertDialog.Builder(this)
-                        .setTitle("Delete Ride?")
-                        .setMessage("This will remove the ride ad. This cannot be undone.")
-                        .setPositiveButton("Delete", (d, w) -> adsPresenter.deleteAd(adId))
-                        .setNegativeButton("Cancel", null)
-                        .show();
-            });
-        } else {
-            binding.layoutOwnerActions.setVisibility(View.GONE);
-            binding.layoutRequesterActions.setVisibility(View.VISIBLE);
-            binding.tvRequestsHeader.setVisibility(View.GONE);
-            binding.rvRequests.setVisibility(View.GONE);
-
-            binding.btnSendRequest.setOnClickListener(v -> {
-                JoinRequest req = new JoinRequest(adId, currentUid, session.getUserName(),
-                        session.getUserPhone(), currentAd.getCreatorUid());
-                requestPresenter.sendJoinRequest(req);
-                binding.btnSendRequest.setEnabled(false);
-            });
-        }
+        stateHolder.setOrigin(currentAd.getOrigin());
+        stateHolder.setDestination(currentAd.getDestination());
+        stateHolder.setDepartureTime(DateUtils.formatDeparture(currentAd.getDepartureTime()));
+        stateHolder.setSeats(currentAd.getAvailableSeats() + " seat(s) available");
+        stateHolder.setPostedBy(currentAd.getCreatorName());
+        stateHolder.setStatus(currentAd.getStatus());
+        stateHolder.setVehicle(currentAd.getVehicleDetails() != null ? currentAd.getVehicleDetails() : "");
+        stateHolder.setNotes(currentAd.getNotes() != null ? currentAd.getNotes() : "");
     }
 
     private void loadRequests() {
@@ -158,67 +101,168 @@ public class AdDetailActivity extends AppCompatActivity implements
             if (req == null) return;
             runOnUiThread(() -> {
                 if (JoinRequest.STATUS_PENDING.equals(req.getStatus())) {
-                    binding.btnSendRequest.setText("Request Pending...");
-                    binding.btnSendRequest.setEnabled(false);
+                    stateHolder.setUserRequestStatus("Pending");
+                    stateHolder.setHasRequested(true);
                 } else if (JoinRequest.STATUS_ACCEPTED.equals(req.getStatus())) {
-                    binding.btnSendRequest.setText("Open Chat 💬");
-                    binding.btnSendRequest.setEnabled(true);
-                    binding.btnSendRequest.setOnClickListener(v -> {
-                        Intent i = new Intent(this, ChatActivity.class);
-                        i.putExtra(AppConstants.KEY_CHAT_ROOM_ID, req.getChatRoomId());
-                        i.putExtra(AppConstants.KEY_OTHER_USER_NAME, currentAd.getCreatorName());
-                        startActivity(i);
-                    });
+                    stateHolder.setUserRequestStatus("Accepted");
+                    stateHolder.setHasRequested(true);
                 }
             });
         });
     }
 
-    // RequestsAdapter callbacks (owner actions)
-    @Override
-    public void onAccept(JoinRequest request) {
-        String chatRoomId = FirebaseManager.getInstance()
-                .generateChatRoomId(adId, currentUid, request.getRequestorUid());
-        requestPresenter.acceptRequest(request, chatRoomId);
+    public void handleMarkFilled() {
+        adsPresenter.updateAdStatus(adId, RideAd.STATUS_FILLED);
     }
 
-    @Override
-    public void onReject(JoinRequest request) {
-        requestPresenter.rejectRequest(request);
+    public void handleDeleteAd() {
+        adsPresenter.deleteAd(adId);
+    }
+    
+    public void handleEditAd() {
+        // Implementation for edit ad
+    }
+    
+    public void handleShareAd() {
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, "Check out this ride from " + currentAd.getOrigin() + " to " + currentAd.getDestination());
+        sendIntent.setType("text/plain");
+        startActivity(Intent.createChooser(sendIntent, "Share Ride"));
     }
 
-    @Override
-    public void onChat(JoinRequest request) {
-        Intent i = new Intent(this, ChatActivity.class);
-        i.putExtra(AppConstants.KEY_CHAT_ROOM_ID, request.getChatRoomId());
-        i.putExtra(AppConstants.KEY_OTHER_USER_NAME, request.getRequestorName());
-        startActivity(i);
+    public void handleSendRequest() {
+        // If already accepted, open chat
+        requestPresenter.checkExistingRequest(adId, currentUid, req -> {
+            if (req != null && JoinRequest.STATUS_ACCEPTED.equals(req.getStatus())) {
+                Intent i = new Intent(this, ChatActivity.class);
+                i.putExtra(AppConstants.KEY_CHAT_ROOM_ID, req.getChatRoomId());
+                i.putExtra(AppConstants.KEY_OTHER_USER_NAME, currentAd.getCreatorName());
+                startActivity(i);
+            } else {
+                JoinRequest newReq = new JoinRequest(adId, currentUid, session.getUserName(),
+                        session.getUserPhone(), currentAd.getCreatorUid());
+                requestPresenter.sendJoinRequest(newReq);
+            }
+        });
+    }
+    
+    public void handleCancelRequest() {
+        // Implementation for cancel request
     }
 
-    // AdsPresenter callbacks
+    public void handleAccept(String requestId) {
+        JoinRequest request = findRequestById(requestId);
+        if (request != null) {
+            String chatRoomId = FirebaseManager.getInstance()
+                    .generateChatRoomId(adId, currentUid, request.getRequestorUid());
+            requestPresenter.acceptRequest(request, chatRoomId);
+        }
+    }
+
+    public void handleReject(String requestId) {
+        JoinRequest request = findRequestById(requestId);
+        if (request != null) {
+            requestPresenter.rejectRequest(request);
+        }
+    }
+    
+    public void handleContactPoster() {
+        if (currentAd != null) {
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + currentAd.getCreatorPhone()));
+            startActivity(intent);
+        }
+    }
+    
+    public void handleCallPoster() {
+        handleContactPoster();
+    }
+    
+    /**
+     * Opens in-app direct messaging with the ride poster.
+     * Creates or opens an existing conversation between current user and poster.
+     */
+    public void handleChatWithPoster() {
+        if (currentAd == null || currentUid == null) return;
+        
+        String posterUid = currentAd.getCreatorUid();
+        if (posterUid == null || posterUid.equals(currentUid)) return;
+        
+        // Generate conversation ID for direct user-to-user messaging
+        String conversationId = FirebaseManager.getInstance().generateConversationId(currentUid, posterUid);
+        
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra(AppConstants.KEY_CHAT_ROOM_ID, conversationId);
+        intent.putExtra(AppConstants.KEY_OTHER_USER_NAME, currentAd.getCreatorName());
+        intent.putExtra(AppConstants.KEY_OTHER_USER_ID, posterUid);
+        // Pass context about where this chat was initiated from
+        intent.putExtra(AppConstants.KEY_AD_ID, adId);
+        startActivity(intent);
+    }
+    
+    public void handleReportAd() {
+        // Implementation for report ad
+    }
+
+    private JoinRequest findRequestById(String id) {
+        for (JoinRequest r : rawRequests) {
+            if (r.getRequestId().equals(id)) return r;
+        }
+        return null;
+    }
+
     @Override public void onAdsLoaded(List<RideAd> ads) {}
     @Override public void onAdPosted(String adId) {}
     @Override public void onAdDeleted() { finish(); }
     @Override public void onError(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        stateHolder.setLoading(false);
+        stateHolder.setError(message);
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
-    @Override public void onLoading(boolean isLoading) {}
+    @Override public void onLoading(boolean isLoading) {
+        stateHolder.setLoading(isLoading);
+    }
 
-    // RequestPresenter callbacks
     @Override public void onRequestSent() {
-        binding.btnSendRequest.setText("Request Sent ✓");
+        stateHolder.setLoading(false);
         Toast.makeText(this, "Request sent!", Toast.LENGTH_SHORT).show();
+        loadAdDetail();
     }
 
     @Override
     public void onRequestsLoaded(List<JoinRequest> requests) {
-        requestsAdapter.updateList(requests);
-        binding.tvNoRequests.setVisibility(requests.isEmpty() ? View.VISIBLE : View.GONE);
+        stateHolder.setLoading(false);
+        this.rawRequests = requests;
+        List<JoinRequestUiModel> uiModels = new ArrayList<>();
+        for (JoinRequest r : requests) {
+            uiModels.add(new JoinRequestUiModel(
+                    r.getRequestId(),
+                    r.getRequestorName(),
+                    r.getRequestorPhone(),
+                    null, // userAvatar
+                    0f,   // userRating
+                    1,    // seatsRequested
+                    null, // message
+                    r.getStatus(),
+                    0L    // timestamp
+            ));
+        }
+        stateHolder.setRequests(uiModels);
     }
 
     @Override
     public void onRequestUpdated(JoinRequest request) {
+        stateHolder.setLoading(false);
+        stateHolder.setProcessingRequest(null);
         loadRequests();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (adsPresenter != null) adsPresenter.detach();
+        if (requestPresenter != null) requestPresenter.detach();
     }
 
     @Override

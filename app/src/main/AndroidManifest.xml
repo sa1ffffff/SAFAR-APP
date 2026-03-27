@@ -99,6 +99,23 @@
             android:name=".views.activities.ProfileActivity"
             android:exported="false" />
 
+        <!-- Settings -->
+        <activity
+            android:name=".views.activities.SettingsActivity"
+            android:exported="false"
+            android:label="Settings" />
+
+        <!-- Help & FAQ -->
+        <activity
+            android:name=".views.activities.HelpActivity"
+            android:exported="false" />
+
+        <!-- About SAFAR -->
+        <activity
+            android:name=".views.activities.AboutActivity"
+            android:exported="false"
+            android:label="About SAFAR" />
+
         <!-- Firebase Cloud Messaging -->
         <service
             android:name=".firebase.SafarMessagingService"

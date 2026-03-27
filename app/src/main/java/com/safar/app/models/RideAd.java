@@ -15,6 +15,7 @@ public class RideAd {
     private String creatorUid;
     private String creatorName;
     private String creatorPhone;
+    private String creatorPhotoUrl;
     private String origin;
     private String destination;
     private double originLat;
@@ -31,12 +32,14 @@ public class RideAd {
     // Required empty constructor for Firebase
     public RideAd() {}
 
-    public RideAd(String creatorUid, String creatorName, String creatorPhone, String origin, String destination,
+    public RideAd(String creatorUid, String creatorName, String creatorPhone, String creatorPhotoUrl,
+                  String origin, String destination,
                   double originLat, double originLng, double destinationLat, double destinationLng,
                   long departureTime, int availableSeats, String vehicleDetails, String notes) {
         this.creatorUid = creatorUid;
         this.creatorName = creatorName;
         this.creatorPhone = creatorPhone;
+        this.creatorPhotoUrl = creatorPhotoUrl;
         this.origin = origin;
         this.destination = destination;
         this.originLat = originLat;
@@ -51,6 +54,15 @@ public class RideAd {
         this.createdAt = System.currentTimeMillis();
     }
 
+    // Legacy constructor for backward compatibility
+    public RideAd(String creatorUid, String creatorName, String creatorPhone, String origin, String destination,
+                  double originLat, double originLng, double destinationLat, double destinationLng,
+                  long departureTime, int availableSeats, String vehicleDetails, String notes) {
+        this(creatorUid, creatorName, creatorPhone, null, origin, destination,
+             originLat, originLng, destinationLat, destinationLng,
+             departureTime, availableSeats, vehicleDetails, notes);
+    }
+
     // Getters and Setters
     public String getAdId() { return adId; }
     public void setAdId(String adId) { this.adId = adId; }
@@ -63,6 +75,9 @@ public class RideAd {
 
     public String getCreatorPhone() { return creatorPhone; }
     public void setCreatorPhone(String creatorPhone) { this.creatorPhone = creatorPhone; }
+
+    public String getCreatorPhotoUrl() { return creatorPhotoUrl; }
+    public void setCreatorPhotoUrl(String creatorPhotoUrl) { this.creatorPhotoUrl = creatorPhotoUrl; }
 
     public String getOrigin() { return origin; }
     public void setOrigin(String origin) { this.origin = origin; }

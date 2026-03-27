@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 android {
     namespace 'com.safar.app'
@@ -28,6 +30,11 @@ android {
 
     buildFeatures {
         viewBinding true
+        compose true
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
     }
 }
 
@@ -40,11 +47,29 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'androidx.annotation:annotation:1.7.1'
 
+    // Jetpack Compose
+    def composeBom = platform('androidx.compose:compose-bom:2024.10.01')
+    implementation composeBom
+    androidTestImplementation composeBom
+
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.activity:activity-compose:1.9.3'
+    implementation 'androidx.navigation:navigation-compose:2.8.3'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7'
+
     // Firebase BoM - manages all Firebase versions
     implementation platform('com.google.firebase:firebase-bom:32.7.0')
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-storage'
+
+    // Coil for Compose image loading
+    implementation 'io.coil-kt:coil-compose:2.5.0'
 
     // Google Sign-In
     implementation 'com.google.android.gms:play-services-auth:21.0.0'
@@ -52,9 +77,11 @@ dependencies {
     // Google Maps
     implementation 'com.google.android.gms:play-services-maps:18.2.0'
     implementation 'com.google.android.gms:play-services-location:21.1.0'
+    implementation 'com.google.maps.android:maps-compose:4.3.3'
 
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.16.0'
+    implementation 'androidx.core:core-ktx:1.13.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 
     implementation 'de.hdodenhof:circleimageview:3.1.0'
@@ -63,4 +90,6 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }

@@ -36,15 +36,9 @@ public class AdsPresenter {
         this.firebaseManager = FirebaseManager.getInstance();
     }
 
-    /**
-     * FIX: Uses addValueEventListener (real-time) NOT singleValueEvent.
-     * Also removed the departure-time filter that was hiding newly posted rides
-     * whose time might be slightly off. Now shows ALL OPEN rides.
-     */
     public void loadActiveAds() {
         if (view != null) view.onLoading(true);
 
-        // Remove old listener first to prevent duplicates
         if (activeAdsListener != null) {
             firebaseManager.getAdsRef().removeEventListener(activeAdsListener);
             activeAdsListener = null;
@@ -53,35 +47,20 @@ public class AdsPresenter {
         activeAdsListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Log.d(TAG, "onDataChange: total nodes = " + snapshot.getChildrenCount());
                 List<RideAd> ads = new ArrayList<>();
-
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     try {
                         RideAd ad = ds.getValue(RideAd.class);
                         if (ad != null) {
-                            // Always set the key from Firebase
                             ad.setAdId(ds.getKey());
-
-                            Log.d(TAG, "Ad found: " + ad.getAdId()
-                                    + " status=" + ad.getStatus()
-                                    + " origin=" + ad.getOrigin());
-
-                            // Only filter by status — NOT by departure time
-                            // (avoids bug where ride not shown due to clock drift)
-                            if (RideAd.STATUS_OPEN.equals(ad.getStatus())
-                                    || ad.getStatus() == null) {
+                            if (RideAd.STATUS_OPEN.equals(ad.getStatus()) || ad.getStatus() == null) {
                                 ads.add(ad);
                             }
-                        } else {
-                            Log.w(TAG, "Null ad at key: " + ds.getKey());
                         }
                     } catch (Exception e) {
-                        Log.e(TAG, "Error parsing ad at " + ds.getKey() + ": " + e.getMessage());
+                        Log.e(TAG, "Error parsing ad: " + e.getMessage());
                     }
                 }
-
-                Log.d(TAG, "Filtered open ads count: " + ads.size());
 
                 if (view != null) {
                     view.onLoading(false);
@@ -91,22 +70,19 @@ public class AdsPresenter {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Firebase cancelled: " + error.getMessage());
                 if (view != null) {
                     view.onLoading(false);
-                    view.onError("Database error: " + error.getMessage()
-                            + "\nCheck Firebase rules and internet connection.");
+                    // Ignore permission errors that often happen during logout
+                    if (error.getCode() != DatabaseError.PERMISSION_DENIED) {
+                        view.onError("Database error: " + error.getMessage());
+                    }
                 }
             }
         };
 
-        // KEY FIX: addValueEventListener fires on every change (not just once)
         firebaseManager.getAdsRef().addValueEventListener(activeAdsListener);
     }
 
-    /**
-     * Load rides posted by a specific user - also real-time.
-     */
     public void loadMyAds(String uid) {
         if (view != null) view.onLoading(true);
 
@@ -140,7 +116,9 @@ public class AdsPresenter {
             public void onCancelled(@NonNull DatabaseError error) {
                 if (view != null) {
                     view.onLoading(false);
-                    view.onError("Failed to load your rides: " + error.getMessage());
+                    if (error.getCode() != DatabaseError.PERMISSION_DENIED) {
+                        view.onError("Failed to load your rides: " + error.getMessage());
+                    }
                 }
             }
         };
@@ -148,44 +126,33 @@ public class AdsPresenter {
         firebaseManager.getAdsRef().addValueEventListener(myAdsListener);
     }
 
-    /**
-     * Post a new ride. Guaranteed to write to Firebase and confirm.
-     */
     public void postAd(RideAd ad) {
         if (view != null) view.onLoading(true);
 
-        // Push a new unique key
         String adId = firebaseManager.getAdsRef().push().getKey();
         if (adId == null) {
-            Log.e(TAG, "Firebase push() returned null key");
             if (view != null) {
                 view.onLoading(false);
-                view.onError("Cannot connect to database. Check your internet connection.");
+                view.onError("Cannot connect to database.");
             }
             return;
         }
 
         ad.setAdId(adId);
-        // Ensure status is always set to OPEN
         ad.setStatus(RideAd.STATUS_OPEN);
         ad.setCreatedAt(System.currentTimeMillis());
 
-        Log.d(TAG, "Posting ad with key: " + adId + " origin=" + ad.getOrigin());
-
         firebaseManager.getAdRef(adId).setValue(ad)
                 .addOnSuccessListener(unused -> {
-                    Log.d(TAG, "Ad posted successfully: " + adId);
                     if (view != null) {
                         view.onLoading(false);
                         view.onAdPosted(adId);
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to post ad: " + e.getMessage());
                     if (view != null) {
                         view.onLoading(false);
-                        view.onError("Failed to post ride: " + e.getMessage()
-                                + "\nCheck Firebase Database rules.");
+                        view.onError("Failed to post ride: " + e.getMessage());
                     }
                 });
     }
@@ -213,9 +180,6 @@ public class AdsPresenter {
                 });
     }
 
-    /**
-     * MUST call this when Fragment/Activity is destroyed.
-     */
     public void detach() {
         if (activeAdsListener != null) {
             try {

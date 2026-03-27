@@ -98,7 +98,7 @@ drawable ic_star
 drawable ic_time
 drawable tab_selector
 id appBar
-id bottomNav
+id bottomNavCompose
 id bottomSheet
 id btnAccept
 id btnCall

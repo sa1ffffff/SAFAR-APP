@@ -40,6 +40,22 @@ public class SessionManager {
         editor.putString(AppConstants.PREF_USER_PHONE, phone).apply();
     }
 
+    public String getUserLanguage() {
+        return prefs.getString(AppConstants.PREF_USER_LANGUAGE, "en");
+    }
+
+    public void setUserLanguage(String language) {
+        editor.putString(AppConstants.PREF_USER_LANGUAGE, language).apply();
+    }
+    
+    public String getUserPhotoUrl() {
+        return prefs.getString(AppConstants.PREF_USER_PHOTO_URL, null);
+    }
+    
+    public void setUserPhotoUrl(String photoUrl) {
+        editor.putString(AppConstants.PREF_USER_PHOTO_URL, photoUrl).apply();
+    }
+
     public boolean isLoggedIn() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         return user != null;

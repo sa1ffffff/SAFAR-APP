@@ -4,49 +4,33 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.core.view.WindowCompat;
 import androidx.fragment.app.Fragment;
 
 import com.safar.app.R;
-import com.safar.app.databinding.ActivityMainBinding;
 import com.safar.app.views.fragments.InboxFragment;
 import com.safar.app.views.fragments.ListFragment;
 import com.safar.app.views.fragments.MapFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding;
+    private MainStateHolder stateHolder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        // CRITICAL FIX: Enable edge-to-edge layout
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        setContentView(R.layout.activity_main);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        stateHolder = new MainStateHolder();
+        ComposeView bottomNavCompose = findViewById(R.id.bottomNavCompose);
+        MainBridgeKt.setupComposeUI(this, bottomNavCompose, stateHolder);
 
         // Default: load map
         if (savedInstanceState == null) {
             loadFragment(new MapFragment());
-            binding.bottomNav.setSelectedItemId(R.id.nav_map);
         }
-
-        binding.bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_map) {
-                loadFragment(new MapFragment());
-            } else if (id == R.id.nav_list) {
-                loadFragment(new ListFragment());
-            } else if (id == R.id.nav_inbox) {
-                loadFragment(new InboxFragment());
-            } else if (id == R.id.nav_profile) {
-                startActivity(new Intent(this, ProfileActivity.class));
-                return false; // Don't highlight profile in bottom nav
-            }
-            return true;
-        });
 
         // Handle intent from PostAdActivity: open Rides tab
         handleIntent(getIntent());
@@ -60,8 +44,19 @@ public class MainActivity extends AppCompatActivity {
 
     private void handleIntent(Intent intent) {
         if (intent != null && "rides".equals(intent.getStringExtra("openTab"))) {
-            binding.bottomNav.setSelectedItemId(R.id.nav_list);
-            loadFragment(new ListFragment());
+            onTabSelected(1);
+        }
+    }
+
+    public void onTabSelected(int index) {
+        stateHolder.setSelectedTab(index);
+        switch (index) {
+            case 0: loadFragment(new MapFragment());   break;
+            case 1: loadFragment(new ListFragment());  break;
+            case 2: loadFragment(new InboxFragment()); break;
+            case 3:
+                startActivity(new Intent(this, ProfileActivity.class));
+                break;
         }
     }
 

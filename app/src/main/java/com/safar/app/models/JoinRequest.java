@@ -18,6 +18,12 @@ public class JoinRequest {
     private String status;
     private long timestamp;
     private String chatRoomId;
+    
+    // Last message info for Inbox
+    private String lastMessage;
+    private long lastMessageTimestamp;
+    private String lastMessageSenderId;
+    private boolean lastMessageRead;
 
     public JoinRequest() {}
 
@@ -30,6 +36,7 @@ public class JoinRequest {
         this.adCreatorUid = adCreatorUid;
         this.status = STATUS_PENDING;
         this.timestamp = System.currentTimeMillis();
+        this.lastMessageRead = true; // Initial state
     }
 
     public String getRequestId() { return requestId; }
@@ -58,4 +65,16 @@ public class JoinRequest {
 
     public String getChatRoomId() { return chatRoomId; }
     public void setChatRoomId(String chatRoomId) { this.chatRoomId = chatRoomId; }
+
+    public String getLastMessage() { return lastMessage; }
+    public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
+
+    public long getLastMessageTimestamp() { return lastMessageTimestamp; }
+    public void setLastMessageTimestamp(long lastMessageTimestamp) { this.lastMessageTimestamp = lastMessageTimestamp; }
+
+    public String getLastMessageSenderId() { return lastMessageSenderId; }
+    public void setLastMessageSenderId(String lastMessageSenderId) { this.lastMessageSenderId = lastMessageSenderId; }
+
+    public boolean isLastMessageRead() { return lastMessageRead; }
+    public void setLastMessageRead(boolean lastMessageRead) { this.lastMessageRead = lastMessageRead; }
 }

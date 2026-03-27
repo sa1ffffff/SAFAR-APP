@@ -22,6 +22,7 @@ public class RequestPresenter {
 
     private final RequestView view;
     private final FirebaseManager firebaseManager;
+    private ValueEventListener requestsListener;
 
     public RequestPresenter(RequestView view) {
         this.view = view;
@@ -41,28 +42,61 @@ public class RequestPresenter {
     }
 
     public void loadRequestsForAd(String adId) {
+        detach();
+        requestsListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<JoinRequest> requests = new ArrayList<>();
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    JoinRequest req = ds.getValue(JoinRequest.class);
+                    if (req != null) {
+                        req.setRequestId(ds.getKey());
+                        requests.add(req);
+                    }
+                }
+                view.onRequestsLoaded(requests);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (error.getCode() != DatabaseError.PERMISSION_DENIED) {
+                    view.onError(error.getMessage());
+                }
+            }
+        };
         firebaseManager.getRequestsRef()
                 .orderByChild("adId")
                 .equalTo(adId)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        List<JoinRequest> requests = new ArrayList<>();
-                        for (DataSnapshot ds : snapshot.getChildren()) {
-                            JoinRequest req = ds.getValue(JoinRequest.class);
-                            if (req != null) {
-                                req.setRequestId(ds.getKey());
-                                requests.add(req);
-                            }
-                        }
-                        view.onRequestsLoaded(requests);
-                    }
+                .addValueEventListener(requestsListener);
+    }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        view.onError(error.getMessage());
+    public void loadIncomingRequests(String currentUid) {
+        detach();
+        requestsListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<JoinRequest> requests = new ArrayList<>();
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    JoinRequest req = ds.getValue(JoinRequest.class);
+                    if (req != null) {
+                        req.setRequestId(ds.getKey());
+                        requests.add(req);
                     }
-                });
+                }
+                view.onRequestsLoaded(requests);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (error.getCode() != DatabaseError.PERMISSION_DENIED) {
+                    view.onError(error.getMessage());
+                }
+            }
+        };
+        firebaseManager.getRequestsRef()
+                .orderByChild("adCreatorUid")
+                .equalTo(currentUid)
+                .addValueEventListener(requestsListener);
     }
 
     public void acceptRequest(JoinRequest request, String chatRoomId) {
@@ -105,6 +139,13 @@ public class RequestPresenter {
                         callback.onResult(null);
                     }
                 });
+    }
+
+    public void detach() {
+        if (requestsListener != null) {
+            firebaseManager.getRequestsRef().removeEventListener(requestsListener);
+            requestsListener = null;
+        }
     }
 
     public interface OnCheckComplete {
