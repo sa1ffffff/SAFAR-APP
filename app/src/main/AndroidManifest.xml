@@ -21,10 +21,10 @@
         android:theme="@style/Theme.SAFAR"
         android:usesCleartextTraffic="false">
 
-        <!-- Google Maps API Key — replace with your key -->
+    
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAVFulcpH7WG2-7yJ_T0keOdIJBvar1m3M" />
+            android:value="API_hidden_for_Safety_purposes" />
 
         <!-- Splash -->
         <activity
