@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.*
+import com.safar.app.utils.PhoneFormatUtils
 import com.safar.app.views.ui.theme.*
 
 data class PostAdUiState(
@@ -70,11 +71,20 @@ fun PostAdScreen(
     onBack: () -> Unit = {}
 ) {
     val effectiveLoading = state.isLoading || isSubmitting
-    val isFormValid = state.originPicked &&
+    val hasLivePhoneFormatError =
+        state.phone.isNotBlank() && !PhoneFormatUtils.isValidWhatsappLocalNumber(state.phone)
+    val phoneErrorMessage = when {
+        hasLivePhoneFormatError -> "Format must be 03xx-xxxxxxx"
+        else -> fieldErrors["phone"]
+    }
+    val canAttemptPost = state.originPicked &&
             state.destPicked &&
             state.dateTimePicked &&
             state.seats.isNotBlank() &&
+            state.vehicle.isNotBlank() &&
             state.phone.isNotBlank()
+    val bannerErrorMessage = state.errorMessage
+        ?: fieldErrors.entries.firstOrNull { it.key != "phone" }?.value
 
     SafarTheme(darkTheme = true) {
         Scaffold(
@@ -119,12 +129,11 @@ fun PostAdScreen(
             ) {
                 // Error Banner
                 AnimatedVisibility(
-                    visible = state.errorMessage != null || fieldErrors.isNotEmpty(),
+                    visible = bannerErrorMessage != null,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
-                    val errorText = state.errorMessage ?: fieldErrors.values.firstOrNull()
-                    errorText?.let { error ->
+                    bannerErrorMessage?.let { error ->
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -212,13 +221,11 @@ fun PostAdScreen(
                             modifier = Modifier.weight(1f)
                         )
 
-                        FormInputField(
+                        PriceInputField(
                             value = state.price,
                             onValueChange = onPriceChange,
                             label = "Price/Seat",
                             placeholder = "Optional",
-                            icon = Icons.Rounded.AttachMoney,
-                            keyboardType = KeyboardType.Number,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -227,15 +234,17 @@ fun PostAdScreen(
                         value = state.phone,
                         onValueChange = onPhoneChange,
                         label = "Contact Phone",
-                        placeholder = "e.g. 03001234567",
+                        placeholder = "e.g. 0300-1234567",
                         icon = Icons.Rounded.Phone,
-                        keyboardType = KeyboardType.Phone
+                        keyboardType = KeyboardType.Phone,
+                        isError = phoneErrorMessage != null,
+                        supportingError = phoneErrorMessage
                     )
 
                     FormInputField(
                         value = state.vehicle,
                         onValueChange = onVehicleChange,
-                        label = "Vehicle (Optional)",
+                        label = "Vehicle",
                         placeholder = "e.g. Honda Civic, Silver",
                         icon = Icons.Rounded.DirectionsCar
                     )
@@ -272,7 +281,7 @@ fun PostAdScreen(
                     // ── Submit Button ─────────────────────────────────────────
                     Button(
                         onClick = onPost,
-                        enabled = isFormValid && !effectiveLoading,
+                        enabled = canAttemptPost && !effectiveLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(58.dp),
@@ -477,6 +486,8 @@ private fun FormInputField(
     placeholder: String,
     icon: ImageVector,
     keyboardType: KeyboardType = KeyboardType.Text,
+    isError: Boolean = false,
+    supportingError: String? = null,
     modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
@@ -493,8 +504,58 @@ private fun FormInputField(
             )
         },
         singleLine = true,
+        isError = isError,
         shape = RoundedCornerShape(14.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        supportingText = if (supportingError != null) {
+            {
+                Text(
+                    text = supportingError,
+                    color = SafarError,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        } else null,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = SafarGreen,
+            unfocusedBorderColor = SafarDivider,
+            focusedContainerColor = SafarDarkCard,
+            unfocusedContainerColor = SafarDarkCard,
+            focusedTextColor = SafarTextPrimary,
+            unfocusedTextColor = SafarTextPrimary,
+            focusedLabelColor = SafarGreen,
+            cursorColor = SafarGreen
+        ),
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun PriceInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, color = SafarTextSecondary, fontSize = 12.sp) },
+        placeholder = { Text(placeholder, color = SafarTextTertiary.copy(alpha = 0.6f)) },
+        leadingIcon = {
+            Text(
+                "Rs",
+                color = SafarTextTertiary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(14.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = SafarGreen,
             unfocusedBorderColor = SafarDivider,

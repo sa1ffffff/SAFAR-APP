@@ -321,32 +321,4 @@ public class RideRepository {
 | Feature                    | Notes                                        |
 |----------------------------|----------------------------------------------|
 | Rating / Review UI         | Model exists — Activity and wiring missing   |
-| Google Places Autocomplete | Plain dialog stub — Places SDK not wired     |
-| Unit Tests                 | Zero tests — JUnit + Mockito needed          |
-| Admin / Moderation Panel   | Not started                                  |
-| Project Report             | Not started                                  |
-
----
-
-## 12. Dos and Don'ts
-
-| ✅ DO                                              | ❌ DON'T                                        |
-|----------------------------------------------------|-------------------------------------------------|
-| Use Java for all logic layers                      | Suggest Kotlin for models, repos, or presenters |
-| Match language of the existing UI file             | Migrate files between Java and Kotlin           |
-| Keep all logic in Presenters                       | Put any logic in Activities or Fragments        |
-| Use Firestore for persistent data                  | Use Room, SQLite, or SharedPreferences for data |
-| Use Realtime DB only for chat                      | Use Realtime DB for rides or users              |
-| Use Glide for all image loading                    | Load images directly or use Picasso / Coil      |
-| Follow naming conventions above exactly            | Rename existing classes, methods, or XML files  |
-| Use MDC-Android M3 components                      | Use deprecated AppCompat widgets                |
-| Give every button a visible state                  | Create ghost, invisible, or placeholder buttons |
-| Use Material Motion transitions                    | Use abrupt or janky custom transitions          |
-| Null-check view in Presenter before every call     | Call view methods without null check            |
-| Generate complete, working code only               | Generate TODO stubs or placeholder code         |
-| Ask before adding a Gradle dependency              | Add dependencies silently                       |
-| Never touch Firebase schema, Auth, or DB structure | Modify collection names or document fields      |
-
----
-
-*SAFAR · BSCS FYP · SEECS NUST · Updated March 2026*
+we w

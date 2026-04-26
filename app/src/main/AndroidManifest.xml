@@ -4,6 +4,9 @@
     <!-- Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Phone Call Permission -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+
     <!-- GPS / Location permissions (Fix #1) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -13,6 +16,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".SafarApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -46,6 +50,18 @@
         <!-- OTP -->
         <activity
             android:name=".views.activities.OtpVerifyActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Password Setup (after phone OTP signup) -->
+        <activity
+            android:name=".views.activities.PasswordSetupActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Forgot Password -->
+        <activity
+            android:name=".views.activities.ForgotPasswordActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
@@ -115,6 +131,25 @@
             android:name=".views.activities.AboutActivity"
             android:exported="false"
             android:label="About SAFAR" />
+
+        <!-- Review -->
+        <activity
+            android:name=".views.activities.ReviewActivity"
+            android:exported="false"
+            android:label="Rate Experience"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Notifications -->
+        <activity
+            android:name=".views.activities.NotificationsActivity"
+            android:exported="false"
+            android:label="Notifications" />
+
+        <!-- User Profile (view other users) -->
+        <activity
+            android:name=".views.activities.UserProfileActivity"
+            android:exported="false"
+            android:label="Profile" />
 
         <!-- Firebase Cloud Messaging -->
         <service

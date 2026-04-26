@@ -9,6 +9,8 @@ public class AppConstants {
     public static final String NODE_REQUESTS = "joinRequests";
     public static final String NODE_CONVERSATIONS = "conversations";
     public static final String NODE_MESSAGES = "messages";
+    public static final String NODE_REVIEWS = "reviews";
+    public static final String NODE_NOTIFICATIONS = "notifications";
 
     // SharedPreferences
     public static final String PREFS_NAME = "SafarPrefs";

@@ -1,0 +1,3 @@
+com.safar.app.test
+style WhiteBackgroundDialogTheme
+style WhiteBackgroundTheme

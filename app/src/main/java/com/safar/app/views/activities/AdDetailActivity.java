@@ -1,6 +1,7 @@
 package com.safar.app.views.activities;
 
 import android.content.Intent;
+import android.content.ActivityNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -18,6 +19,7 @@ import com.safar.app.presenters.AdsPresenter;
 import com.safar.app.presenters.RequestPresenter;
 import com.safar.app.utils.AppConstants;
 import com.safar.app.utils.DateUtils;
+import com.safar.app.utils.PhoneFormatUtils;
 import com.safar.app.utils.SessionManager;
 import com.safar.app.views.ui.screens.JoinRequestUiModel;
 
@@ -69,6 +71,12 @@ public class AdDetailActivity extends AppCompatActivity implements
                     currentAd = snapshot.getValue(RideAd.class);
                     if (currentAd == null) { finish(); return; }
                     currentAd.setAdId(adId);
+                    if (currentAd.isExpired(System.currentTimeMillis())) {
+                        FirebaseManager.getInstance().getAdRef(adId).removeValue();
+                        Toast.makeText(this, "This ride has expired.", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
                     boolean isOwner = currentAd.getCreatorUid().equals(currentUid);
                     stateHolder.setIsOwner(isOwner);
                     
@@ -87,6 +95,7 @@ public class AdDetailActivity extends AppCompatActivity implements
         stateHolder.setDepartureTime(DateUtils.formatDeparture(currentAd.getDepartureTime()));
         stateHolder.setSeats(currentAd.getAvailableSeats() + " seat(s) available");
         stateHolder.setPostedBy(currentAd.getCreatorName());
+        stateHolder.setPosterPhone(currentAd.getCreatorPhone() != null ? currentAd.getCreatorPhone() : "");
         stateHolder.setStatus(currentAd.getStatus());
         stateHolder.setVehicle(currentAd.getVehicleDetails() != null ? currentAd.getVehicleDetails() : "");
         stateHolder.setNotes(currentAd.getNotes() != null ? currentAd.getNotes() : "");
@@ -156,29 +165,74 @@ public class AdDetailActivity extends AppCompatActivity implements
         if (request != null) {
             String chatRoomId = FirebaseManager.getInstance()
                     .generateChatRoomId(adId, currentUid, request.getRequestorUid());
-            requestPresenter.acceptRequest(request, chatRoomId);
+            String acceptorName = session.getUserName() != null ? session.getUserName() : "Driver";
+            requestPresenter.acceptRequest(request, chatRoomId, acceptorName);
         }
     }
 
     public void handleReject(String requestId) {
         JoinRequest request = findRequestById(requestId);
         if (request != null) {
-            requestPresenter.rejectRequest(request);
+            String rejectorName = session.getUserName() != null ? session.getUserName() : "Driver";
+            requestPresenter.rejectRequest(request, rejectorName);
         }
     }
     
     public void handleContactPoster() {
-        if (currentAd != null) {
+        if (currentAd == null) {
+            Toast.makeText(this, "Ad data not loaded", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        String phone = currentAd.getCreatorPhone();
+        if (phone == null || phone.trim().isEmpty()) {
+            Toast.makeText(this, "Phone number not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        try {
             Intent intent = new Intent(Intent.ACTION_DIAL);
-            intent.setData(Uri.parse("tel:" + currentAd.getCreatorPhone()));
+            intent.setData(Uri.parse("tel:" + phone.trim()));
             startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Unable to open dialer: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
     public void handleCallPoster() {
         handleContactPoster();
     }
-    
+
+    public void handleWhatsAppPoster() {
+        if (currentAd == null) {
+            Toast.makeText(this, "Ad data not loaded", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String rawPhone = currentAd.getCreatorPhone();
+        if (!PhoneFormatUtils.isValidWhatsappLocalNumber(rawPhone)) {
+            Toast.makeText(this, "Ask the user to share phone in 03xx-xxxxxxx format", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String whatsappNumber = PhoneFormatUtils.toWhatsappInternationalNumber(rawPhone);
+        if (whatsappNumber == null) {
+            Toast.makeText(this, "Ask the user to share phone in 03xx-xxxxxxx format", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String message = "Hi " + currentAd.getCreatorName() + ", I saw your ride from "
+                + currentAd.getOrigin() + " to " + currentAd.getDestination() + " on SAFAR.";
+        Uri whatsappUri = Uri.parse("https://wa.me/" + whatsappNumber + "?text=" + Uri.encode(message));
+        Intent intent = new Intent(Intent.ACTION_VIEW, whatsappUri);
+
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Unable to open WhatsApp link", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     /**
      * Opens in-app direct messaging with the ride poster.
      * Creates or opens an existing conversation between current user and poster.
@@ -238,6 +292,7 @@ public class AdDetailActivity extends AppCompatActivity implements
         for (JoinRequest r : requests) {
             uiModels.add(new JoinRequestUiModel(
                     r.getRequestId(),
+                    r.getRequestorUid(),  // userId for profile navigation
                     r.getRequestorName(),
                     r.getRequestorPhone(),
                     null, // userAvatar
@@ -249,6 +304,16 @@ public class AdDetailActivity extends AppCompatActivity implements
             ));
         }
         stateHolder.setRequests(uiModels);
+    }
+
+    /**
+     * Navigates to view another user's profile
+     */
+    public void navigateToUserProfile(String userId) {
+        if (userId == null || userId.isEmpty()) return;
+        Intent intent = new Intent(this, UserProfileActivity.class);
+        intent.putExtra(AppConstants.KEY_OTHER_USER_ID, userId);
+        startActivity(intent);
     }
 
     @Override

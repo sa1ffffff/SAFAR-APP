@@ -11,6 +11,9 @@
     <!-- Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Phone Call Permission -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+
     <!-- GPS / Location permissions (Fix #1) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -41,6 +44,7 @@
     <uses-permission android:name="com.safar.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 
     <application
+        android:name="com.safar.app.SafarApplication"
         android:allowBackup="true"
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:debuggable="true"
@@ -79,6 +83,18 @@
         <!-- OTP -->
         <activity
             android:name="com.safar.app.views.activities.OtpVerifyActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Password Setup (after OTP/Google signup) -->
+        <activity
+            android:name="com.safar.app.views.activities.PasswordSetupActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Forgot Password -->
+        <activity
+            android:name="com.safar.app.views.activities.ForgotPasswordActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
@@ -148,6 +164,25 @@
             android:name="com.safar.app.views.activities.AboutActivity"
             android:exported="false"
             android:label="About SAFAR" />
+
+        <!-- Review -->
+        <activity
+            android:name="com.safar.app.views.activities.ReviewActivity"
+            android:exported="false"
+            android:label="Rate Experience"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Notifications -->
+        <activity
+            android:name="com.safar.app.views.activities.NotificationsActivity"
+            android:exported="false"
+            android:label="Notifications" />
+
+        <!-- User Profile (view other users) -->
+        <activity
+            android:name="com.safar.app.views.activities.UserProfileActivity"
+            android:exported="false"
+            android:label="Profile" />
 
         <!-- Firebase Cloud Messaging -->
         <service

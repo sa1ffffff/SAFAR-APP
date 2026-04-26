@@ -6,6 +6,7 @@ import com.google.firebase.database.IgnoreExtraProperties;
 @IgnoreExtraProperties
 public class RideAd {
 
+    public static final long EXPIRY_WINDOW_MS = 3L * 24 * 60 * 60 * 1000;
     public static final String STATUS_OPEN = "OPEN";
     public static final String STATUS_FILLED = "FILLED";
     public static final String STATUS_COMPLETED = "COMPLETED";
@@ -27,6 +28,7 @@ public class RideAd {
     private String vehicleDetails;
     private String status;
     private long createdAt;
+    private long expiresAt;
     private String notes;
 
     // Required empty constructor for Firebase
@@ -52,6 +54,7 @@ public class RideAd {
         this.notes = notes;
         this.status = STATUS_OPEN;
         this.createdAt = System.currentTimeMillis();
+        this.expiresAt = this.createdAt + EXPIRY_WINDOW_MS;
     }
 
     // Legacy constructor for backward compatibility
@@ -112,11 +115,25 @@ public class RideAd {
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
 
+    public long getExpiresAt() { return expiresAt; }
+    public void setExpiresAt(long expiresAt) { this.expiresAt = expiresAt; }
+
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
     @Exclude
     public boolean isOpen() {
         return STATUS_OPEN.equals(status);
+    }
+
+    @Exclude
+    public long getEffectiveExpiresAt() {
+        if (expiresAt > 0L) return expiresAt;
+        return createdAt + EXPIRY_WINDOW_MS;
+    }
+
+    @Exclude
+    public boolean isExpired(long nowMillis) {
+        return getEffectiveExpiresAt() <= nowMillis;
     }
 }

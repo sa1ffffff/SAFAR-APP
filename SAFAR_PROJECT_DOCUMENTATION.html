@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAFAR - Complete Project Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #FFD600 0%, #C9A800 100%);
+            color: #0A0A0A;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        nav {
+            background: #0A0A0A;
+            padding: 15px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        nav a {
+            color: #FFD600;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        nav a:hover {
+            background: #FFD600;
+            color: #0A0A0A;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        section {
+            margin-bottom: 60px;
+            scroll-margin-top: 60px;
+        }
+
+        h2 {
+            color: #0A0A0A;
+            font-size: 2.2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #FFD600;
+        }
+
+        h3 {
+            color: #333;
+            font-size: 1.6em;
+            margin: 30px 0 15px;
+        }
+
+        h4 {
+            color: #555;
+            font-size: 1.3em;
+            margin: 20px 0 10px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #FFD600;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .architecture-diagram {
+            background: #0A0A0A;
+            color: #F0F0F0;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .type { color: #4ec9b0; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background: #FFD600;
+            color: #0A0A0A;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .feature-card h4 {
+            color: #FFD600;
+            margin-bottom: 10px;
+        }
+
+        .flow-diagram {
+            background: white;
+            border: 2px solid #FFD600;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .arrow {
+            color: #FFD600;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .highlight {
+            background: #FFD600;
+            color: #0A0A0A;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: #0A0A0A;
+            color: #FFD600;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        footer {
+            background: #0A0A0A;
+            color: #F0F0F0;
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            nav {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 SAFAR — سفر</h1>
+            <div class="subtitle">Community Carpool Marketplace</div>
+            <div class="subtitle" style="font-size: 0.9em; margin-top: 10px;">Complete Technical Documentation & Architecture Guide</div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#structure">Project Structure</a></li>
+                <li><a href="#tech-stack">Tech Stack</a></li>
+                <li><a href="#data-flow">Data Flow</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#firebase">Firebase</a></li>
+                <li><a href="#setup">Setup</a></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <!-- OVERVIEW SECTION -->
+            <section id="overview">
+                <h2>📌 Project Overview</h2>
+                
+                <div class="info-box">
+                    <h3>What is SAFAR?</h3>
+                    <p><strong>SAFAR</strong> (سفر - Urdu for "Journey") is a peer-to-peer ride-sharing Android application designed specifically for Pakistan. It connects drivers with empty seats to passengers heading in the same direction, creating a community-driven transport solution.</p>
+                </div>
+
+                <h3>Core Concept</h3>
+                <p>SAFAR enables users to:</p>
+                <ul style="margin-left: 40px; margin-top: 15px;">
+                    <li>✅ <strong>Post ride offers</strong> (e.g., Lahore → Islamabad at 3:00 PM)</li>
+                    <li>✅ <strong>Discover rides</strong> via interactive map or searchable list view</li>
+                    <li>✅ <strong>Request to join rides</strong> with seat selection</li>
+                    <li>✅ <strong>Real-time chat</strong> with drivers/passengers after approval</li>
+                    <li>✅ <strong>Track and manage</strong> their posted ads and join requests</li>
+                </ul>
+
+                <h3>Project Context</h3>
+                <table>
+                    <tr>
+                        <th>Attribute</th>
+                        <th>Details</th>
+                    </tr>
+                    <tr>
+                        <td>Institution</td>
+                        <td>SEECS, NUST (National University of Sciences and Technology)</td>
+                    </tr>
+                    <tr>
+                        <td>Project Type</td>
+                        <td>BSCS Final Year Project (FYP)</td>
+                    </tr>
+                    <tr>
+                        <td>Platform</td>
+                        <td>Android Native (No web app, no separate backend server)</td>
+                    </tr>
+                    <tr>
+                        <td>Backend</td>
+                        <td>Firebase as Backend-as-a-Service (BaaS)</td>
+                    </tr>
+                    <tr>
+                        <td>Target Region</td>
+                        <td>Pakistan</td>
+                    </tr>
+                    <tr>
+                        <td>Design Inspiration</td>
+                        <td>Yango ride-hailing aesthetic with dark theme</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- ARCHITECTURE SECTION -->
+            <section id="architecture">
+                <h2>🏗️ Software Architecture</h2>
+
+                <h3>Architecture Pattern: MVP (Model-View-Presenter)</h3>
+                
+                <div class="info-box">
+                    <p><strong>Why MVP?</strong> SAFAR follows the Model-View-Presenter pattern for strict separation of concerns, making the codebase maintainable, testable, and scalable.</p>
+                </div>
+
+                <div class="architecture-diagram">
+<pre>
+╔══════════════════════════════════════════════════════════════════════╗
+║                         MVP ARCHITECTURE                              ║
+╠══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║  ┌─────────────┐         ┌─────────────┐         ┌─────────────┐   ║
+║  │    MODEL    │         │  PRESENTER  │         │     VIEW    │   ║
+║  │   (Data)    │◄────────│   (Logic)   │────────►│     (UI)    │   ║
+║  │             │         │             │         │             │   ║
+║  │  User.java  │         │ Presenters/ │         │ Activities  │   ║
+║  │  Ride.java  │         │ *.java      │         │ Fragments   │   ║
+║  │ Message.java│         │             │         │ *.java/.kt  │   ║
+║  │ Request.java│         │  ┌────────┐ │         │             │   ║
+║  │  (POJOs)    │         │  │Contract│ │         │             │   ║
+║  └─────────────┘         │  │Interface│ │         └─────────────┘   ║
+║        ▲                 │  └────────┘ │               │           ║
+║        │                 └──────┬──────┘               │           ║
+║        │                        │                      │           ║
+║        │                        ▼                      │           ║
+║  ┌─────┴─────────────────────────────────────────────┴─────┐      ║
+║  │                    REPOSITORY LAYER                       │      ║
+║  │            (Firebase Communication Bridge)                │      ║
+║  │                                                           │      ║
+║  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │      ║
+║  │  │UserRepository│  │RideRepository│  │ChatRepository│   │      ║
+║  │  │   .java      │  │   .java      │  │   .java      │   │      ║
+║  │  └──────────────┘  └──────────────┘  └──────────────┘   │      ║
+║  │                                                           │      ║
+║  └───────────────────────────┬───────────────────────────────┘      ║
+║                              │                                      ║
+║                              ▼                                      ║
+║  ┌───────────────────────────────────────────────────────────┐     ║
+║  │                  FIREBASE BACKEND                          │     ║
+║  │                                                            │     ║
+║  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │     ║
+║  │  │Firestore │  │ Realtime │  │   Auth   │  │   FCM    │  │     ║
+║  │  │(Database)│  │ Database │  │  (Phone) │  │(Messaging│  │     ║
+║  │  │          │  │  (Chat)  │  │   OTP    │  │ & Notif) │  │     ║
+║  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │     ║
+║  └───────────────────────────────────────────────────────────┘     ║
+║                                                                     ║
+╚═════════════════════════════════════════════════════════════════════╝
+</pre>
+                </div>
+
+                <h3>Layer Responsibilities</h3>
+
+                <h4>1. Model Layer (Data Objects)</h4>
+                <div class="code-block">
+<span class="comment">// Plain Java POJOs (Plain Old Java Objects)</span>
+<span class="comment">// NO Android imports, NO Firebase calls, NO business logic</span>
+
+<span class="keyword">public class</span> <span class="type">User</span> {
+    <span class="keyword">private</span> String uid;
+    <span class="keyword">private</span> String name;
+    <span class="keyword">private</span> String phone;
+    <span class="keyword">private</span> String profilePicUrl;
+    <span class="keyword">private float</span> rating;
+    <span class="comment">// Getters, setters, constructors only</span>
+}
+                </div>
+                <p><strong>Purpose:</strong> Pure data containers with no logic. They represent the business entities.</p>
+
+                <h4>2. View Layer (UI Components)</h4>
+                <div class="code-block">
+<span class="comment">// Activities and Fragments implement View contracts</span>
+<span class="comment">// ONLY UI updates, NO business logic, NO Firebase calls</span>
+
+<span class="keyword">public class</span> <span class="type">RideDetailActivity</span> <span class="keyword">implements</span> RideDetailContract.View {
+    
+    <span class="keyword">@Override</span>
+    <span class="keyword">public void</span> showRideDetails(Ride ride) {
+        <span class="comment">// Update UI with ride data</span>
+        titleText.setText(ride.getOrigin() + <span class="string">" → "</span> + ride.getDestination());
+    }
+    
+    <span class="keyword">@Override</span>
+    <span class="keyword">public void</span> showError(String message) {
+        Toast.makeText(<span class="keyword">this</span>, message, Toast.LENGTH_SHORT).show();
+    }
+}
+                </div>
+                <p><strong>Purpose:</strong> Display data and capture user input. Delegates all logic to Presenter.</p>
+
+                <h4>3. Presenter Layer (Business Logic)</h4>
+                <div class="code-block">
+<span class="comment">// Handles ALL business logic and coordinates between View and Repository</span>
+
+<span class="keyword">public class</span> <span class="type">RideDetailPresenter</span> <span class="keyword">implements</span> RideDetailContract.Presenter {
+    <span class="keyword">private</span> RideDetailContract.View view;
+    <span class="keyword">private final</span> RideRepository rideRepo;
+    
+    <span class="keyword">public</span> RideDetailPresenter(RideDetailContract.View view) {
+        <span class="keyword">this</span>.view = view;
+        <span class="keyword">this</span>.rideRepo = <span class="keyword">new</span> RideRepository();
+    }
+    
+    <span class="keyword">@Override</span>
+    <span class="keyword">public void</span> loadRide(String rideId) {
+        <span class="keyword">if</span> (view != <span class="keyword">null</span>) view.showLoading(<span class="keyword">true</span>);
+        
+        rideRepo.getRide(rideId, ride -> {
+            <span class="keyword">if</span> (view == <span class="keyword">null</span>) <span class="keyword">return</span>; <span class="comment">// View destroyed</span>
+            view.showLoading(<span class="keyword">false</span>);
+            view.showRideDetails(ride);
+        });
+    }
+    
+    <span class="keyword">@Override</span>
+    <span class="keyword">public void</span> onDestroy() { 
+        view = <span class="keyword">null</span>; <span class="comment">// Prevent memory leaks</span>
+    }
+}
+                </div>
+                <p><strong>Purpose:</strong> Contains all business logic, calls Repository for data, updates View via contract.</p>
+
+                <h4>4. Repository Layer (Data Access)</h4>
+                <div class="code-block">
+<span class="comment">// ALL Firebase read/write operations happen here</span>
+<span class="comment">// Returns data via callbacks to Presenter</span>
+
+<span class="keyword">public class</span> <span class="type">RideRepository</span> {
+    <span class="keyword">private final</span> FirebaseFirestore db = FirebaseFirestore.getInstance();
+    <span class="keyword">private static final</span> String COLLECTION = <span class="string">"rides"</span>;
+    
+    <span class="keyword">public void</span> getRide(String rideId, OnRideFetchedListener listener) {
+        db.collection(COLLECTION)
+          .document(rideId)
+          .get()
+          .addOnSuccessListener(snap -> {
+              Ride ride = snap.toObject(Ride.<span class="keyword">class</span>);
+              listener.onFetched(ride);
+          });
+    }
+}
+                </div>
+                <p><strong>Purpose:</strong> Abstracts all Firebase operations. Provides clean data access interface.</p>
+
+                <h3>Contract Pattern (View-Presenter Communication)</h3>
+                <div class="code-block">
+<span class="comment">// Contract defines communication interface between View and Presenter</span>
+
+<span class="keyword">public interface</span> <span class="type">RideDetailContract</span> {
+    
+    <span class="keyword">interface</span> <span class="type">View</span> {
+        <span class="keyword">void</span> showRideDetails(Ride ride);
+        <span class="keyword">void</span> showError(String message);
+        <span class="keyword">void</span> showLoading(<span class="keyword">boolean</span> show);
+        <span class="keyword">void</span> navigateToChat(String rideId);
+    }
+    
+    <span class="keyword">interface</span> <span class="type">Presenter</span> {
+        <span class="keyword">void</span> loadRide(String rideId);
+        <span class="keyword">void</span> sendJoinRequest(String rideId, <span class="keyword">int</span> seats);
+        <span class="keyword">void</span> onDestroy();
+    }
+}
+                </div>
+
+                <div class="success-box">
+                    <h4>✅ Architecture Benefits:</h4>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Separation of Concerns:</strong> Each layer has a single responsibility</li>
+                        <li><strong>Testability:</strong> Presenters can be unit tested without Android dependencies</li>
+                        <li><strong>Maintainability:</strong> Changes in UI don't affect business logic and vice versa</li>
+                        <li><strong>Scalability:</strong> Easy to add new features without breaking existing code</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- PROJECT STRUCTURE SECTION -->
+            <section id="structure">
+                <h2>📂 Project Structure</h2>
+
+                <div class="architecture-diagram">
+<pre>
+SAFAR ktjava/
+│
+├── app/
+│   ├── src/
+│   │   └── main/
+│   │       ├── java/com/safar/app/
+│   │       │   │
+│   │       │   ├── <span style="color: #FFD600;">models/</span>                    ← Data Models (POJOs)
+│   │       │   │   ├── User.java
+│   │       │   │   ├── RideAd.java
+│   │       │   │   ├── ChatMessage.java
+│   │       │   │   ├── JoinRequest.java
+│   │       │   │   └── Conversation.java
+│   │       │   │
+│   │       │   ├── <span style="color: #FFD600;">presenters/</span>                ← Business Logic Layer
+│   │       │   │   ├── AdsPresenter.java
+│   │       │   │   ├── ChatPresenter.java
+│   │       │   │   ├── RequestPresenter.java
+│   │       │   │   └── ConversationPresenter.java
+│   │       │   │
+│   │       │   ├── <span style="color: #FFD600;">views/</span>                     ← UI Layer
+│   │       │   │   │
+│   │       │   │   ├── activities/           ← Screen Activities (Java)
+│   │       │   │   │   ├── MainActivity.java
+│   │       │   │   │   ├── LoginActivity.java
+│   │       │   │   │   ├── PhoneAuthActivity.java
+│   │       │   │   │   ├── OtpVerifyActivity.java
+│   │       │   │   │   ├── PostAdActivity.java
+│   │       │   │   │   ├── AdDetailActivity.java
+│   │       │   │   │   ├── ChatActivity.java
+│   │       │   │   │   ├── ProfileActivity.java
+│   │       │   │   │   ├── MyAdsActivity.java
+│   │       │   │   │   ├── LocationPickerActivity.java
+│   │       │   │   │   ├── SafetyActivity.java
+│   │       │   │   │   ├── SettingsActivity.java
+│   │       │   │   │   ├── HelpActivity.java
+│   │       │   │   │   ├── AboutActivity.java
+│   │       │   │   │   └── SplashActivity.java
+│   │       │   │   │
+│   │       │   │   ├── activities/           ← Activity Bridges (Kotlin)
+│   │       │   │   │   ├── MainBridge.kt
+│   │       │   │   │   ├── LoginBridge.kt
+│   │       │   │   │   ├── PhoneAuthBridge.kt
+│   │       │   │   │   ├── (and others...)
+│   │       │   │   │
+│   │       │   │   ├── fragments/            ← UI Fragments (Kotlin)
+│   │       │   │   │   ├── MapFragment.kt
+│   │       │   │   │   ├── ListFragment.kt
+│   │       │   │   │   ├── InboxFragment.kt
+│   │       │   │   │   ├── AdBottomSheetFragment.kt
+│   │       │   │   │   └── FragmentBridges.kt
+│   │       │   │   │
+│   │       │   │   ├── adapters/             ← RecyclerView Adapters (Java)
+│   │       │   │   │   ├── RideAdAdapter.java
+│   │       │   │   │   ├── ChatAdapter.java
+│   │       │   │   │   ├── RequestsAdapter.java
+│   │       │   │   │   ├── InboxAdapter.java
+│   │       │   │   │   └── BottomSheetAdAdapter.java
+│   │       │   │   │
+│   │       │   │   └── ui/                   ← Jetpack Compose UI (Kotlin)
+│   │       │   │       ├── theme/
+│   │       │   │       │   └── SafarTheme.kt
+│   │       │   │       ├── components/
+│   │       │   │       │   └── SafarComponents.kt
+│   │       │   │       ├── screens/          ← Compose Screens
+│   │       │   │       │   ├── MainScreen.kt
+│   │       │   │       │   ├── LoginScreen.kt
+│   │       │   │       │   ├── MapScreen.kt
+│   │       │   │       │   ├── ProfileScreen.kt
+│   │       │   │       │   ├── (and others...)
+│   │       │   │       └── MapComponents.kt
+│   │       │   │
+│   │       │   ├── <span style="color: #FFD600;">firebase/</span>                 ← Firebase Services
+│   │       │   │   ├── FirebaseManager.java
+│   │       │   │   └── SafarMessagingService.java
+│   │       │   │
+│   │       │   └── <span style="color: #FFD600;">utils/</span>                    ← Helper Classes
+│   │       │       ├── SessionManager.java
+│   │       │       ├── AppConstants.java
+│   │       │       ├── DateUtils.java
+│   │       │       ├── ProfileImageHelper.java
+│   │       │       └── SettingsRepository.kt
+│   │       │
+│   │       ├── res/                          ← Resources
+│   │       │   ├── layout/                   ← XML Layouts
+│   │       │   ├── drawable/                 ← Images & Icons
+│   │       │   ├── values/                   ← Strings, Colors, Themes
+│   │       │   ├── raw/                      ← Raw files (map styles)
+│   │       │   └── mipmap/                   ← App Icons
+│   │       │
+│   │       └── AndroidManifest.xml          ← App Configuration
+│   │
+│   ├── build.gradle                          ← App-level Gradle
+│   └── google-services.json                  ← Firebase Configuration
+│
+├── gradle/                                    ← Gradle Wrapper
+├── build.gradle                               ← Project-level Gradle
+├── settings.gradle                            ← Gradle Settings
+├── README.md                                  ← Project Documentation
+├── SAFAR-CONTEXT.md                          ← Architecture Rules
+├── FAQ_IMPLEMENTATION_SUMMARY.md             ← FAQ Feature Docs
+└── LOGIN_REDESIGN_SUMMARY.md                 ← Login UI Docs
+</pre>
+                </div>
+
+                <h3>Package Organization</h3>
+                <table>
+                    <tr>
+                        <th>Package</th>
+                        <th>Purpose</th>
+                        <th>Language</th>
+                    </tr>
+                    <tr>
+                        <td><code>models/</code></td>
+                        <td>Data classes representing business entities</td>
+                        <td>Java only</td>
+                    </tr>
+                    <tr>
+                        <td><code>presenters/</code></td>
+                        <td>Business logic and coordination</td>
+                        <td>Java only</td>
+                    </tr>
+                    <tr>
+                        <td><code>views/activities/</code></td>
+                        <td>Activity screens (UI layer)</td>
+                        <td>Java or Kotlin (hybrid)</td>
+                    </tr>
+                    <tr>
+                        <td><code>views/fragments/</code></td>
+                        <td>Fragment components</td>
+                        <td>Kotlin</td>
+                    </tr>
+                    <tr>
+                        <td><code>views/adapters/</code></td>
+                        <td>RecyclerView adapters for lists</td>
+                        <td>Java</td>
+                    </tr>
+                    <tr>
+                        <td><code>views/ui/</code></td>
+                        <td>Jetpack Compose screens & components</td>
+                        <td>Kotlin</td>
+                    </tr>
+                    <tr>
+                        <td><code>firebase/</code></td>
+                        <td>Firebase services & managers</td>
+                        <td>Java</td>
+                    </tr>
+                    <tr>
+                        <td><code>utils/</code></td>
+                        <td>Helper classes and utilities</td>
+                        <td>Java/Kotlin</td>
+                    </tr>
+                </table>
+
+                <div class="warning-box">
+                    <h4>⚠️ Language Rules (Strictly Enforced):</h4>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Models, Presenters, Firebase:</strong> Java ONLY</li>
+                        <li><strong>Activities & Fragments:</strong> Match existing file language</li>
+                        <li><strong>Never mix</strong> Java and Kotlin in the same file</li>
+                        <li><strong>Never migrate</strong> a file from one language to another</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- TECH STACK SECTION -->
+            <section id="tech-stack">
+                <h2>🛠️ Technology Stack</h2>
+
+                <h3>Core Technologies</h3>
+                <div style="margin: 20px 0;">
+                    <span class="tech-badge">Android SDK</span>
+                    <span class="tech-badge">Java 11</span>
+                    <span class="tech-badge">Kotlin 2.0.21</span>
+                    <span class="tech-badge">Gradle 8.7.0</span>
+                    <span class="tech-badge">compileSdk 35</span>
+                    <span class="tech-badge">minSdk 24</span>
+                </div>
+
+                <h3>UI Framework</h3>
+                <div style="margin: 20px 0;">
+                    <span class="tech-badge">Material Design 3</span>
+                    <span class="tech-badge">ConstraintLayout</span>
+                    <span class="tech-badge">Jetpack Compose</span>
+                    <span class="tech-badge">View Binding</span>
+                    <span class="tech-badge">RecyclerView</span>
+                </div>
+
+                <h3>Backend & Database</h3>
+                <div style="margin: 20px 0;">
+                    <span class="tech-badge">Firebase BoM 32.7.0</span>
+                    <span class="tech-badge">Firebase Auth (Phone)</span>
+                    <span class="tech-badge">Firebase Firestore</span>
+                    <span class="tech-badge">Firebase Realtime DB</span>
+                    <span class="tech-badge">Firebase Cloud Messaging</span>
+                    <span class="tech-badge">Firebase Storage</span>
+                </div>
+
+                <h3>Maps & Location</h3>
+                <div style="margin: 20px 0;">
+                    <span class="tech-badge">Google Maps SDK 18.2.0</span>
+                    <span class="tech-badge">Play Services Location 21.1.0</span>
+                    <span class="tech-badge">Maps Compose 4.3.3</span>
+                </div>
+
+                <h3>Image Loading</h3>
+                <div style="margin: 20px 0;">
+                    <span class="tech-badge">Glide 4.16.0</span>
+                    <span class="tech-badge">Coil Compose 2.5.0</span>
+                    <span class="tech-badge">CircleImageView 3.1.0</span>
+                </div>
+
+                <h3>Authentication</h3>
+                <div style="margin: 20px 0;">
+                    <span class="tech-badge">Google Sign-In 21.0.0</span>
+                    <span class="tech-badge">Country Code Picker 2.7.0</span>
+                </div>
+
+                <h3>Jetpack Components</h3>
+                <div style="margin: 20px 0;">
+                    <span class="tech-badge">AppCompat 1.6.1</span>
+                    <span class="tech-badge">Lifecycle ViewModel</span>
+                    <span class="tech-badge">Navigation Compose</span>
+                    <span class="tech-badge">Activity Compose</span>
+                </div>
+
+                <h3>Dependencies Breakdown</h3>
+                <table>
+                    <tr>
+                        <th>Library</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>Material Design</td>
+                        <td>1.11.0</td>
+                        <td>UI components with Material 3 theming</td>
+                    </tr>
+                    <tr>
+                        <td>Compose BoM</td>
+                        <td>2024.10.01</td>
+                        <td>Jetpack Compose unified versioning</td>
+                    </tr>
+                    <tr>
+                        <td>Firebase BoM</td>
+                        <td>32.7.0</td>
+                        <td>Firebase services unified versioning</td>
+                    </tr>
+                    <tr>
+                        <td>Glide</td>
+                        <td>4.16.0</td>
+                        <td>Image loading and caching</td>
+                    </tr>
+                    <tr>
+                        <td>Coil Compose</td>
+                        <td>2.5.0</td>
+                        <td>Image loading for Compose</td>
+                    </tr>
+                    <tr>
+                        <td>Google Maps</td>
+                        <td>18.2.0</td>
+                        <td>Map display and markers</td>
+                    </tr>
+                    <tr>
+                        <td>CircleImageView</td>
+                        <td>3.1.0</td>
+                        <td>Circular profile pictures</td>
+                    </tr>
+                    <tr>
+                        <td>Country Code Picker</td>
+                        <td>2.7.0</td>
+                        <td>Phone number input with country codes</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- DATA FLOW SECTION -->
+            <section id="data-flow">
+                <h2>🔄 Data Flow & Component Interaction</h2>
+
+                <h3>User Action Flow Example: Viewing a Ride</h3>
+                <div class="flow-diagram">
+<pre>
+1. User taps on ride pin/card
+   │
+   ├─► <strong>View</strong> (MapFragment / ListFragment)
+   │   └─► Captures tap event
+   │
+   ↓
+2. View calls Presenter
+   │
+   ├─► <strong>Presenter</strong> (AdsPresenter)
+   │   ├─► presenter.onRideSelected(rideId)
+   │   └─► Validates input, prepares request
+   │
+   ↓
+3. Presenter calls Repository
+   │
+   ├─► <strong>Repository</strong> (RideRepository)
+   │   ├─► getRide(rideId, callback)
+   │   └─► Executes Firebase Firestore query
+   │
+   ↓
+4. Firebase returns data
+   │
+   ├─► <strong>Firebase Firestore</strong>
+   │   └─► /rides/{rideId} document
+   │
+   ↓
+5. Repository calls callback
+   │
+   ├─► <strong>Callback</strong> → Presenter
+   │   └─► onRideFetched(ride)
+   │
+   ↓
+6. Presenter updates View
+   │
+   ├─► <strong>View</strong> (RideDetailActivity)
+   │   ├─► showRideDetails(ride)
+   │   └─► UI updated with ride information
+</pre>
+                </div>
+
+                <h3>Complete Feature Flow: Join Request Process</h3>
+                <div class="architecture-diagram">
+<pre>
+╔══════════════════════════════════════════════════════════════════════╗
+║                    JOIN REQUEST WORKFLOW                              ║
+╠══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║  STEP 1: Rider Sends Join Request                                    ║
+║  ─────────────────────────────────                                   ║
+║  AdDetailActivity                                                     ║
+║      │                                                                ║
+║      ├─► User clicks "Request to Join" button                        ║
+║      │                                                                ║
+║      └─► AdsPresenter.sendJoinRequest(rideId, seats)                 ║
+║           │                                                           ║
+║           └─► FirebaseManager.sendJoinRequest()                      ║
+║                │                                                      ║
+║                ├─► Creates JoinRequest object                        ║
+║                │   - reqId, rideId, riderId, seats                   ║
+║                │   - status: "PENDING"                               ║
+║                │                                                      ║
+║                ├─► Firestore: /requests/{reqId}                      ║
+║                │   - Writes request document                         ║
+║                │                                                      ║
+║                └─► FCM: Send notification to driver                  ║
+║                                                                       ║
+║  ─────────────────────────────────────────────────────────────────   ║
+║                                                                       ║
+║  STEP 2: Driver Receives Notification                                ║
+║  ──────────────────────────────────                                  ║
+║  SafarMessagingService.onMessageReceived()                           ║
+║      │                                                                ║
+║      └─► Shows notification: "New join request for your ride"        ║
+║                                                                       ║
+║  ─────────────────────────────────────────────────────────────────   ║
+║                                                                       ║
+║  STEP 3: Driver Opens Inbox                                          ║
+║  ────────────────────────────                                        ║
+║  InboxFragment                                                        ║
+║      │                                                                ║
+║      ├─► ConversationPresenter.loadRequests()                        ║
+║      │   │                                                            ║
+║      │   └─► FirebaseManager.fetchRequestsForDriver()                ║
+║      │       │                                                        ║
+║      │       └─► Firestore: Query /requests WHERE driverId = uid     ║
+║      │                                                                ║
+║      └─► RequestsAdapter displays list of requests                   ║
+║                                                                       ║
+║  ─────────────────────────────────────────────────────────────────   ║
+║                                                                       ║
+║  STEP 4: Driver Accepts Request                                      ║
+║  ────────────────────────────                                        ║
+║  InboxFragment                                                        ║
+║      │                                                                ║
+║      ├─► User clicks "Accept" button                                 ║
+║      │                                                                ║
+║      └─► RequestPresenter.acceptRequest(reqId, rideId, seats)        ║
+║           │                                                           ║
+║           └─► FirebaseManager.acceptJoinRequest()                    ║
+║                │                                                      ║
+║                ├─► Firestore Transaction:                            ║
+║                │   ├─► Update /requests/{reqId}                      ║
+║                │   │   └─► status = "ACCEPTED"                       ║
+║                │   │                                                  ║
+║                │   └─► Update /rides/{rideId}                        ║
+║                │       └─► seatsLeft -= seatsRequested               ║
+║                │                                                      ║
+║                ├─► Create chat conversation                          ║
+║                │   └─► Realtime DB: /chats/{rideId}/                 ║
+║                │                                                      ║
+║                └─► FCM: Notify rider "Request accepted!"             ║
+║                                                                       ║
+║  ─────────────────────────────────────────────────────────────────   ║
+║                                                                       ║
+║  STEP 5: Chat Unlocked                                               ║
+║  ──────────────────────                                              ║
+║  ChatActivity                                                         ║
+║      │                                                                ║
+║      ├─► ChatPresenter.loadMessages(rideId)                          ║
+║      │   │                                                            ║
+║      │   └─► ChatRepository.listenForMessages()                      ║
+║      │       │                                                        ║
+║      │       └─► Realtime DB: /chats/{rideId}/messages/              ║
+║      │                                                                ║
+║      └─► Real-time messaging enabled                                 ║
+║                                                                       ║
+╚══════════════════════════════════════════════════════════════════════╝
+</pre>
+                </div>
+
+                <h3>Component Communication Patterns</h3>
+
+                <h4>Pattern 1: Activity → Presenter → Repository → Firebase</h4>
+                <div class="code-block">
+<span class="comment">// Step 1: Activity (View)</span>
+btnPostRide.setOnClickListener(v -> {
+    presenter.postRide(origin, destination, seats, price, time);
+});
+
+<span class="comment">// Step 2: Presenter (Logic)</span>
+<span class="keyword">public void</span> postRide(String origin, String dest, <span class="keyword">int</span> seats, ...) {
+    <span class="keyword">if</span> (seats <= 0) {
+        view.showError(<span class="string">"Invalid seats"</span>);
+        <span class="keyword">return</span>;
+    }
+    
+    RideAd ad = <span class="keyword">new</span> RideAd(origin, dest, seats, ...);
+    firebaseManager.postRideAd(ad, 
+        () -> view.showSuccess(),
+        error -> view.showError(error)
+    );
+}
+
+<span class="comment">// Step 3: Repository/Manager (Data Access)</span>
+<span class="keyword">public void</span> postRideAd(RideAd ad, OnSuccessListener success, ...) {
+    db.collection(<span class="string">"rides"</span>)
+      .document(ad.getRideId())
+      .set(ad)
+      .addOnSuccessListener(success)
+      .addOnFailureListener(failure);
+}
+                </div>
+
+                <h4>Pattern 2: Firebase Listener → Repository → Presenter → View</h4>
+                <div class="code-block">
+<span class="comment">// Real-time updates flow (e.g., chat messages)</span>
+
+<span class="comment">// Repository sets up listener</span>
+<span class="keyword">public void</span> listenForMessages(String rideId, OnMessageListener listener) {
+    dbRef.child(<span class="string">"chats"</span>).child(rideId).child(<span class="string">"messages"</span>)
+        .addChildEventListener(<span class="keyword">new</span> ChildEventListener() {
+            <span class="keyword">@Override</span>
+            <span class="keyword">public void</span> onChildAdded(DataSnapshot snap, String prevKey) {
+                ChatMessage msg = snap.getValue(ChatMessage.<span class="keyword">class</span>);
+                listener.onMessageReceived(msg);
+            }
+        });
+}
+
+<span class="comment">// Presenter handles callback</span>
+chatRepo.listenForMessages(rideId, message -> {
+    <span class="keyword">if</span> (view != <span class="keyword">null</span>) {
+        view.addMessageToChat(message);
+    }
+});
+
+<span class="comment">// View updates UI</span>
+<span class="keyword">@Override</span>
+<span class="keyword">public void</span> addMessageToChat(ChatMessage message) {
+    messages.add(message);
+    chatAdapter.notifyItemInserted(messages.size() - 1);
+    recyclerView.scrollToPosition(messages.size() - 1);
+}
+                </div>
+            </section>
+
+            <!-- FEATURES SECTION -->
+            <section id="features">
+                <h2>⚡ Features & Screens</h2>
+
+                <h3>Implemented Features ✅</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🔐 Authentication</h4>
+                        <p><strong>Phone OTP Login:</strong> Firebase Phone Authentication with country code picker and OTP verification</p>
+                        <p><strong>Google Sign-In:</strong> One-tap Google authentication</p>
+                        <p><strong>Screens:</strong> LoginActivity, PhoneAuthActivity, OtpVerifyActivity</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>🗺️ Ride Discovery</h4>
+                        <p><strong>Map View:</strong> Interactive Google Maps with dark theme, yellow pill markers for rides</p>
+                        <p><strong>List View:</strong> Searchable RecyclerView with ride cards</p>
+                        <p><strong>Screens:</strong> MapFragment, ListFragment</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>📝 Post Ride Ad</h4>
+                        <p>Create ride offers with origin, destination, departure time, available seats, and price per seat</p>
+                        <p><strong>Screens:</strong> PostAdActivity, LocationPickerActivity</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>📋 Ride Details</h4>
+                        <p>View complete ride information, driver profile, ratings, and send join requests</p>
+                        <p><strong>Screens:</strong> AdDetailActivity</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>🔔 Join Requests</h4>
+                        <p>Send join requests, drivers accept/reject, transactional seat booking with Firestore transactions</p>
+                        <p><strong>Screens:</strong> InboxFragment, AdDetailActivity</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>💬 Real-Time Chat</h4>
+                        <p>Per-ride chat rooms unlocked after request acceptance, powered by Firebase Realtime Database</p>
+                        <p><strong>Screens:</strong> ChatActivity</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>📬 Inbox System</h4>
+                        <p>Conversation list showing all active chats and pending requests</p>
+                        <p><strong>Screens:</strong> InboxFragment</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>👤 User Profile</h4>
+                        <p>View and edit profile, upload profile picture, display ratings and ride statistics</p>
+                        <p><strong>Screens:</strong> ProfileActivity</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>📱 My Ads</h4>
+                        <p>Manage posted ride ads, view status (Active/Full/Completed/Cancelled)</p>
+                        <p><strong>Screens:</strong> MyAdsActivity</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>🔔 Push Notifications</h4>
+                        <p>Firebase Cloud Messaging for new requests, chat messages, and ride updates</p>
+                        <p><strong>Service:</strong> SafarMessagingService</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>🛡️ Safety Onboarding</h4>
+                        <p>First-launch safety guidelines and community rules</p>
+                        <p><strong>Screens:</strong> SafetyActivity</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>⚙️ Settings & Help</h4>
+                        <p>App settings, FAQ section, About page, and help documentation</p>
+                        <p><strong>Screens:</strong> SettingsActivity, HelpActivity, AboutActivity</p>
+                    </div>
+                </div>
+
+                <h3>Screen Navigation Flow</h3>
+                <div class="architecture-diagram">
+<pre>
+                          ┌──────────────┐
+                          │SplashActivity│
+                          └──────┬───────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+              (First Launch)            (Logged In)
+                    │                         │
+                    ▼                         ▼
+            ┌──────────────┐          ┌──────────────┐
+            │SafetyActivity│          │MainActivity  │
+            └──────┬───────┘          └──────┬───────┘
+                   │                         │
+                   ▼                         │
+            ┌──────────────┐                 │
+            │LoginActivity │                 │
+            └──────┬───────┘                 │
+                   │                         │
+         ┌─────────┴─────────┐               │
+         │                   │               │
+         ▼                   ▼               │
+  ┌──────────────┐   ┌──────────────┐       │
+  │PhoneAuth     │   │Google Login  │       │
+  │Activity      │   │   Flow       │       │
+  └──────┬───────┘   └──────┬───────┘       │
+         │                   │               │
+         ▼                   │               │
+  ┌──────────────┐           │               │
+  │OtpVerify     │           │               │
+  │Activity      │           │               │
+  └──────┬───────┘           │               │
+         │                   │               │
+         └───────────────────┴───────────────┘
+                             │
+                             ▼
+                    ┌──────────────┐
+                    │MainActivity  │
+                    │  (3 Tabs)    │
+                    └──────┬───────┘
+                           │
+         ┌─────────────────┼─────────────────┐
+         │                 │                 │
+         ▼                 ▼                 ▼
+  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+  │MapFragment  │  │ListFragment │  │InboxFragment│
+  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
+         │                │                 │
+         └────────────────┴─────────────────┘
+                          │
+              ┌───────────┼───────────┐
+              │           │           │
+              ▼           ▼           ▼
+       ┌────────────┐ ┌────────────┐ ┌────────────┐
+       │AdDetail    │ │Chat        │ │Profile     │
+       │Activity    │ │Activity    │ │Activity    │
+       └────────────┘ └────────────┘ └────────────┘
+              │
+              ▼
+       ┌────────────┐
+       │Location    │
+       │Picker      │
+       └────────────┘
+
+  <strong>Additional Screens:</strong>
+  - PostAdActivity (from FAB button)
+  - MyAdsActivity (from menu)
+  - SettingsActivity (from menu)
+  - HelpActivity (from menu)
+  - AboutActivity (from menu)
+</pre>
+                </div>
+            </section>
+
+            <!-- FIREBASE SECTION -->
+            <section id="firebase">
+                <h2>🔥 Firebase Backend Architecture</h2>
+
+                <h3>Firebase Services Used</h3>
+                <table>
+                    <tr>
+                        <th>Service</th>
+                        <th>Purpose</th>
+                        <th>Usage</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Firebase Authentication</strong></td>
+                        <td>User authentication</td>
+                        <td>Phone OTP verification, Google Sign-In</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cloud Firestore</strong></td>
+                        <td>Primary database</td>
+                        <td>Users, Rides, Requests, Reports, Ratings</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Realtime Database</strong></td>
+                        <td>Real-time messaging</td>
+                        <td>Chat messages only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cloud Messaging (FCM)</strong></td>
+                        <td>Push notifications</td>
+                        <td>New requests, messages, ride updates</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Storage</strong></td>
+                        <td>File storage</td>
+                        <td>Profile pictures</td>
+                    </tr>
+                </table>
+
+                <h3>Firestore Database Schema</h3>
+                <div class="architecture-diagram">
+<pre>
+<span style="color: #FFD600;">Firestore Database</span>
+│
+├── <strong>/users/{uid}</strong>
+│   ├── uid: String
+│   ├── name: String
+│   ├── phone: String
+│   ├── profilePicUrl: String
+│   ├── fcmToken: String                  ← For push notifications
+│   ├── rating: Float                     ← Average rating (0-5)
+│   ├── ridesGiven: Int                   ← Total rides as driver
+│   ├── ridesTaken: Int                   ← Total rides as passenger
+│   └── createdAt: Long                   ← Timestamp
+│
+├── <strong>/rides/{rideId}</strong>
+│   ├── rideId: String
+│   ├── driverId: String                  ← Reference to /users/{uid}
+│   ├── origin: String                    ← "Lahore"
+│   ├── destination: String               ← "Islamabad"
+│   ├── originGeo: GeoPoint               ← Lat/Lng for map
+│   ├── destGeo: GeoPoint                 ← Lat/Lng for map
+│   ├── totalSeats: Int                   ← Total available seats
+│   ├── seatsLeft: Int                    ← Remaining seats
+│   ├── pricePerSeat: Double              ← Price in PKR
+│   ├── departureTime: Long               ← Epoch milliseconds
+│   ├── status: String                    ← "ACTIVE" | "FULL" | "COMPLETED" | "CANCELLED"
+│   └── createdAt: Long                   ← Timestamp
+│
+├── <strong>/requests/{reqId}</strong>
+│   ├── reqId: String
+│   ├── rideId: String                    ← Reference to /rides/{rideId}
+│   ├── riderId: String                   ← Reference to /users/{uid}
+│   ├── driverId: String                  ← Reference to /users/{uid}
+│   ├── seatsRequested: Int               ← Number of seats
+│   ├── status: String                    ← "PENDING" | "ACCEPTED" | "REJECTED"
+│   └── createdAt: Long                   ← Timestamp
+│
+├── <strong>/reports/{reportId}</strong>
+│   ├── reportId: String
+│   ├── reporterId: String                ← Who filed the report
+│   ├── targetUserId: String              ← User being reported
+│   ├── targetRideId: String              ← (Optional) Ride being reported
+│   ├── reason: String                    ← Report reason
+│   └── timestamp: Long                   ← Timestamp
+│
+└── <strong>/ratings/{ratingId}</strong>
+    ├── ratingId: String
+    ├── fromUid: String                   ← Rater
+    ├── toUid: String                     ← User being rated
+    ├── rideId: String                    ← Associated ride
+    ├── stars: Int                        ← 1-5 stars
+    ├── comment: String                   ← Optional review text
+    └── timestamp: Long                   ← Timestamp
+</pre>
+                </div>
+
+                <h3>Realtime Database Schema (Chat Only)</h3>
+                <div class="architecture-diagram">
+<pre>
+<span style="color: #FFD600;">Realtime Database</span>
+│
+└── <strong>/chats/{rideId}/messages/{msgId}</strong>
+    ├── msgId: String
+    ├── senderId: String                  ← Who sent the message
+    ├── senderName: String                ← Sender's display name
+    ├── text: String                      ← Message content
+    └── timestamp: Long                   ← Message time
+
+<strong>Why Realtime DB for chat?</strong>
+- Real-time synchronization
+- Listener-based updates
+- Lower latency than Firestore for messaging
+- Cost-effective for high-frequency reads/writes
+</pre>
+                </div>
+
+                <h3>Firebase Operations Examples</h3>
+
+                <h4>Creating a Ride</h4>
+                <div class="code-block">
+<span class="comment">// FirebaseManager.java</span>
+<span class="keyword">public void</span> postRideAd(RideAd ad, OnSuccessListener onSuccess, OnFailureListener onFailure) {
+    db.collection(<span class="string">"rides"</span>)
+      .document(ad.getRideId())
+      .set(ad)
+      .addOnSuccessListener(onSuccess)
+      .addOnFailureListener(onFailure);
+}
+                </div>
+
+                <h4>Accepting a Join Request (Transaction)</h4>
+                <div class="code-block">
+<span class="comment">// Ensures atomic seat booking - prevents double-booking</span>
+<span class="keyword">public void</span> acceptJoinRequest(String reqId, String rideId, <span class="keyword">int</span> seats, ...) {
+    db.runTransaction(transaction -> {
+        <span class="comment">// Step 1: Get current ride document</span>
+        DocumentSnapshot rideSnap = transaction.get(
+            db.collection(<span class="string">"rides"</span>).document(rideId)
+        );
+        
+        <span class="keyword">int</span> seatsLeft = rideSnap.getLong(<span class="string">"seatsLeft"</span>).intValue();
+        
+        <span class="comment">// Step 2: Check if enough seats available</span>
+        <span class="keyword">if</span> (seatsLeft < seats) {
+            <span class="keyword">throw new</span> FirebaseFirestoreException(
+                <span class="string">"Not enough seats"</span>, 
+                FirebaseFirestoreException.Code.ABORTED
+            );
+        }
+        
+        <span class="comment">// Step 3: Update seats (atomic)</span>
+        transaction.update(
+            db.collection(<span class="string">"rides"</span>).document(rideId),
+            <span class="string">"seatsLeft"</span>, seatsLeft - seats
+        );
+        
+        <span class="comment">// Step 4: Update request status</span>
+        transaction.update(
+            db.collection(<span class="string">"requests"</span>).document(reqId),
+            <span class="string">"status"</span>, <span class="string">"ACCEPTED"</span>
+        );
+        
+        <span class="keyword">return null</span>;
+    });
+}
+                </div>
+
+                <h4>Real-time Chat Listener</h4>
+                <div class="code-block">
+<span class="comment">// ChatRepository.java - Firebase Realtime Database</span>
+<span class="keyword">public void</span> listenForMessages(String rideId, OnMessageListener listener) {
+    DatabaseReference messagesRef = FirebaseDatabase.getInstance()
+        .getReference(<span class="string">"chats"</span>)
+        .child(rideId)
+        .child(<span class="string">"messages"</span>);
+    
+    messagesRef.addChildEventListener(<span class="keyword">new</span> ChildEventListener() {
+        <span class="keyword">@Override</span>
+        <span class="keyword">public void</span> onChildAdded(DataSnapshot snapshot, String previousChildName) {
+            ChatMessage message = snapshot.getValue(ChatMessage.<span class="keyword">class</span>);
+            listener.onMessageReceived(message);
+        }
+        
+        <span class="comment">// Other lifecycle methods...</span>
+    });
+}
+                </div>
+
+                <h3>Firebase Security Rules</h3>
+                <div class="info-box">
+                    <p>Security rules are defined in <strong>FIREBASE_RULES.md</strong>. Key principles:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Users can only edit their own profile</li>
+                        <li>Only drivers can edit their own ride ads</li>
+                        <li>Chat access only for ride participants</li>
+                        <li>Requests validated for seat availability</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- SETUP SECTION -->
+            <section id="setup">
+                <h2>⚙️ Development Setup Guide</h2>
+
+                <h3>Prerequisites</h3>
+                <ul style="margin-left: 40px; margin-top: 15px;">
+                    <li>✅ Android Studio (Latest version - Hedgehog or newer)</li>
+                    <li>✅ JDK 11 or higher</li>
+                    <li>✅ Android SDK with compileSdk 35</li>
+                    <li>✅ Firebase Project (create at <a href="https://console.firebase.google.com">Firebase Console</a>)</li>
+                    <li>✅ Google Maps API Key</li>
+                </ul>
+
+                <h3>Step 1: Clone the Repository</h3>
+                <div class="code-block">
+git clone &lt;repository-url&gt;
+cd "SAFAR ktjava"
+                </div>
+
+                <h3>Step 2: Firebase Configuration</h3>
+                <div class="warning-box">
+                    <h4>📋 Firebase Setup Checklist:</h4>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Create a Firebase project at <a href="https://console.firebase.google.com">console.firebase.google.com</a></li>
+                        <li>Add an Android app with package name: <code>com.safar.app</code></li>
+                        <li>Download <code>google-services.json</code></li>
+                        <li>Place it in <code>app/</code> directory</li>
+                        <li>Enable the following services:
+                            <ul style="margin-left: 20px;">
+                                <li>Authentication → Phone</li>
+                                <li>Authentication → Google</li>
+                                <li>Firestore Database</li>
+                                <li>Realtime Database</li>
+                                <li>Cloud Messaging (FCM)</li>
+                                <li>Storage</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+
+                <h3>Step 3: Google Maps API Key</h3>
+                <ol style="margin-left: 40px; margin-top: 15px;">
+                    <li>Go to <a href="https://console.cloud.google.com">Google Cloud Console</a></li>
+                    <li>Enable Maps SDK for Android</li>
+                    <li>Create an API key</li>
+                    <li>Add key to <code>local.properties</code>:</li>
+                </ol>
+                <div class="code-block">
+MAPS_API_KEY=your_api_key_here
+                </div>
+                <p>Or add directly to <code>AndroidManifest.xml</code>:</p>
+                <div class="code-block">
+&lt;meta-data
+    android:name="com.google.android.geo.API_KEY"
+    android:value="YOUR_API_KEY_HERE" /&gt;
+                </div>
+
+                <h3>Step 4: Build and Run</h3>
+                <ol style="margin-left: 40px; margin-top: 15px;">
+                    <li>Open project in Android Studio</li>
+                    <li>Sync Gradle files</li>
+                    <li>Connect Android device or start emulator</li>
+                    <li>Click Run ▶️</li>
+                </ol>
+
+                <h3>Gradle Build Configuration</h3>
+                <table>
+                    <tr>
+                        <th>Configuration</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Namespace</td>
+                        <td>com.safar.app</td>
+                    </tr>
+                    <tr>
+                        <td>Compile SDK</td>
+                        <td>35</td>
+                    </tr>
+                    <tr>
+                        <td>Min SDK</td>
+                        <td>24 (Android 7.0)</td>
+                    </tr>
+                    <tr>
+                        <td>Target SDK</td>
+                        <td>35</td>
+                    </tr>
+                    <tr>
+                        <td>Java Version</td>
+                        <td>11</td>
+                    </tr>
+                    <tr>
+                        <td>Kotlin Version</td>
+                        <td>2.0.21</td>
+                    </tr>
+                </table>
+
+                <h3>Common Issues & Solutions</h3>
+                <div class="warning-box">
+                    <h4>⚠️ Issue: "google-services.json not found"</h4>
+                    <p><strong>Solution:</strong> Ensure google-services.json is in the <code>app/</code> directory (same level as app/build.gradle)</p>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ Issue: "Map not showing"</h4>
+                    <p><strong>Solution:</strong> Check if Maps API key is correctly configured. Enable Maps SDK in Google Cloud Console.</p>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ Issue: "OTP not receiving"</h4>
+                    <p><strong>Solution:</strong> Add SHA-1 fingerprint to Firebase project settings. For debug builds, use debug keystore SHA-1.</p>
+                </div>
+
+                <h3>Project Documentation Files</h3>
+                <table>
+                    <tr>
+                        <th>File</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>README.md</td>
+                        <td>Project overview and quick start</td>
+                    </tr>
+                    <tr>
+                        <td>SAFAR-CONTEXT.md</td>
+                        <td>Architecture rules and conventions (MUST READ)</td>
+                    </tr>
+                    <tr>
+                        <td>FAQ_IMPLEMENTATION_SUMMARY.md</td>
+                        <td>FAQ feature documentation</td>
+                    </tr>
+                    <tr>
+                        <td>LOGIN_REDESIGN_SUMMARY.md</td>
+                        <td>Login UI redesign documentation</td>
+                    </tr>
+                    <tr>
+                        <td>FIREBASE_RULES.md</td>
+                        <td>Firebase security rules</td>
+                    </tr>
+                    <tr>
+                        <td>copilot-instructions.md</td>
+                        <td>AI coding assistant guidelines</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- DESIGN SYSTEM -->
+            <section id="design">
+                <h2>🎨 Design System</h2>
+
+                <h3>Color Palette</h3>
+                <table>
+                    <tr>
+                        <th>Color Name</th>
+                        <th>Hex</th>
+                        <th>Usage</th>
+                        <th style="width: 100px;">Preview</th>
+                    </tr>
+                    <tr>
+                        <td>Primary Yellow</td>
+                        <td>#FFD600</td>
+                        <td>Primary accent, buttons, highlights</td>
+                        <td style="background: #FFD600;"></td>
+                    </tr>
+                    <tr>
+                        <td>Yellow Dark</td>
+                        <td>#C9A800</td>
+                        <td>Pressed states, dark variant</td>
+                        <td style="background: #C9A800;"></td>
+                    </tr>
+                    <tr>
+                        <td>Background Dark</td>
+                        <td>#0A0A0A</td>
+                        <td>Window background</td>
+                        <td style="background: #0A0A0A;"></td>
+                    </tr>
+                    <tr>
+                        <td>Surface</td>
+                        <td>#111111</td>
+                        <td>Card surfaces</td>
+                        <td style="background: #111111;"></td>
+                    </tr>
+                    <tr>
+                        <td>Surface Elevated</td>
+                        <td>#181818</td>
+                        <td>Elevated surfaces</td>
+                        <td style="background: #181818;"></td>
+                    </tr>
+                    <tr>
+                        <td>Text Primary</td>
+                        <td>#F0F0F0</td>
+                        <td>Body text</td>
+                        <td style="background: #F0F0F0;"></td>
+                    </tr>
+                    <tr>
+                        <td>Text Muted</td>
+                        <td>#6B6B6B</td>
+                        <td>Hints, captions</td>
+                        <td style="background: #6B6B6B;"></td>
+                    </tr>
+                    <tr>
+                        <td>Success Green</td>
+                        <td>#22C55E</td>
+                        <td>Success states</td>
+                        <td style="background: #22C55E;"></td>
+                    </tr>
+                    <tr>
+                        <td>Error Red</td>
+                        <td>#EF4444</td>
+                        <td>Error states</td>
+                        <td style="background: #EF4444;"></td>
+                    </tr>
+                </table>
+
+                <h3>UI Standards</h3>
+                <ul style="margin-left: 40px; margin-top: 15px;">
+                    <li>✅ <strong>Framework:</strong> Material Design 3 (no AppCompat widgets)</li>
+                    <li>✅ <strong>Layout:</strong> ConstraintLayout for all screens</li>
+                    <li>✅ <strong>Dark Theme:</strong> Default and only theme</li>
+                    <li>✅ <strong>Buttons:</strong> Must have normal, pressed, and disabled states</li>
+                    <li>✅ <strong>Feedback:</strong> Ripple effects on all clickable elements</li>
+                    <li>✅ <strong>Transitions:</strong> Material Motion (fade-through, slide)</li>
+                    <li>✅ <strong>Images:</strong> Loaded with Glide (never on main thread)</li>
+                </ul>
+
+                <h3>Map Customization</h3>
+                <div class="info-box">
+                    <p>Custom dark map style defined in <code>res/raw/map_style_dark.json</code></p>
+                    <p>Yellow pill-shaped markers for ride locations</p>
+                </div>
+            </section>
+
+            <!-- CONCLUSION -->
+            <section id="conclusion">
+                <h2>🎓 Summary & Best Practices</h2>
+
+                <h3>Key Architectural Principles</h3>
+                <div class="success-box">
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Separation of Concerns:</strong> Models, Views, Presenters, Repositories - each has ONE job</li>
+                        <li><strong>Contract Pattern:</strong> All View-Presenter communication through interfaces</li>
+                        <li><strong>Null Safety:</strong> Always check if view != null in Presenters before calling view methods</li>
+                        <li><strong>Memory Management:</strong> Call presenter.onDestroy() and set view = null in Activity/Fragment onDestroy()</li>
+                        <li><strong>Language Consistency:</strong> Java for logic, Java/Kotlin for UI (match existing files)</li>
+                        <li><strong>Firebase Abstraction:</strong> All Firebase calls in Repositories/Managers, never in Activities</li>
+                    </ol>
+                </div>
+
+                <h3>Development Workflow</h3>
+                <ol style="margin-left: 40px; margin-top: 15px;">
+                    <li>Define data models in <code>models/</code></li>
+                    <li>Create Contract interface in <code>views/contracts/</code></li>
+                    <li>Implement Presenter with business logic</li>
+                    <li>Build Repository for data access</li>
+                    <li>Create Activity/Fragment implementing View contract</li>
+                    <li>Test with Firebase in development environment</li>
+                    <li>Deploy Firebase security rules</li>
+                </ol>
+
+                <h3>Important Resources</h3>
+                <ul style="margin-left: 40px; margin-top: 15px;">
+                    <li>📖 <strong>SAFAR-CONTEXT.md</strong> - Master architecture document (READ FIRST)</li>
+                    <li>🔥 <strong>FIREBASE_RULES.md</strong> - Security rules reference</li>
+                    <li>💡 <strong>copilot-instructions.md</strong> - Coding guidelines for AI assistance</li>
+                    <li>🎨 <strong>res/values/colors.xml</strong> - Complete color system</li>
+                    <li>🗺️ <strong>res/raw/map_style_dark.json</strong> - Map customization</li>
+                </ul>
+
+                <div class="info-box" style="margin-top: 30px;">
+                    <h3>💡 Professor's Final Words</h3>
+                    <p>SAFAR demonstrates modern Android development with clean architecture. The MVP pattern ensures that your codebase remains maintainable and testable. Firebase provides a robust backend without the complexity of server management. Remember: <strong>architecture is not about writing more code—it's about organizing code so future you (and your teammates) can understand and modify it easily.</strong></p>
+                    <p style="margin-top: 15px;">Always think about separation of concerns, always validate user input, and always handle edge cases. Happy coding! 🚗</p>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <h3>SAFAR — سفر</h3>
+            <p>Community Carpool Marketplace</p>
+            <p style="margin-top: 10px; opacity: 0.8;">Saifullah Waseem | SEECS, NUST | Pakistan</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Built with ❤️ using Android, Java, Kotlin, Firebase & Material Design 3</p>
+        </footer>
+    </div>
+</body>
+</html>

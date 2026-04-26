@@ -16,23 +16,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.zIndex
+import com.safar.app.R
 import com.safar.app.views.ui.theme.*
 
 // ─── Data / State ─────────────────────────────────────────────────────────────
-enum class LoginTab { PHONE, EMAIL }
-enum class EmailMode { LOGIN, REGISTER }
+enum class AuthMode { SIGN_IN, SIGN_UP }
 
 data class LoginUiState(
-    val selectedTab: LoginTab = LoginTab.PHONE,
-    val emailMode: EmailMode = EmailMode.LOGIN,
+    val authMode: AuthMode = AuthMode.SIGN_IN,
     val phone: String = "",
     val countryCode: String = "+92",
-    val name: String = "",
     val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
@@ -40,31 +39,42 @@ data class LoginUiState(
     val error: String? = null
 )
 
+// Keep old enums for compatibility but deprecated
+@Deprecated("Use AuthMode instead")
+enum class LoginTab { PHONE, EMAIL }
+@Deprecated("Use AuthMode instead")
+enum class EmailMode { LOGIN, REGISTER }
+
 /**
  * SAFAR LOGIN SCREEN
- * Instagram-inspired authentication UI with sliding tab animations
- * Production-ready with Uber dark aesthetic
+ * Redesigned authentication UI with Sign In / Sign Up approach
+ * Sign In: Phone/Email + Password
+ * Sign Up: Phone → OTP → Password Setup, Google → Direct sign in/sign up
  */
 @Composable
 fun LoginScreen(
     uiState: LoginUiState = LoginUiState(),
-    onTabSelected: (LoginTab) -> Unit = {},
+    onAuthModeChanged: (AuthMode) -> Unit = {},
     onPhoneChanged: (String) -> Unit = {},
     onEmailChanged: (String) -> Unit = {},
     onPasswordChanged: (String) -> Unit = {},
+    onSignIn: () -> Unit = {},
+    onSignUpWithPhone: () -> Unit = {},
+    onGoogleSignIn: () -> Unit = {},
+    onForgotPassword: () -> Unit = {},
+    onTogglePassword: () -> Unit = {},
+    // Legacy callbacks for compatibility
+    onTabSelected: (LoginTab) -> Unit = {},
     onNameChanged: (String) -> Unit = {},
     onContinuePhone: () -> Unit = {},
     onEmailAction: () -> Unit = {},
-    onToggleEmailMode: () -> Unit = {},
-    onForgotPassword: () -> Unit = {},
-    onGoogleSignIn: () -> Unit = {},
-    onTogglePassword: () -> Unit = {}
+    onToggleEmailMode: () -> Unit = {}
 ) {
     SafarTheme(darkTheme = true) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BgDark) // Dark background for login
+                .background(BgDark)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -76,10 +86,10 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Professional Tab Selector (updated call)
-            ProfessionalTabSelector(
-                selectedTab = uiState.selectedTab,
-                onTabSelected = onTabSelected
+            // Sign In / Sign Up Tab Selector
+            AuthModeSelector(
+                selectedMode = uiState.authMode,
+                onModeSelected = onAuthModeChanged
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -96,32 +106,48 @@ fun LoginScreen(
                 }
             }
 
-            // Tab Content with Instagram-style transitions
-            InstagramTabContent(
-                uiState = uiState,
-                onPhoneChanged = onPhoneChanged,
-                onContinuePhone = onContinuePhone,
-                onNameChanged = onNameChanged,
-                onEmailChanged = onEmailChanged,
-                onPasswordChanged = onPasswordChanged,
-                onEmailAction = onEmailAction,
-                onToggleEmailMode = onToggleEmailMode,
-                onForgotPassword = onForgotPassword,
-                onTogglePassword = onTogglePassword
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // OR Divider
-            OrDivider()
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Google Sign In
-            GoogleSignInButton(
-                onClick = onGoogleSignIn,
-                isLoading = uiState.isLoading
-            )
+            // Content based on auth mode
+            AnimatedContent(
+                targetState = uiState.authMode,
+                transitionSpec = {
+                    val slideDirection = if (targetState == AuthMode.SIGN_UP) 1 else -1
+                    slideInHorizontally(
+                        initialOffsetX = { it * slideDirection },
+                        animationSpec = tween(300, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(200, delayMillis = 100)) togetherWith
+                            slideOutHorizontally(
+                                targetOffsetX = { it * -slideDirection },
+                                animationSpec = tween(200, easing = FastOutSlowInEasing)
+                            ) + fadeOut(animationSpec = tween(100))
+                },
+                label = "authModeContent"
+            ) { mode ->
+                when (mode) {
+                    AuthMode.SIGN_IN -> SignInContent(
+                        phone = uiState.phone,
+                        email = uiState.email,
+                        password = uiState.password,
+                        showPassword = uiState.showPassword,
+                        isLoading = uiState.isLoading,
+                        countryCode = uiState.countryCode,
+                        onPhoneChanged = onPhoneChanged,
+                        onEmailChanged = onEmailChanged,
+                        onPasswordChanged = onPasswordChanged,
+                        onTogglePassword = onTogglePassword,
+                        onSignIn = onSignIn,
+                        onForgotPassword = onForgotPassword,
+                        onGoogleSignIn = onGoogleSignIn
+                    )
+                    AuthMode.SIGN_UP -> SignUpContent(
+                        phone = uiState.phone,
+                        countryCode = uiState.countryCode,
+                        isLoading = uiState.isLoading,
+                        onPhoneChanged = onPhoneChanged,
+                        onSignUpWithPhone = onSignUpWithPhone,
+                        onGoogleSignIn = onGoogleSignIn
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -159,13 +185,12 @@ private fun LoginHeader() {
 }
 
 @Composable
-private fun ProfessionalTabSelector(
-    selectedTab: LoginTab,
-    onTabSelected: (LoginTab) -> Unit
+private fun AuthModeSelector(
+    selectedMode: AuthMode,
+    onModeSelected: (AuthMode) -> Unit
 ) {
-    // Simple animation without complex sliding
-    val phoneSelected = selectedTab == LoginTab.PHONE
-    val emailSelected = selectedTab == LoginTab.EMAIL
+    val signInSelected = selectedMode == AuthMode.SIGN_IN
+    val signUpSelected = selectedMode == AuthMode.SIGN_UP
     
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -178,47 +203,47 @@ private fun ProfessionalTabSelector(
                 .fillMaxWidth()
                 .padding(6.dp)
         ) {
-            // Phone Tab
+            // Sign In Tab
             Button(
-                onClick = { onTabSelected(LoginTab.PHONE) },
+                onClick = { onModeSelected(AuthMode.SIGN_IN) },
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (phoneSelected) Green else Color.Transparent,
-                    contentColor = if (phoneSelected) Color.Black else TextSecondary
+                    containerColor = if (signInSelected) Green else Color.Transparent,
+                    contentColor = if (signInSelected) Color.Black else TextSecondary
                 ),
-                elevation = if (phoneSelected) ButtonDefaults.buttonElevation(defaultElevation = 3.dp) 
+                elevation = if (signInSelected) ButtonDefaults.buttonElevation(defaultElevation = 3.dp) 
                           else ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
                 Text(
-                    text = "Phone",
+                    text = "Sign In",
                     fontSize = 16.sp,
-                    fontWeight = if (phoneSelected) FontWeight.SemiBold else FontWeight.Normal
+                    fontWeight = if (signInSelected) FontWeight.SemiBold else FontWeight.Normal
                 )
             }
             
             Spacer(modifier = Modifier.width(6.dp))
             
-            // Email Tab
+            // Sign Up Tab
             Button(
-                onClick = { onTabSelected(LoginTab.EMAIL) },
+                onClick = { onModeSelected(AuthMode.SIGN_UP) },
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (emailSelected) Green else Color.Transparent,
-                    contentColor = if (emailSelected) Color.Black else TextSecondary
+                    containerColor = if (signUpSelected) Green else Color.Transparent,
+                    contentColor = if (signUpSelected) Color.Black else TextSecondary
                 ),
-                elevation = if (emailSelected) ButtonDefaults.buttonElevation(defaultElevation = 3.dp) 
+                elevation = if (signUpSelected) ButtonDefaults.buttonElevation(defaultElevation = 3.dp) 
                           else ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
                 Text(
-                    text = "Email",
+                    text = "Sign Up",
                     fontSize = 16.sp,
-                    fontWeight = if (emailSelected) FontWeight.SemiBold else FontWeight.Normal
+                    fontWeight = if (signUpSelected) FontWeight.SemiBold else FontWeight.Normal
                 )
             }
         }
@@ -226,74 +251,274 @@ private fun ProfessionalTabSelector(
 }
 
 @Composable
-private fun InstagramTabContent(
-    uiState: LoginUiState,
+private fun SignInContent(
+    phone: String,
+    email: String,
+    password: String,
+    showPassword: Boolean,
+    isLoading: Boolean,
+    countryCode: String,
     onPhoneChanged: (String) -> Unit,
-    onContinuePhone: () -> Unit,
-    onNameChanged: (String) -> Unit,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
-    onEmailAction: () -> Unit,
-    onToggleEmailMode: () -> Unit,
+    onTogglePassword: () -> Unit,
+    onSignIn: () -> Unit,
     onForgotPassword: () -> Unit,
-    onTogglePassword: () -> Unit
-) {
-    // Instagram-style content sliding
-    AnimatedContent(
-        targetState = uiState.selectedTab,
-        transitionSpec = {
-            val slideDirection = if (targetState == LoginTab.EMAIL) 1 else -1
-            slideInHorizontally(
-                initialOffsetX = { it * slideDirection },
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
-            ) + fadeIn(animationSpec = tween(200, delayMillis = 100)) togetherWith
-                    slideOutHorizontally(
-                        targetOffsetX = { it * -slideDirection },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(100))
-        },
-        label = "tabContent"
-    ) { tab ->
-        when (tab) {
-            LoginTab.PHONE -> PhoneTabContent(
-                phone = uiState.phone,
-                countryCode = uiState.countryCode,
-                isLoading = uiState.isLoading,
-                onPhoneChanged = onPhoneChanged,
-                onContinue = onContinuePhone
-            )
-            LoginTab.EMAIL -> EmailTabContent(
-                mode = uiState.emailMode,
-                name = uiState.name,
-                email = uiState.email,
-                password = uiState.password,
-                showPassword = uiState.showPassword,
-                isLoading = uiState.isLoading,
-                onNameChanged = onNameChanged,
-                onEmailChanged = onEmailChanged,
-                onPasswordChanged = onPasswordChanged,
-                onEmailAction = onEmailAction,
-                onToggleEmailMode = onToggleEmailMode,
-                onForgotPassword = onForgotPassword,
-                onTogglePassword = onTogglePassword
-            )
-        }
-    }
-}
-
-@Composable
-private fun PhoneTabContent(
-    phone: String,
-    countryCode: String,
-    isLoading: Boolean,
-    onPhoneChanged: (String) -> Unit,
-    onContinue: () -> Unit
+    onGoogleSignIn: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Phone Input with Country Code - Professional styling
+        // Info text
+        Text(
+            text = "Welcome back! Sign in with your phone number or email and password.",
+            fontSize = 14.sp,
+            color = TextSecondary,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Phone or Email Input
+        OutlinedTextField(
+            value = if (phone.isNotEmpty()) phone else email,
+            onValueChange = { value ->
+                // Detect if it's a phone number or email
+                if (value.all { it.isDigit() || it == '+' }) {
+                    onPhoneChanged(value)
+                    onEmailChanged("")
+                } else {
+                    onEmailChanged(value)
+                    onPhoneChanged("")
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Phone Number or Email") },
+            placeholder = { Text("Enter phone or email") },
+            leadingIcon = {
+                Icon(
+                    imageVector = if (phone.isNotEmpty()) Icons.Rounded.Phone else Icons.Rounded.AlternateEmail,
+                    contentDescription = null,
+                    tint = TextMuted,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            colors = loginTextFieldColors(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = if (phone.isNotEmpty()) KeyboardType.Phone else KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Password Input
+        OutlinedTextField(
+            value = password,
+            onValueChange = onPasswordChanged,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Password") },
+            placeholder = { Text("Enter your password") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.Lock,
+                    contentDescription = null,
+                    tint = TextMuted,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            trailingIcon = {
+                IconButton(onClick = onTogglePassword) {
+                    Icon(
+                        imageVector = if (showPassword) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
+                        contentDescription = if (showPassword) "Hide password" else "Show password",
+                        tint = TextMuted,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            },
+            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            colors = loginTextFieldColors(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Forgot Password
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = onForgotPassword) {
+                Text(
+                    text = "Forgot Password?",
+                    color = Green,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Sign In Button
+        Button(
+            onClick = onSignIn,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            enabled = (phone.isNotEmpty() || email.isNotEmpty()) && password.length >= 6 && !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = SafarYellow,
+                contentColor = Color.Black,
+                disabledContainerColor = Surface2,
+                disabledContentColor = TextMuted
+            ),
+            shape = RoundedCornerShape(12.dp),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp,
+                disabledElevation = 0.dp
+            )
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.Black,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = "Sign In",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // OR Divider
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = Surface2
+            )
+            Text(
+                text = "  OR  ",
+                color = TextMuted,
+                fontSize = 12.sp
+            )
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = Surface2
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Google Sign In Button
+        OutlinedButton(
+            onClick = onGoogleSignIn,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            enabled = !isLoading,
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, Surface2)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_google),
+                    contentDescription = "Google",
+                    modifier = Modifier.size(20.dp),
+                    tint = Color.Unspecified
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Continue with Google",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SignUpContent(
+    phone: String,
+    countryCode: String,
+    isLoading: Boolean,
+    onPhoneChanged: (String) -> Unit,
+    onSignUpWithPhone: () -> Unit,
+    onGoogleSignIn: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Subheading for new users
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = SafarYellow.copy(alpha = 0.1f)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Info,
+                    contentDescription = null,
+                    tint = SafarYellow,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "New to SAFAR? Create an account to start your journey!",
+                    fontSize = 13.sp,
+                    color = SafarTextSecondary,
+                    lineHeight = 18.sp
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        Text(
+            text = "Sign up with your phone number",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+        
+        Text(
+            text = "We'll send you a verification code",
+            fontSize = 14.sp,
+            color = TextSecondary,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Phone Input with Country Code
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -339,11 +564,11 @@ private fun PhoneTabContent(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
-                        focusedBorderColor = Green,
+                        focusedBorderColor = SafarYellow,
                         unfocusedBorderColor = Surface2,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        cursorColor = Green
+                        cursorColor = SafarYellow
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     singleLine = true,
@@ -351,234 +576,130 @@ private fun PhoneTabContent(
                 )
             }
         }
-
+        
         Spacer(modifier = Modifier.height(24.dp))
-
-        // Continue Button - Professional styling
+        
+        // Continue with Phone Button
         Button(
-            onClick = onContinue,
+            onClick = onSignUpWithPhone,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             enabled = phone.length >= 7 && !isLoading,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Green,
+                containerColor = SafarYellow,
                 contentColor = Color.Black,
                 disabledContainerColor = Surface2,
                 disabledContentColor = TextMuted
             ),
+            shape = RoundedCornerShape(12.dp),
             elevation = ButtonDefaults.buttonElevation(
                 defaultElevation = 4.dp,
                 pressedElevation = 8.dp,
                 disabledElevation = 0.dp
-            ),
-            shape = RoundedCornerShape(12.dp)
+            )
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                     color = Color.Black,
                     strokeWidth = 2.dp
                 )
             } else {
+                Icon(
+                    imageVector = Icons.Rounded.Phone,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Continue",
+                    text = "Continue with Phone",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun EmailTabContent(
-    mode: EmailMode,
-    name: String,
-    email: String,
-    password: String,
-    showPassword: Boolean,
-    isLoading: Boolean,
-    onNameChanged: (String) -> Unit,
-    onEmailChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
-    onEmailAction: () -> Unit,
-    onToggleEmailMode: () -> Unit,
-    onForgotPassword: () -> Unit,
-    onTogglePassword: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Name field (only in register mode)
-        AnimatedVisibility(
-            visible = mode == EmailMode.REGISTER,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            Column {
-                PremiumTextField(
-                    value = name,
-                    onValueChange = onNameChanged,
-                    placeholder = "Full Name",
-                    leadingIcon = Icons.Rounded.Person
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
-
-        // Email field
-        PremiumTextField(
-            value = email,
-            onValueChange = onEmailChanged,
-            placeholder = "Email",
-            leadingIcon = Icons.Rounded.Email,
-            keyboardType = KeyboardType.Email
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Password field
-        PremiumTextField(
-            value = password,
-            onValueChange = onPasswordChanged,
-            placeholder = "Password",
-            leadingIcon = Icons.Rounded.Lock,
-            isPassword = true,
-            showPassword = showPassword,
-            onTogglePassword = onTogglePassword
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Forgot Password (only in login mode)
-        AnimatedVisibility(
-            visible = mode == EmailMode.LOGIN,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onForgotPassword) {
-                    Text(
-                        text = "Forgot Password?",
-                        color = Green, // Changed from Yellow to Green
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-        }
-
+        
         Spacer(modifier = Modifier.height(24.dp))
-
-        // Action Button
-        Button(
-            onClick = onEmailAction,
+        
+        // OR Divider
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = Surface2,
+                thickness = 1.dp
+            )
+            Text(
+                text = "OR",
+                color = TextMuted,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = Surface2,
+                thickness = 1.dp
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Google Sign Up Button
+        OutlinedButton(
+            onClick = onGoogleSignIn,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            enabled = email.isNotEmpty() && password.length >= 6 && 
-                     (mode == EmailMode.LOGIN || name.isNotEmpty()) && !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Green,
-                contentColor = Color.Black,
-                disabledContainerColor = Surface2,
-                disabledContentColor = TextMuted
+            enabled = !isLoading,
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = TextPrimary
             ),
-            shape = RoundedCornerShape(16.dp)
+            border = BorderStroke(1.dp, Surface2),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_google),
+                    contentDescription = "Google",
                     modifier = Modifier.size(20.dp),
-                    color = Color.Black,
-                    strokeWidth = 2.dp
+                    tint = Color.Unspecified
                 )
-            } else {
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = if (mode == EmailMode.LOGIN) "Sign In" else "Create Account",
+                    text = "Continue with Google",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Medium
                 )
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Mode Toggle
-        TextButton(onClick = onToggleEmailMode) {
-            Text(
-                text = if (mode == EmailMode.LOGIN) 
-                    "Don't have an account? Sign up" 
-                else 
-                    "Already have an account? Sign in",
-                color = TextMuted,
-                fontSize = 14.sp
-            )
         }
     }
 }
 
 @Composable
-private fun PremiumTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    leadingIcon: androidx.compose.ui.graphics.vector.ImageVector,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false,
-    showPassword: Boolean = false,
-    onTogglePassword: () -> Unit = {}
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { 
-            Text(
-                text = placeholder,
-                color = TextMuted,
-                fontSize = 16.sp
-            ) 
-        },
-        leadingIcon = {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = null,
-                tint = TextMuted,
-                modifier = Modifier.size(20.dp)
-            )
-        },
-        trailingIcon = if (isPassword) {
-            {
-                IconButton(onClick = onTogglePassword) {
-                    Icon(
-                        imageVector = if (showPassword) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
-                        contentDescription = if (showPassword) "Hide password" else "Show password",
-                        tint = TextMuted,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        } else null,
-        visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        singleLine = true,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Surface,
-            unfocusedContainerColor = Surface,
-            focusedBorderColor = Green, // Changed from Yellow to Green
-            unfocusedBorderColor = Surface2,
-            focusedTextColor = TextPrimary,
-            unfocusedTextColor = TextPrimary
-        ),
-        shape = RoundedCornerShape(16.dp),
-        textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
-    )
-}
+private fun loginTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = TextPrimary,
+    unfocusedTextColor = TextPrimary,
+    focusedContainerColor = Surface,
+    unfocusedContainerColor = Surface,
+    focusedBorderColor = SafarYellow,
+    unfocusedBorderColor = Surface2,
+    focusedLabelColor = SafarYellow,
+    unfocusedLabelColor = TextMuted,
+    cursorColor = SafarYellow,
+    focusedLeadingIconColor = SafarYellow,
+    unfocusedLeadingIconColor = TextMuted,
+    focusedTrailingIconColor = TextSecondary,
+    unfocusedTrailingIconColor = TextMuted,
+    focusedPlaceholderColor = TextMuted,
+    unfocusedPlaceholderColor = TextMuted
+)
 
 @Composable
 private fun ErrorCard(message: String) {
@@ -603,69 +724,6 @@ private fun ErrorCard(message: String) {
                 color = SafarError,
                 fontSize = 14.sp,
                 modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun OrDivider() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        HorizontalDivider(
-            modifier = Modifier.weight(1f),
-            color = Surface2,
-            thickness = 1.dp
-        )
-        Text(
-            text = "OR",
-            color = TextMuted,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        HorizontalDivider(
-            modifier = Modifier.weight(1f),
-            color = Surface2,
-            thickness = 1.dp
-        )
-    }
-}
-
-@Composable
-private fun GoogleSignInButton(
-    onClick: () -> Unit,
-    isLoading: Boolean
-) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        enabled = !isLoading,
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.Transparent,
-            contentColor = TextPrimary
-        ),
-        border = BorderStroke(1.dp, Surface2),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Login,
-                contentDescription = null,
-                tint = TextPrimary,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "Continue with Google",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
             )
         }
     }

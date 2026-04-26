@@ -35,6 +35,7 @@ fun HelpScreen(
     faqsByCategory: Map<FaqCategory, List<FaqItem>> = emptyMap(),
     expandedIndex: Int = -1,
     onToggleFaq: (Int) -> Unit = {},
+    onContactSupport: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     Scaffold(
@@ -108,7 +109,7 @@ fun HelpScreen(
 
             // Contact support section
             item {
-                ContactSupportCard()
+                ContactSupportCard(onContactSupport = onContactSupport)
             }
         }
     }
@@ -127,7 +128,7 @@ private fun HelpHeader() {
             imageVector = Icons.Rounded.Help,
             contentDescription = null,
             modifier = Modifier.size(56.dp),
-            tint = Yellow
+            tint = UberGreen
         )
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -257,7 +258,9 @@ private fun FaqCard(
 }
 
 @Composable
-private fun ContactSupportCard() {
+private fun ContactSupportCard(
+    onContactSupport: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -278,7 +281,7 @@ private fun ContactSupportCard() {
                 imageVector = Icons.Rounded.HeadsetMic,
                 contentDescription = null,
                 modifier = Modifier.size(40.dp),
-                tint = Yellow
+                tint = SafarYellow
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -302,9 +305,9 @@ private fun ContactSupportCard() {
             Spacer(modifier = Modifier.height(16.dp))
             
             Button(
-                onClick = { /* Email intent will be handled by activity */ },
+                onClick = onContactSupport,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow,
+                    containerColor = SafarYellow,
                     contentColor = Color.Black
                 ),
                 shape = RoundedCornerShape(8.dp),
@@ -317,7 +320,7 @@ private fun ContactSupportCard() {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "support@safar.app",
+                    text = "safar.support.app@gmail.com",
                     fontWeight = FontWeight.Bold
                 )
             }

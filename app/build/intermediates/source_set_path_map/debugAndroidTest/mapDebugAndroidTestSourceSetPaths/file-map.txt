@@ -1,0 +1,6 @@
+com.safar.app.test.app-jetified-core-1.5.0-0 C:\Users\hp\.gradle\caches\8.9\transforms\01737bcdb4a9c45cdc8b43fbba8e2627\transformed\jetified-core-1.5.0\res
+com.safar.app.test.app-jetified-annotation-experimental-1.4.1-1 C:\Users\hp\.gradle\caches\8.9\transforms\06123944d479c94e7a7abd340f83b416\transformed\jetified-annotation-experimental-1.4.1\res
+com.safar.app.test.app-androidTest-2 D:\SAFAR ktjava\app\build\generated\res\resValues\androidTest\debug
+com.safar.app.test.app-mergeDebugAndroidTestResources-3 D:\SAFAR ktjava\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.safar.app.test.app-mergeDebugAndroidTestResources-4 D:\SAFAR ktjava\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.safar.app.test.app-debugAndroidTest-5 D:\SAFAR ktjava\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

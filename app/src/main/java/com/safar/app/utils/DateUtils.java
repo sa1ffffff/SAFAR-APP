@@ -25,6 +25,11 @@ public class DateUtils {
         return (diff / TimeUnit.DAYS.toMillis(1)) + "d ago";
     }
 
+    public static String formatMemberSince(long timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
+        return sdf.format(new Date(timestamp));
+    }
+
     public static String formatChatTime(long timestamp) {
         SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         return sdf.format(new Date(timestamp));

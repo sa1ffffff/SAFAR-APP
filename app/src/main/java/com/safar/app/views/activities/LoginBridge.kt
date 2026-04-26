@@ -5,14 +5,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.safar.app.views.ui.screens.LoginScreen
-import com.safar.app.views.ui.screens.LoginTab
-import com.safar.app.views.ui.screens.EmailMode
+import com.safar.app.views.ui.screens.AuthMode
 import com.safar.app.views.ui.screens.LoginUiState
 import com.safar.app.views.ui.theme.SafarTheme
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LOGIN BRIDGE
 // Connects Java LoginActivity to Jetpack Compose LoginScreen
+// Redesigned for Sign In / Sign Up flow
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
@@ -26,12 +26,12 @@ import com.safar.app.views.ui.theme.SafarTheme
  * // Reading values
  * boolean isLoading = stateHolder.isLoading();
  * String phone = stateHolder.getPhone();
- * LoginTab selectedTab = stateHolder.getSelectedTab();
+ * AuthMode authMode = stateHolder.getAuthMode();
  * 
  * // Setting values
  * stateHolder.setPhone("3001234567");
  * stateHolder.setLoading(true);
- * stateHolder.selectTab(LoginTab.EMAIL);
+ * stateHolder.setAuthMode(AuthMode.SIGN_UP);
  * ```
  */
 class LoginStateHolder {
@@ -39,18 +39,22 @@ class LoginStateHolder {
     private var _uiState by mutableStateOf(LoginUiState())
     val uiState: LoginUiState get() = _uiState
     
-    // ─── Tab Management ──────────────────────────────────────────────────────
+    // ─── Auth Mode Management ────────────────────────────────────────────────
     
-    fun selectTab(tab: LoginTab) {
-        _uiState = _uiState.copy(selectedTab = tab, error = null)
+    fun setAuthMode(mode: AuthMode) {
+        _uiState = _uiState.copy(authMode = mode, error = null)
     }
     
-    fun getSelectedTab(): LoginTab = _uiState.selectedTab
+    fun getAuthMode(): AuthMode = _uiState.authMode
+    
+    fun isSignInMode(): Boolean = _uiState.authMode == AuthMode.SIGN_IN
+    
+    fun isSignUpMode(): Boolean = _uiState.authMode == AuthMode.SIGN_UP
     
     // ─── Phone Input ─────────────────────────────────────────────────────────
     
     fun setPhone(phone: String) {
-        _uiState = _uiState.copy(phone = phone)
+        _uiState = _uiState.copy(phone = sanitizePhoneInput(phone))
     }
     
     fun getPhone(): String = _uiState.phone
@@ -60,6 +64,11 @@ class LoginStateHolder {
     }
     
     fun getCountryCode(): String = _uiState.countryCode
+    
+    fun getFullPhone(): String {
+        val normalizedPhone = sanitizePhoneInput(_uiState.phone)
+        return _uiState.countryCode + normalizedPhone
+    }
     
     // ─── Email Input ─────────────────────────────────────────────────────────
     
@@ -75,28 +84,11 @@ class LoginStateHolder {
     
     fun getPassword(): String = _uiState.password
     
-    fun setName(name: String) {
-        _uiState = _uiState.copy(name = name)
-    }
-    
-    fun getName(): String = _uiState.name
-    
     fun togglePasswordVisibility() {
         _uiState = _uiState.copy(showPassword = !_uiState.showPassword)
     }
     
     fun getShowPassword(): Boolean = _uiState.showPassword
-    
-    // ─── Email Mode Management ───────────────────────────────────────────────
-    
-    fun toggleEmailMode() {
-        val newMode = if (_uiState.emailMode == EmailMode.LOGIN) EmailMode.REGISTER else EmailMode.LOGIN
-        _uiState = _uiState.copy(emailMode = newMode, error = null)
-    }
-    
-    fun getEmailMode(): EmailMode = _uiState.emailMode
-    
-    fun isInRegisterMode(): Boolean = _uiState.emailMode == EmailMode.REGISTER
     
     // ─── Loading State ───────────────────────────────────────────────────────
     
@@ -120,7 +112,7 @@ class LoginStateHolder {
     
     // ─── Validation ──────────────────────────────────────────────────────────
     
-    fun isPhoneValid(): Boolean = _uiState.phone.length >= 7
+    fun isPhoneValid(): Boolean = sanitizePhoneInput(_uiState.phone).length >= 9
     
     fun isEmailValid(): Boolean = _uiState.email.isNotEmpty() && 
                                   _uiState.email.contains("@") && 
@@ -128,16 +120,15 @@ class LoginStateHolder {
     
     fun isPasswordValid(): Boolean = _uiState.password.length >= 6
     
-    fun isRegisterFormValid(): Boolean = isEmailValid() && isPasswordValid() && _uiState.name.isNotEmpty()
+    fun hasPhoneOrEmail(): Boolean = _uiState.phone.isNotEmpty() || _uiState.email.isNotEmpty()
     
-    fun isLoginFormValid(): Boolean = isEmailValid() && isPasswordValid()
+    fun canSignIn(): Boolean = hasPhoneOrEmail() && isPasswordValid()
     
     // ─── Reset Functions ─────────────────────────────────────────────────────
     
     fun clearForm() {
         _uiState = _uiState.copy(
             phone = "",
-            name = "",
             email = "",
             password = "",
             error = null,
@@ -147,6 +138,20 @@ class LoginStateHolder {
     
     fun resetToDefaults() {
         _uiState = LoginUiState()
+    }
+
+    private fun sanitizePhoneInput(rawPhone: String): String {
+        var digits = rawPhone.filter { it.isDigit() }
+        if (digits.startsWith("00")) {
+            digits = digits.removePrefix("00")
+        }
+
+        val countryDigits = _uiState.countryCode.filter { it.isDigit() }
+        if (countryDigits.isNotEmpty() && digits.startsWith(countryDigits)) {
+            digits = digits.removePrefix(countryDigits)
+        }
+
+        return digits.trimStart('0')
     }
 }
 
@@ -161,43 +166,26 @@ fun LoginActivity.setupComposeUI(stateHolder: LoginStateHolder) {
         SafarTheme(darkTheme = true) {
             LoginScreen(
                 uiState = stateHolder.uiState,
-                onTabSelected = { tab -> stateHolder.selectTab(tab) },
+                onAuthModeChanged = { mode -> stateHolder.setAuthMode(mode) },
                 onPhoneChanged = { phone -> stateHolder.setPhone(phone) },
                 onEmailChanged = { email -> stateHolder.setEmail(email) },
                 onPasswordChanged = { password -> stateHolder.setPassword(password) },
-                onNameChanged = { name -> stateHolder.setName(name) },
-                onContinuePhone = { 
+                onSignIn = { 
+                    if (stateHolder.canSignIn()) {
+                        handleSignIn(
+                            stateHolder.getPhone(),
+                            stateHolder.getEmail(),
+                            stateHolder.getPassword()
+                        )
+                    }
+                },
+                onSignUpWithPhone = { 
                     if (stateHolder.isPhoneValid()) {
-                        handlePhoneAuth(stateHolder.getCountryCode() + stateHolder.getPhone())
-                    }
-                },
-                onEmailAction = {
-                    if (stateHolder.isInRegisterMode()) {
-                        if (stateHolder.isRegisterFormValid()) {
-                            handleEmailRegister(
-                                stateHolder.getEmail(),
-                                stateHolder.getPassword(),
-                                stateHolder.getName()
-                            )
-                        }
-                    } else {
-                        if (stateHolder.isLoginFormValid()) {
-                            handleEmailLogin(
-                                stateHolder.getEmail(),
-                                stateHolder.getPassword()
-                            )
-                        }
-                    }
-                },
-                onToggleEmailMode = { stateHolder.toggleEmailMode() },
-                onForgotPassword = { 
-                    if (stateHolder.isEmailValid()) {
-                        handleForgotPassword(stateHolder.getEmail())
-                    } else {
-                        stateHolder.setError("Enter your email first")
+                        handlePhoneAuth(stateHolder.getFullPhone())
                     }
                 },
                 onGoogleSignIn = { handleGoogleSignIn() },
+                onForgotPassword = { navigateToForgotPassword() },
                 onTogglePassword = { stateHolder.togglePasswordVisibility() }
             )
         }

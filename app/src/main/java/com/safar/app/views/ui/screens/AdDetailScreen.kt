@@ -15,8 +15,11 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
+import coil.compose.AsyncImage
 import com.safar.app.views.ui.theme.*
 
 @Immutable
@@ -44,6 +47,7 @@ data class AdDetailUiState(
 @Immutable
 data class JoinRequestUiModel(
     val id: String,
+    val userId: String,  // Added for profile navigation
     val userName: String,
     val userPhone: String? = null,
     val userAvatar: String? = null,
@@ -79,7 +83,9 @@ fun AdDetailScreen(
     onContactPoster: () -> Unit = {},
     onCallPoster: () -> Unit = {},
     onChatWithPoster: () -> Unit = {},
-    onReportAd: () -> Unit = {}
+    onWhatsAppPoster: () -> Unit = {},
+    onReportAd: () -> Unit = {},
+    onUserClick: (String) -> Unit = {}  // Added for profile navigation
 ) {
     SafarTheme(darkTheme = false) {
         Scaffold(
@@ -129,7 +135,8 @@ fun AdDetailScreen(
                                 userRequestStatus = uiState.userRequestStatus,
                                 onSendRequest = onSendRequest,
                                 onCallDriver = onCallPoster,
-                                onChatWithDriver = onChatWithPoster
+                                onChatWithDriver = onChatWithPoster,
+                                onWhatsAppDriver = onWhatsAppPoster
                             )
                         }
                     }
@@ -142,7 +149,8 @@ fun AdDetailScreen(
                                 request = request,
                                 isProcessing = processingRequestId == request.id,
                                 onAccept = { onAcceptRequest(request.id) },
-                                onReject = { onRejectRequest(request.id) }
+                                onReject = { onRejectRequest(request.id) },
+                                onUserClick = { onUserClick(request.userId) }
                             )
                         }
                     }
@@ -294,7 +302,7 @@ private fun InfoCard(departureTime: String, seats: String, postedBy: String, veh
             }
             if (price.isNotBlank()) {
                 HorizontalDivider(color = SafarDividerLight, modifier = Modifier.padding(vertical = 12.dp))
-                InfoRow(icon = Icons.Rounded.AttachMoney, label = "Price per seat", text = price, highlight = true)
+                InfoRow(icon = Icons.Rounded.CurrencyRupee, label = "Price per seat", text = "Rs $price", highlight = true)
             }
         }
     }
@@ -397,7 +405,8 @@ private fun RequesterActionsCard(
     userRequestStatus: String = "",
     onSendRequest: () -> Unit,
     onCallDriver: () -> Unit,
-    onChatWithDriver: () -> Unit
+    onChatWithDriver: () -> Unit,
+    onWhatsAppDriver: () -> Unit
 ) {
     val isAccepted = userRequestStatus.equals("Accepted", ignoreCase = true)
     
@@ -441,12 +450,11 @@ private fun RequesterActionsCard(
             }
         }
         
-        // Contact options - always show chat, call available after acceptance
+        // Contact options: in-app chat, WhatsApp deep-link, and phone call
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Message/Chat button - opens in-app direct messaging
             Button(
                 onClick = onChatWithDriver,
                 modifier = Modifier.weight(1f).height(52.dp),
@@ -456,21 +464,44 @@ private fun RequesterActionsCard(
                     contentColor = SafarBlack
                 )
             ) {
-                Icon(Icons.Rounded.Chat, null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Message", fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Rounded.Chat, null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    "Message",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
             
-            // Call button - available after request is accepted
             OutlinedButton(
-                onClick = onCallDriver,
-                enabled = isAccepted,
+                onClick = onWhatsAppDriver,
                 modifier = Modifier.weight(1f).height(52.dp),
                 shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.5.dp, if (isAccepted) SafarDividerLight else SafarDividerLight.copy(alpha = 0.3f)),
+                border = BorderStroke(1.5.dp, SafarGreen.copy(alpha = 0.4f)),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = if (isAccepted) SafarTextDark else SafarTextMuted,
-                    disabledContentColor = SafarTextMuted
+                    contentColor = SafarGreen
+                )
+            ) {
+                Icon(Icons.Rounded.OpenInNew, null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    "WhatsApp",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            OutlinedButton(
+                onClick = onCallDriver,
+                modifier = Modifier.weight(1f).height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.5.dp, SafarDividerLight),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = SafarTextDark
                 )
             ) {
                 Icon(Icons.Rounded.Phone, null, modifier = Modifier.size(18.dp))
@@ -486,7 +517,8 @@ private fun JoinRequestCard(
     request: JoinRequestUiModel,
     isProcessing: Boolean,
     onAccept: () -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
+    onUserClick: () -> Unit = {}
 ) {
     val isPending = request.status.equals("Pending", ignoreCase = true)
     val isAccepted = request.status.equals("Accepted", ignoreCase = true)
@@ -501,20 +533,32 @@ private fun JoinRequestCard(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // User Avatar / Initial
+            // User Avatar / Initial - Now clickable
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(SafarGreen.copy(alpha = 0.1f)),
+                    .background(SafarGreen.copy(alpha = 0.1f))
+                    .clickable { onUserClick() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = request.userName.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = SafarGreen
-                )
+                if (!request.userAvatar.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = request.userAvatar,
+                        contentDescription = "Profile picture",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = request.userName.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = SafarGreen
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.width(14.dp))

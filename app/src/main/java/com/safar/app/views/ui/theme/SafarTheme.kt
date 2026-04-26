@@ -32,6 +32,10 @@ val SafarDivider = Color(0xFF333333)
 val SafarGreen = Color(0xFF06C167)
 val SafarGreenDark = Color(0xFF048A46)
 val SafarGreenLight = Color(0xFF34D399)
+val SafarYellow = Color(0xFFFFD600)       // Primary yellow accent
+val SafarYellowDark = Color(0xFFCCAA00)   // Darker yellow for pressed states
+val SafarRed = Color(0xFFEF4444)          // Error/danger red
+val SafarRedDark = Color(0xFFDC2626)      // Darker red
 val SafarBlue = Color(0xFF276EF1)
 val SafarBlueDark = Color(0xFF1A56C4)
 val SafarBlueLight = Color(0xFF5B91F5)
@@ -73,7 +77,6 @@ val TextMuted = UberTextMuted            // Muted gray text
 val Green = UberGreen                    // Primary green for actions
 val GreenDark = UberGreenDark           // Dark green for pressed states
 val GreenLight = UberGreenLight         // Light green for highlights
-val Yellow = Color(0xFFFFBA08)          // Professional yellow accent
 
 // ─── Typography ──────────────────────────────────────────────────────────────
 object SafarTypography {

@@ -18,6 +18,13 @@ public class User {
     private String fcmToken;
     private boolean pushNotifications;
     private boolean emailNotifications;
+    
+    // Authentication fields for the new sign up/sign in system
+    private String passwordHash;          // Hashed password (salt:hash format)
+    private boolean isVerified;           // Whether phone/email is verified
+    private String authProvider;          // "phone", "google", or "email"
+    private String resetCode;             // Temporary reset code for forgot password
+    private long resetCodeExpiry;         // Expiry timestamp for reset code
 
     public User() {}
 
@@ -31,6 +38,27 @@ public class User {
         this.ratingCount = 0;
         this.pushNotifications = true;
         this.emailNotifications = true;
+        this.isVerified = false;
+        this.authProvider = "phone";
+    }
+    
+    /**
+     * Constructor for full registration with password
+     */
+    public User(String uid, String name, String phone, String email, String passwordHash, String authProvider) {
+        this.uid = uid;
+        this.name = name;
+        this.phone = phone;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.authProvider = authProvider;
+        this.joinedAt = System.currentTimeMillis();
+        this.totalRides = 0;
+        this.rating = 0.0;
+        this.ratingCount = 0;
+        this.pushNotifications = true;
+        this.emailNotifications = true;
+        this.isVerified = true; // Verified during signup via OTP/Google
     }
 
     public String getUid() { return uid; }
@@ -71,4 +99,38 @@ public class User {
 
     public boolean isEmailNotifications() { return emailNotifications; }
     public void setEmailNotifications(boolean emailNotifications) { this.emailNotifications = emailNotifications; }
+    
+    // New authentication getters/setters
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    
+    public boolean isVerified() { return isVerified; }
+    public void setVerified(boolean verified) { isVerified = verified; }
+    
+    public String getAuthProvider() { return authProvider; }
+    public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+    
+    public String getResetCode() { return resetCode; }
+    public void setResetCode(String resetCode) { this.resetCode = resetCode; }
+    
+    public long getResetCodeExpiry() { return resetCodeExpiry; }
+    public void setResetCodeExpiry(long resetCodeExpiry) { this.resetCodeExpiry = resetCodeExpiry; }
+    
+    /**
+     * Checks if reset code is still valid (not expired).
+     * Reset codes expire after 15 minutes.
+     */
+    public boolean isResetCodeValid() {
+        return resetCode != null && 
+               !resetCode.isEmpty() && 
+               System.currentTimeMillis() < resetCodeExpiry;
+    }
+    
+    /**
+     * Clears the reset code after successful password reset.
+     */
+    public void clearResetCode() {
+        this.resetCode = null;
+        this.resetCodeExpiry = 0;
+    }
 }

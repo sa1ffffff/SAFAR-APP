@@ -12,6 +12,7 @@ import com.safar.app.firebase.FirebaseManager;
 import com.safar.app.models.RideAd;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AdsPresenter {
@@ -48,11 +49,18 @@ public class AdsPresenter {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<RideAd> ads = new ArrayList<>();
+                long now = System.currentTimeMillis();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     try {
                         RideAd ad = ds.getValue(RideAd.class);
                         if (ad != null) {
                             ad.setAdId(ds.getKey());
+                            if (ad.isExpired(now)) {
+                                ds.getRef().removeValue()
+                                        .addOnFailureListener(e ->
+                                                Log.w(TAG, "Failed removing expired ad " + ds.getKey() + ": " + e.getMessage()));
+                                continue;
+                            }
                             if (RideAd.STATUS_OPEN.equals(ad.getStatus()) || ad.getStatus() == null) {
                                 ads.add(ad);
                             }
@@ -61,6 +69,9 @@ public class AdsPresenter {
                         Log.e(TAG, "Error parsing ad: " + e.getMessage());
                     }
                 }
+
+                // Sort by earliest posted first (ascending order of createdAt)
+                Collections.sort(ads, (a, b) -> Long.compare(a.getCreatedAt(), b.getCreatedAt()));
 
                 if (view != null) {
                     view.onLoading(false);
@@ -95,17 +106,30 @@ public class AdsPresenter {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<RideAd> ads = new ArrayList<>();
+                long now = System.currentTimeMillis();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     try {
                         RideAd ad = ds.getValue(RideAd.class);
-                        if (ad != null && uid.equals(ad.getCreatorUid())) {
+                        if (ad != null) {
                             ad.setAdId(ds.getKey());
-                            ads.add(ad);
+                            if (ad.isExpired(now)) {
+                                ds.getRef().removeValue()
+                                        .addOnFailureListener(e ->
+                                                Log.w(TAG, "Failed removing expired ad " + ds.getKey() + ": " + e.getMessage()));
+                                continue;
+                            }
+                            if (uid.equals(ad.getCreatorUid())) {
+                                ads.add(ad);
+                            }
                         }
                     } catch (Exception e) {
                         Log.e(TAG, "Error parsing ad: " + e.getMessage());
                     }
                 }
+
+                // Sort by earliest posted first (ascending order of createdAt)
+                Collections.sort(ads, (a, b) -> Long.compare(a.getCreatedAt(), b.getCreatedAt()));
+
                 if (view != null) {
                     view.onLoading(false);
                     view.onAdsLoaded(ads);
@@ -141,6 +165,7 @@ public class AdsPresenter {
         ad.setAdId(adId);
         ad.setStatus(RideAd.STATUS_OPEN);
         ad.setCreatedAt(System.currentTimeMillis());
+        ad.setExpiresAt(ad.getCreatedAt() + RideAd.EXPIRY_WINDOW_MS);
 
         firebaseManager.getAdRef(adId).setValue(ad)
                 .addOnSuccessListener(unused -> {

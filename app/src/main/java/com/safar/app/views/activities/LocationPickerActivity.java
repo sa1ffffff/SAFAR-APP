@@ -95,10 +95,87 @@ public class LocationPickerActivity extends AppCompatActivity implements OnMapRe
 
     public void handleSearch(String query) { searchLocation(query); hideKeyboard(); }
 
+    /**
+     * Fetches location suggestions for the dropdown without auto-selecting or navigating.
+     * This allows the user to see suggestions while continuing to type.
+     */
+    public void fetchLocationSuggestions(String query, LocationPickerStateHolder holder) {
+        if (query == null || query.length() < 2) {
+            holder.clearSuggestions();
+            return;
+        }
+
+        executor.execute(() -> {
+            try {
+                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                List<Address> results = geocoder.getFromLocationName(query, 5); // Get up to 5 suggestions
+                mainHandler.post(() -> {
+                    holder.getSuggestions().clear();
+                    if (results != null && !results.isEmpty()) {
+                        for (Address addr : results) {
+                            String primary = "";
+                            String secondary = "";
+                            
+                            // Build primary text (main location name)
+                            if (addr.getLocality() != null) {
+                                primary = addr.getLocality();
+                            } else if (addr.getSubLocality() != null) {
+                                primary = addr.getSubLocality();
+                            } else if (addr.getFeatureName() != null) {
+                                primary = addr.getFeatureName();
+                            } else if (addr.getAddressLine(0) != null) {
+                                primary = addr.getAddressLine(0);
+                            }
+                            
+                            // Build secondary text (region/country)
+                            if (addr.getAdminArea() != null) {
+                                secondary = addr.getAdminArea();
+                                if (addr.getCountryName() != null) {
+                                    secondary += ", " + addr.getCountryName();
+                                }
+                            } else if (addr.getCountryName() != null) {
+                                secondary = addr.getCountryName();
+                            }
+                            
+                            if (!primary.isEmpty()) {
+                                String placeId = String.format(Locale.US, "%.6f,%.6f", 
+                                        addr.getLatitude(), addr.getLongitude());
+                                holder.getSuggestions().add(new LocationSuggestion(
+                                        placeId, primary, secondary, null));
+                            }
+                        }
+                    }
+                    holder.setSearching(false);
+                });
+            } catch (IOException e) {
+                mainHandler.post(() -> {
+                    holder.clearSuggestions();
+                    holder.setSearching(false);
+                });
+            }
+        });
+    }
+
     public void handleSuggestionSelected(String placeId) {
-        // TODO: Implement detailed place lookup using Google Places API if needed
-        // For now, search by name if the placeId is just a name or handled by searchLocation
-        searchLocation(stateHolder.getSearchQuery());
+        // placeId format: "lat,lng" - navigate to these coordinates
+        if (placeId != null && placeId.contains(",")) {
+            try {
+                String[] parts = placeId.split(",");
+                double lat = Double.parseDouble(parts[0].trim());
+                double lng = Double.parseDouble(parts[1].trim());
+                if (googleMap != null) {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                            new LatLng(lat, lng), PICKED_ZOOM));
+                }
+                hideKeyboard();
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                // Fallback to text search if parsing fails
+                searchLocation(stateHolder.getSearchQuery());
+            }
+        } else {
+            // Fallback to text search
+            searchLocation(stateHolder.getSearchQuery());
+        }
     }
 
     public void handleRecentLocationSelected(String id) {

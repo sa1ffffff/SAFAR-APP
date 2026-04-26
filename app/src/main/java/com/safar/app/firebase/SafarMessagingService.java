@@ -12,7 +12,7 @@ import androidx.core.app.NotificationCompat;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.safar.app.R;
-import com.safar.app.views.activities.MainActivity;
+import com.safar.app.views.activities.NotificationsActivity;
 
 public class SafarMessagingService extends FirebaseMessagingService {
 
@@ -56,10 +56,12 @@ public class SafarMessagingService extends FirebaseMessagingService {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Notifications for ride requests and updates");
             manager.createNotificationChannel(channel);
         }
 
-        Intent intent = new Intent(this, MainActivity.class);
+        // Navigate to NotificationsActivity when tapped
+        Intent intent = new Intent(this, NotificationsActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);

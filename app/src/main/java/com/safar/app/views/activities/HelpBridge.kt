@@ -230,7 +230,7 @@ object FaqDatabase {
         ),
         FaqItem(
             question = "How do I contact support?",
-            answer = "For issues not covered in this FAQ:\n\n• Tap 'Help & Support' in your profile\n• Use the 'Contact Support' button\n• Email: support@safar.app\n\nWe typically respond within 24-48 hours.",
+            answer = "For issues not covered in this FAQ:\n\n• Tap 'Help & Support' in your profile\n• Use the 'Contact Support' button\n• Email: safar.support.app@gmail.com\n\nWe typically respond within 24-48 hours.",
             category = FaqCategory.TROUBLESHOOTING
         )
     )
@@ -277,6 +277,7 @@ fun HelpActivity.setupComposeUI(stateHolder: HelpStateHolder) {
                 faqsByCategory = FaqDatabase.getFaqsByCategory(),
                 expandedIndex = stateHolder.expandedIndex,
                 onToggleFaq = { index -> stateHolder.toggleFaq(index) },
+                onContactSupport = { openSupportEmail() },
                 onBack = { onBackPressedDispatcher.onBackPressed() }
             )
         }

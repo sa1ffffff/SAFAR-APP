@@ -45,7 +45,7 @@ data class ProfileUiState(
  * - Action cards with icons
  * - Edit profile dialog with bio
  * - Premium logout button
- * - Light theme for clarity
+ * - Dark theme consistency with app UI
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,16 +74,16 @@ fun ProfileScreen(
     onDismissLogout: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
-    SafarTheme(darkTheme = false) {
+    SafarTheme(darkTheme = true) {
         Scaffold(
-            containerColor = SafarBg,
+            containerColor = SafarBlack,
             topBar = {
                 TopAppBar(
                     title = {
                         Text(
                             "Profile",
                             fontWeight = FontWeight.Bold,
-                            color = SafarTextDark
+                            color = SafarTextPrimary
                         )
                     },
                     navigationIcon = {
@@ -91,7 +91,7 @@ fun ProfileScreen(
                             Icon(
                                 Icons.Rounded.ArrowBackIosNew,
                                 "Back",
-                                tint = SafarTextDark
+                                tint = SafarTextPrimary
                             )
                         }
                     },
@@ -100,12 +100,12 @@ fun ProfileScreen(
                             Icon(
                                 Icons.Rounded.Settings,
                                 "Settings",
-                                tint = SafarTextDark
+                                tint = SafarTextPrimary
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = SafarWhite
+                        containerColor = SafarDarkSurface
                     )
                 )
             }
@@ -139,7 +139,7 @@ fun ProfileScreen(
                         text = "ACCOUNT",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = SafarTextMuted,
+                        color = SafarTextSecondary,
                         letterSpacing = 1.5.sp,
                         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                     )
@@ -164,7 +164,7 @@ fun ProfileScreen(
                         text = "SUPPORT",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = SafarTextMuted,
+                        color = SafarTextSecondary,
                         letterSpacing = 1.5.sp,
                         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                     )
@@ -266,7 +266,7 @@ private fun ProfileHeaderCard(
 ) {
     Card(
         shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-        colors = CardDefaults.cardColors(containerColor = SafarWhite),
+        colors = CardDefaults.cardColors(containerColor = SafarDarkSurface),
         elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -341,7 +341,7 @@ private fun ProfileHeaderCard(
                 text = state.name.ifEmpty { "Guest User" },
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
-                color = SafarTextDark
+                color = SafarTextPrimary
             )
             
             // Bio
@@ -350,7 +350,7 @@ private fun ProfileHeaderCard(
                 Text(
                     text = state.bio,
                     fontSize = 14.sp,
-                    color = SafarTextMuted,
+                    color = SafarTextSecondary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
@@ -363,7 +363,7 @@ private fun ProfileHeaderCard(
                 Text(
                     text = state.phone,
                     fontSize = 14.sp,
-                    color = SafarTextMuted
+                    color = SafarTextSecondary
                 )
             }
             
@@ -371,7 +371,7 @@ private fun ProfileHeaderCard(
                 Text(
                     text = state.email,
                     fontSize = 14.sp,
-                    color = SafarTextMuted
+                    color = SafarTextSecondary
                 )
             }
 
@@ -381,9 +381,9 @@ private fun ProfileHeaderCard(
             OutlinedButton(
                 onClick = onEditProfile,
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, SafarDividerLight),
+                border = BorderStroke(1.dp, SafarDivider),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = SafarTextDark
+                    contentColor = SafarTextPrimary
                 )
             ) {
                 Icon(
@@ -440,7 +440,7 @@ private fun StatCard(
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SafarWhite),
+        colors = CardDefaults.cardColors(containerColor = SafarDarkCard),
         elevation = CardDefaults.cardElevation(1.dp),
         modifier = modifier
     ) {
@@ -468,12 +468,12 @@ private fun StatCard(
                     text = value,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    color = SafarTextDark
+                    color = SafarTextPrimary
                 )
                 Text(
                     text = label,
                     fontSize = 12.sp,
-                    color = SafarTextMuted
+                    color = SafarTextSecondary
                 )
             }
         }
@@ -489,7 +489,7 @@ private fun ProfileActionCard(
 ) {
     Card(
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SafarWhite),
+        colors = CardDefaults.cardColors(containerColor = SafarDarkCard),
         elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -519,18 +519,18 @@ private fun ProfileActionCard(
                     title,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
-                    color = SafarTextDark
+                    color = SafarTextPrimary
                 )
                 Text(
                     subtitle,
                     fontSize = 12.sp,
-                    color = SafarTextMuted
+                    color = SafarTextSecondary
                 )
             }
             Icon(
                 Icons.Rounded.ChevronRight,
                 null,
-                tint = SafarTextMuted,
+                tint = SafarTextSecondary,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -557,7 +557,7 @@ private fun EditProfileDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = SafarWhite),
+            colors = CardDefaults.cardColors(containerColor = SafarDarkCard),
             elevation = CardDefaults.cardElevation(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -572,7 +572,7 @@ private fun EditProfileDialog(
                     "Edit Profile",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    color = SafarTextDark
+                    color = SafarTextPrimary
                 )
                 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -636,7 +636,7 @@ private fun EditProfileDialog(
                 Text(
                     "Tap to change photo",
                     fontSize = 12.sp,
-                    color = SafarTextMuted,
+                    color = SafarTextSecondary,
                     modifier = Modifier.padding(top = 8.dp)
                 )
                 
@@ -652,8 +652,14 @@ private fun EditProfileDialog(
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SafarGreen,
+                        unfocusedBorderColor = SafarDivider,
+                        focusedContainerColor = SafarDarkSurface,
+                        unfocusedContainerColor = SafarDarkSurface,
+                        focusedTextColor = SafarTextPrimary,
+                        unfocusedTextColor = SafarTextPrimary,
                         cursorColor = SafarGreen,
-                        focusedLabelColor = SafarGreen
+                        focusedLabelColor = SafarGreen,
+                        unfocusedLabelColor = SafarTextSecondary
                     )
                 )
                 
@@ -672,8 +678,16 @@ private fun EditProfileDialog(
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SafarGreen,
+                        unfocusedBorderColor = SafarDivider,
+                        focusedContainerColor = SafarDarkSurface,
+                        unfocusedContainerColor = SafarDarkSurface,
+                        focusedTextColor = SafarTextPrimary,
+                        unfocusedTextColor = SafarTextPrimary,
                         cursorColor = SafarGreen,
-                        focusedLabelColor = SafarGreen
+                        focusedLabelColor = SafarGreen,
+                        unfocusedLabelColor = SafarTextSecondary,
+                        focusedPlaceholderColor = SafarTextTertiary,
+                        unfocusedPlaceholderColor = SafarTextTertiary
                     )
                 )
                 
@@ -688,9 +702,9 @@ private fun EditProfileDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f).height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, SafarDividerLight),
+                        border = BorderStroke(1.dp, SafarDivider),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = SafarTextMuted
+                            contentColor = SafarTextSecondary
                         )
                     ) {
                         Text("Cancel", fontWeight = FontWeight.SemiBold)

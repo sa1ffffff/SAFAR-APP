@@ -239,6 +239,19 @@ public class ChatActivity extends AppCompatActivity
         if (conversationPresenter != null) conversationPresenter.detach();
     }
 
+    /**
+     * Navigates to view the chat peer's profile
+     */
+    public void navigateToUserProfile() {
+        if (otherUserId == null || otherUserId.isEmpty()) {
+            Toast.makeText(this, "User profile not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        android.content.Intent intent = new android.content.Intent(this, UserProfileActivity.class);
+        intent.putExtra(AppConstants.KEY_OTHER_USER_ID, otherUserId);
+        startActivity(intent);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) { onBackPressed(); return true; }

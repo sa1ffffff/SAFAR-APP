@@ -13,7 +13,28 @@
           "package_name": "com.safar.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "684922450543-51b2l6voornr39q2c1l9ggfvovaon4e5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.safar.app",
+            "certificate_hash": "8116284d497210165d5f6b1fe5e16fa08cc5fb97"
+          }
+        },
+        {
+          "client_id": "684922450543-n8stb8celor5j8qep5ugske424dffrff.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.safar.app",
+            "certificate_hash": "09906c20e8cb8ec5a32164d2cb3e7711d03b7434"
+          }
+        },
+        {
+          "client_id": "684922450543-rc78r81qq19i3hcitgl5i04s8r8ss4bk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD8INyM6rtB70o4KilyozuZButsnfiKUWQ"
@@ -21,7 +42,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "684922450543-rc78r81qq19i3hcitgl5i04s8r8ss4bk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

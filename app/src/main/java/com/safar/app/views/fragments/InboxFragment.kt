@@ -43,6 +43,7 @@ import com.safar.app.utils.AppConstants
 import com.safar.app.utils.DateUtils
 import com.safar.app.views.activities.AdDetailActivity
 import com.safar.app.views.activities.ChatActivity
+import com.safar.app.views.activities.UserProfileActivity
 import com.safar.app.views.ui.theme.SafarTheme
 import com.safar.app.views.ui.theme.*
 
@@ -111,7 +112,8 @@ class InboxFragment : Fragment(), RequestPresenter.RequestView, ConversationPres
                 InboxScreen(
                     state = stateHolder.state,
                     onChatOpen = { chatRoomId, peerName, requestId, peerUid -> openChat(chatRoomId, peerName, requestId, peerUid) },
-                    onRequestOpen = { adId -> openAdDetail(adId) }
+                    onRequestOpen = { adId -> openAdDetail(adId) },
+                    onUserClick = { userId -> openUserProfile(userId) }
                 )
             }
         }
@@ -147,6 +149,13 @@ class InboxFragment : Fragment(), RequestPresenter.RequestView, ConversationPres
         if (!isAdded) return
         val intent = Intent(requireContext(), AdDetailActivity::class.java)
         intent.putExtra(AppConstants.KEY_AD_ID, adId)
+        startActivity(intent)
+    }
+
+    private fun openUserProfile(userId: String) {
+        if (!isAdded || userId.isEmpty()) return
+        val intent = Intent(requireContext(), UserProfileActivity::class.java)
+        intent.putExtra(AppConstants.KEY_OTHER_USER_ID, userId)
         startActivity(intent)
     }
 
@@ -297,7 +306,8 @@ class InboxFragment : Fragment(), RequestPresenter.RequestView, ConversationPres
 fun InboxScreen(
     state: InboxUiState,
     onChatOpen: (String, String, String, String) -> Unit,  // chatRoomId, peerName, requestId, peerUid
-    onRequestOpen: (String) -> Unit
+    onRequestOpen: (String) -> Unit,
+    onUserClick: (String) -> Unit = {}
 ) {
     Scaffold(
         containerColor = SafarBlack,
@@ -305,22 +315,29 @@ fun InboxScreen(
             InboxTopBar(itemCount = state.items.count { it.isUnread })
         }
     ) { paddingValues ->
-        AnimatedContent(
-            targetState = state.isLoading,
-            transitionSpec = {
-                fadeIn() togetherWith fadeOut()
-            },
-            modifier = Modifier.padding(paddingValues),
-            label = "inbox_content"
-        ) { isLoading ->
-            when {
-                isLoading -> LoadingState()
-                state.items.isEmpty() -> EmptyInboxState()
-                else -> InboxList(
-                    items = state.items,
-                    onChatOpen = onChatOpen,
-                    onRequestOpen = onRequestOpen
-                )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            AnimatedContent(
+                targetState = state.isLoading,
+                transitionSpec = {
+                    fadeIn() togetherWith fadeOut()
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "inbox_content"
+            ) { isLoading ->
+                when {
+                    isLoading -> LoadingState()
+                    state.items.isEmpty() -> EmptyInboxState()
+                    else -> InboxList(
+                        items = state.items,
+                        onChatOpen = onChatOpen,
+                        onRequestOpen = onRequestOpen,
+                        onUserClick = onUserClick
+                    )
+                }
             }
         }
     }
@@ -332,13 +349,14 @@ private fun InboxTopBar(itemCount: Int) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = SafarDarkSurface,
-        tonalElevation = 4.dp
+        tonalElevation = 2.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(horizontal = 16.dp)
-                .padding(top = 24.dp, bottom = 16.dp)
+                .padding(top = 12.dp, bottom = 14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -375,7 +393,7 @@ private fun InboxTopBar(itemCount: Int) {
             Text(
                 text = "Messages & ride requests",
                 style = MaterialTheme.typography.bodyMedium,
-                color = SafarTextTertiary
+                color = SafarTextSecondary
             )
         }
     }
@@ -384,31 +402,58 @@ private fun InboxTopBar(itemCount: Int) {
 @Composable
 private fun LoadingState() {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        CircularProgressIndicator(color = SafarGreen)
+        CircularProgressIndicator(
+            color = SafarGreen,
+            strokeWidth = 3.dp
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        Text(
+            text = "Loading inbox...",
+            style = MaterialTheme.typography.bodyMedium,
+            color = SafarTextSecondary
+        )
     }
 }
 
 @Composable
 private fun EmptyInboxState() {
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Outlined.Inbox,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = SafarTextTertiary.copy(alpha = 0.3f)
-        )
+        Surface(
+            modifier = Modifier.size(86.dp),
+            shape = CircleShape,
+            color = SafarDarkCard
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Outlined.Inbox,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = SafarTextTertiary.copy(alpha = 0.7f)
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = "No messages yet",
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = SafarTextPrimary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "When you send or receive requests, conversations will appear here.",
+            style = MaterialTheme.typography.bodyMedium,
             color = SafarTextSecondary
         )
     }
@@ -418,10 +463,13 @@ private fun EmptyInboxState() {
 private fun InboxList(
     items: List<InboxItem>,
     onChatOpen: (String, String, String, String) -> Unit,  // chatRoomId, peerName, requestId, peerUid
-    onRequestOpen: (String) -> Unit
+    onRequestOpen: (String) -> Unit,
+    onUserClick: (String) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         itemsIndexed(
             items = items,
@@ -434,6 +482,9 @@ private fun InboxList(
                         InboxItemType.CHAT -> onChatOpen(item.chatRoomId, item.peerName, item.requestId, item.peerUid)
                         InboxItemType.JOIN_REQUEST -> onRequestOpen(item.adId)
                     }
+                },
+                onAvatarClick = {
+                    if (item.peerUid.isNotEmpty()) onUserClick(item.peerUid)
                 }
             )
         }
@@ -443,36 +494,49 @@ private fun InboxList(
 @Composable
 private fun InboxItemCard(
     item: InboxItem,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onAvatarClick: () -> Unit = {}
 ) {
     val isChat = item.type == InboxItemType.CHAT
+    val unreadAccent = if (item.isUnread) SafarGreen else SafarTextTertiary
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        color = SafarBlack
+        shape = RoundedCornerShape(18.dp),
+        color = SafarDarkCard,
+        tonalElevation = 1.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(horizontal = 14.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar with unread indicator
-            Box {
+            // Avatar with unread indicator - Now clickable
+            Box(modifier = Modifier.clickable { onAvatarClick() }) {
                 Surface(
-                    modifier = Modifier.size(52.dp),
-                    shape = CircleShape,
-                    color = SafarDarkCard
+                    modifier = Modifier.size(50.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (item.isUnread) SafarGreen.copy(alpha = 0.14f) else SafarDivider
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = item.title.firstOrNull()?.uppercase() ?: "?",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = if (item.isUnread) SafarGreen else SafarTextSecondary
-                        )
+                        if (isChat) {
+                            Text(
+                                text = item.title.firstOrNull()?.uppercase() ?: "?",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = if (item.isUnread) SafarGreen else SafarTextSecondary
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.DirectionsCar,
+                                contentDescription = null,
+                                tint = SafarGreen,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
                     }
                 }
                 
@@ -481,9 +545,9 @@ private fun InboxItemCard(
                         modifier = Modifier
                             .size(14.dp)
                             .clip(CircleShape)
-                            .background(SafarError)
+                            .background(SafarGreen)
                             .align(Alignment.TopEnd)
-                            .border(2.dp, SafarBlack, CircleShape)
+                            .border(2.dp, SafarDarkCard, CircleShape)
                     )
                 }
             }
@@ -506,7 +570,7 @@ private fun InboxItemCard(
                     Text(
                         text = item.timestamp,
                         fontSize = 11.sp,
-                        color = if (item.isUnread) SafarGreen else SafarTextTertiary
+                        color = unreadAccent
                     )
                 }
 
@@ -520,8 +584,36 @@ private fun InboxItemCard(
                     overflow = TextOverflow.Ellipsis,
                     fontWeight = if (item.isUnread) FontWeight.Medium else FontWeight.Normal
                 )
+
+                if (!isChat && item.statusLabel.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val statusColor = when (item.statusLabel.lowercase()) {
+                        "accepted" -> SafarGreen
+                        "rejected" -> SafarError
+                        else -> SafarYellow
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = statusColor.copy(alpha = 0.16f)
+                    ) {
+                        Text(
+                            text = item.statusLabel,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = statusColor
+                        )
+                    }
+                }
             }
+
+            Spacer(modifier = Modifier.width(10.dp))
+            Icon(
+                imageVector = Icons.Filled.ChevronRight,
+                contentDescription = null,
+                tint = SafarTextTertiary,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
-    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = SafarDivider, thickness = 0.5.dp)
 }

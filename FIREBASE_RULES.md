@@ -54,6 +54,18 @@ Firebase has TWO separate rule systems:
         },
         ".indexOn": ["timestamp"]
       }
+    },
+    "notifications": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null",
+        ".indexOn": ["timestamp", "read"]
+      }
+    },
+    "reviews": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["revieweeId", "reviewerId"]
     }
   }
 }

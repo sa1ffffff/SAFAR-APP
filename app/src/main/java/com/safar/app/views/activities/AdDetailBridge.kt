@@ -288,7 +288,9 @@ fun AdDetailActivity.setupComposeUI(stateHolder: AdDetailStateHolder) {
                 onContactPoster = { handleContactPoster() },
                 onCallPoster = { handleCallPoster() },
                 onChatWithPoster = { handleChatWithPoster() },
-                onReportAd = { handleReportAd() }
+                onWhatsAppPoster = { handleWhatsAppPoster() },
+                onReportAd = { handleReportAd() },
+                onUserClick = { userId -> navigateToUserProfile(userId) }
             )
         }
     }

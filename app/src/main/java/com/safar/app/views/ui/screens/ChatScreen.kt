@@ -67,7 +67,8 @@ fun ChatScreen(
     onBack: () -> Unit = {},
     onInfoClick: () -> Unit = {},
     onCallPeer: () -> Unit = {},
-    onReportIssue: () -> Unit = {}
+    onReportIssue: () -> Unit = {},
+    onAvatarClick: () -> Unit = {}  // Added for profile navigation
 ) {
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -90,7 +91,8 @@ fun ChatScreen(
                     },
                     isOnline = isOnline,
                     onBack = onBack,
-                    onInfoClick = onInfoClick
+                    onInfoClick = onInfoClick,
+                    onAvatarClick = onAvatarClick
                 )
             },
             bottomBar = {
@@ -176,19 +178,21 @@ private fun ChatTopBar(
     peerInitial: String,
     isOnline: Boolean,
     onBack: () -> Unit,
-    onInfoClick: () -> Unit
+    onInfoClick: () -> Unit,
+    onAvatarClick: () -> Unit = {}
 ) {
     TopAppBar(
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Avatar
+                // Avatar - Now clickable
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(SafarGreen.copy(alpha = 0.12f)),
+                        .background(SafarGreen.copy(alpha = 0.12f))
+                        .clickable { onAvatarClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(

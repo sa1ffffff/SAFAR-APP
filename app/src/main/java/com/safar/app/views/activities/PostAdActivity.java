@@ -15,6 +15,7 @@ import androidx.core.view.WindowCompat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.safar.app.models.RideAd;
 import com.safar.app.presenters.AdsPresenter;
+import com.safar.app.utils.PhoneFormatUtils;
 import com.safar.app.utils.SessionManager;
 
 import java.text.SimpleDateFormat;
@@ -70,7 +71,7 @@ public class PostAdActivity extends AppCompatActivity implements AdsPresenter.Ad
 
         String savedPhone = session.getUserPhone();
         if (savedPhone != null && !savedPhone.isEmpty()) {
-            stateHolder.updatePhone(savedPhone);
+            stateHolder.updatePhone(PhoneFormatUtils.normalizeWhatsappLocalInput(savedPhone));
         }
 
         PostAdBridgeKt.setupComposeUI(this, stateHolder);
@@ -131,8 +132,8 @@ public class PostAdActivity extends AppCompatActivity implements AdsPresenter.Ad
         if (phone.isEmpty()) {
             Toast.makeText(this, "Phone number is required", Toast.LENGTH_SHORT).show(); return;
         }
-        if (phone.length() < 10) {
-            Toast.makeText(this, "Enter a valid phone number", Toast.LENGTH_SHORT).show(); return;
+        if (!PhoneFormatUtils.isValidWhatsappLocalNumber(phone)) {
+            Toast.makeText(this, "Format must be 03xx-xxxxxxx", Toast.LENGTH_SHORT).show(); return;
         }
         if (!dateTimeSelected) {
             Toast.makeText(this, "Please select departure date and time", Toast.LENGTH_SHORT).show(); return;

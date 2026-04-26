@@ -2,7 +2,6 @@ package com.safar.app.views.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -22,12 +21,19 @@ import com.safar.app.R;
 import com.safar.app.firebase.FirebaseManager;
 import com.safar.app.models.User;
 import com.safar.app.utils.AppConstants;
+import com.safar.app.utils.PasswordUtils;
 import com.safar.app.utils.SessionManager;
+
+// Kotlin bridge imports
+import static com.safar.app.views.activities.LoginBridgeKt.setupComposeUI;
 
 /**
  * SAFAR LOGIN ACTIVITY
- * Modern Compose-based login with Instagram-style animations
- * Supports phone, email, and Google authentication
+ * Redesigned authentication with Sign In / Sign Up flow
+ * 
+ * Sign In: Phone/Email + Password (no OTP)
+ * Sign Up: Phone → OTP → Password Setup
+ *          Google → Direct sign in/sign up
  */
 public class LoginActivity extends AppCompatActivity {
 
@@ -65,83 +71,105 @@ public class LoginActivity extends AppCompatActivity {
         googleSignInClient = GoogleSignIn.getClient(this, gso);
 
         // Setup Compose UI
-        LoginBridgeKt.setupComposeUI(this, stateHolder);
+        setupComposeUI(this, stateHolder);
     }
 
     /**
-     * Handles phone authentication flow
+     * Handles Sign In with phone/email and password
+     * No OTP required - direct password authentication
      */
-    public void handlePhoneAuth(String phoneNumber) {
+    public void handleSignIn(String phone, String email, String password) {
         stateHolder.setLoading(true);
         stateHolder.clearError();
+
+        // Determine if signing in with phone or email
+        String identifier = phone.isEmpty() ? email : phone;
         
-        Intent intent = new Intent(this, OtpVerifyActivity.class);
-        intent.putExtra(AppConstants.KEY_PHONE_NUMBER, phoneNumber);
-        startActivity(intent);
-        stateHolder.setLoading(false);
+        // First, find user in database by phone or email
+        if (!phone.isEmpty()) {
+            // Sign in with phone number + password
+            String fullPhone = stateHolder.getFullPhone();
+            signInWithPhonePassword(fullPhone, password);
+        } else {
+            // Sign in with email + password using Firebase Auth
+            signInWithEmailPassword(email, password);
+        }
     }
 
     /**
-     * Handles email registration
+     * Sign in with phone number and password
+     * Looks up user in Firebase Database and verifies password
      */
-    public void handleEmailRegister(String email, String password, String name) {
-        stateHolder.setLoading(true);
-        stateHolder.clearError();
-
-        auth.createUserWithEmailAndPassword(email, password)
-                .addOnSuccessListener(result -> {
-                    FirebaseUser firebaseUser = result.getUser();
-                    if (firebaseUser == null) {
+    private void signInWithPhonePassword(String phoneNumber, String password) {
+        // Query Firebase for user with this phone number
+        FirebaseManager.getInstance().getUsersRef()
+                .orderByChild("phone")
+                .equalTo(phoneNumber)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!snapshot.exists() || !snapshot.hasChildren()) {
                         stateHolder.setLoading(false);
-                        stateHolder.setError("Registration failed");
+                        stateHolder.setError("Account not found. Please sign up first.");
                         return;
                     }
 
-                    // Send verification email
-                    firebaseUser.sendEmailVerification()
-                            .addOnSuccessListener(unused ->
-                                    Toast.makeText(this,
-                                            "Verification email sent. Please verify then login.",
-                                            Toast.LENGTH_LONG).show());
+                    // Get the first matching user
+                    User user = null;
+                    String userId = null;
+                    for (com.google.firebase.database.DataSnapshot child : snapshot.getChildren()) {
+                        user = child.getValue(User.class);
+                        userId = child.getKey();
+                        break;
+                    }
 
-                    // Save to DB
-                    User user = new User(firebaseUser.getUid(), name, email);
-                    FirebaseManager.getInstance().getUserRef(firebaseUser.getUid()).setValue(user);
-                    session.setUserName(name);
-                    session.setUserPhone(email); // Using phone field for email
+                    if (user == null || userId == null) {
+                        stateHolder.setLoading(false);
+                        stateHolder.setError("User data corrupted");
+                        return;
+                    }
+
+                    // Check if user has a password set
+                    String passwordHash = user.getPasswordHash();
+                    if (passwordHash == null || passwordHash.isEmpty()) {
+                        stateHolder.setLoading(false);
+                        stateHolder.setError("No password set. Please sign up again.");
+                        return;
+                    }
+
+                    // Verify password
+                    if (!PasswordUtils.verifyPassword(password, passwordHash)) {
+                        stateHolder.setLoading(false);
+                        stateHolder.setError("Incorrect password");
+                        return;
+                    }
+
+                    // Password correct - login successful
+                    session.setUserId(userId);
+                    session.setUserName(user.getName());
+                    session.setUserPhone(user.getPhone());
+                    if (user.getEmail() != null) {
+                        session.setUserEmail(user.getEmail());
+                    }
 
                     stateHolder.setLoading(false);
-                    // Sign out - force them to verify email first
-                    auth.signOut();
-                    showEmailVerificationDialog(email);
+                    navigateToMain();
                 })
                 .addOnFailureListener(e -> {
                     stateHolder.setLoading(false);
-                    stateHolder.setError("Registration failed: " + e.getMessage());
+                    stateHolder.setError("Sign in failed: " + e.getMessage());
                 });
     }
 
     /**
-     * Handles email login
+     * Sign in with email and password using Firebase Auth
      */
-    public void handleEmailLogin(String email, String password) {
-        stateHolder.setLoading(true);
-        stateHolder.clearError();
-
+    private void signInWithEmailPassword(String email, String password) {
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
                     FirebaseUser firebaseUser = result.getUser();
                     if (firebaseUser == null) {
                         stateHolder.setLoading(false);
-                        stateHolder.setError("Login failed");
-                        return;
-                    }
-
-                    // Check if email is verified
-                    if (!firebaseUser.isEmailVerified()) {
-                        stateHolder.setLoading(false);
-                        auth.signOut();
-                        showResendVerificationDialog(email, password);
+                        stateHolder.setError("Sign in failed");
                         return;
                     }
 
@@ -150,8 +178,12 @@ public class LoginActivity extends AppCompatActivity {
                             .addOnSuccessListener(snapshot -> {
                                 User user = snapshot.getValue(User.class);
                                 if (user != null) {
+                                    session.setUserId(firebaseUser.getUid());
                                     session.setUserName(user.getName());
                                     session.setUserPhone(user.getPhone());
+                                    if (user.getEmail() != null) {
+                                        session.setUserEmail(user.getEmail());
+                                    }
                                 }
                                 stateHolder.setLoading(false);
                                 navigateToMain();
@@ -159,30 +191,51 @@ public class LoginActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     stateHolder.setLoading(false);
-                    stateHolder.setError("Login failed: " + e.getMessage());
+                    String message = e.getMessage();
+                    if (message != null && message.contains("no user record")) {
+                        stateHolder.setError("Account not found. Please sign up first.");
+                    } else if (message != null && message.contains("password is invalid")) {
+                        stateHolder.setError("Incorrect password");
+                    } else {
+                        stateHolder.setError("Sign in failed: " + message);
+                    }
                 });
     }
 
     /**
-     * Handles Google authentication
+     * Handles phone sign up - navigates to OTP verification
+     * After OTP verification, user will set password
+     */
+    public void handlePhoneAuth(String phoneNumber) {
+        stateHolder.setLoading(true);
+        stateHolder.clearError();
+        
+        Intent intent = new Intent(this, OtpVerifyActivity.class);
+        intent.putExtra(AppConstants.KEY_PHONE_NUMBER, phoneNumber);
+        intent.putExtra("IS_SIGN_UP", true); // Flag to indicate sign up flow
+        startActivity(intent);
+        stateHolder.setLoading(false);
+    }
+
+    /**
+     * Handles Google Sign-In/Sign-Up
+     * For both new and existing users: signs in directly
      */
     public void handleGoogleSignIn() {
         stateHolder.setLoading(true);
         stateHolder.clearError();
-        googleLauncher.launch(googleSignInClient.getSignInIntent());
+        // Sign out first to force account picker to show every time
+        googleSignInClient.signOut().addOnCompleteListener(task -> {
+            googleLauncher.launch(googleSignInClient.getSignInIntent());
+        });
     }
 
     /**
-     * Handles forgot password
+     * Navigate to Forgot Password screen
      */
-    public void handleForgotPassword(String email) {
-        auth.sendPasswordResetEmail(email)
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(this, "Password reset email sent!", Toast.LENGTH_LONG).show();
-                    stateHolder.clearError();
-                })
-                .addOnFailureListener(e ->
-                        stateHolder.setError("Error: " + e.getMessage()));
+    public void navigateToForgotPassword() {
+        Intent intent = new Intent(this, ForgotPasswordActivity.class);
+        startActivity(intent);
     }
 
     // ─── PRIVATE HELPERS ─────────────────────────────────────────────────────────
@@ -198,38 +251,76 @@ public class LoginActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // Check if new user
-                    boolean isNew = result.getAdditionalUserInfo() != null
-                            && result.getAdditionalUserInfo().isNewUser();
+                    FirebaseManager.getInstance().getUserRef(firebaseUser.getUid()).get()
+                            .addOnSuccessListener(snapshot -> {
+                                User user = snapshot.getValue(User.class);
+                                if (snapshot.exists() && user != null) {
+                                    signInWithGoogleUser(firebaseUser, user);
+                                    return;
+                                }
 
-                    if (isNew) {
-                        // Save new user to DB
-                        User user = new User(
-                                firebaseUser.getUid(),
-                                firebaseUser.getDisplayName() != null ? firebaseUser.getDisplayName() : "User",
-                                firebaseUser.getEmail() != null ? firebaseUser.getEmail() : ""
-                        );
-                        FirebaseManager.getInstance().getUserRef(firebaseUser.getUid()).setValue(user);
-                        session.setUserName(user.getName());
-                        session.setUserPhone(user.getPhone());
-                    } else {
-                        // Existing user - load from DB
-                        FirebaseManager.getInstance().getUserRef(firebaseUser.getUid()).get()
-                                .addOnSuccessListener(snapshot -> {
-                                    User user = snapshot.getValue(User.class);
-                                    if (user != null) {
-                                        session.setUserName(user.getName());
-                                        session.setUserPhone(user.getPhone());
-                                    }
-                                });
-                    }
-                    stateHolder.setLoading(false);
-                    navigateToMain();
+                                User newGoogleUser = buildGoogleUser(firebaseUser);
+                                FirebaseManager.getInstance().getUserRef(firebaseUser.getUid()).setValue(newGoogleUser)
+                                        .addOnSuccessListener(unused -> signInWithGoogleUser(firebaseUser, newGoogleUser))
+                                        .addOnFailureListener(e -> {
+                                            stateHolder.setLoading(false);
+                                            stateHolder.setError("Failed to create account: " + e.getMessage());
+                                        });
+                            })
+                            .addOnFailureListener(e -> {
+                                stateHolder.setLoading(false);
+                                stateHolder.setError("Failed to load user data: " + e.getMessage());
+                            });
                 })
                 .addOnFailureListener(e -> {
                     stateHolder.setLoading(false);
                     stateHolder.setError("Google authentication failed: " + e.getMessage());
                 });
+    }
+
+    private void signInWithGoogleUser(FirebaseUser firebaseUser, User user) {
+        String resolvedName = firstNonBlank(user.getName(), firebaseUser.getDisplayName(), "User");
+        String resolvedPhone = firstNonBlank(user.getPhone(), "");
+        String resolvedEmail = firstNonBlank(user.getEmail(), firebaseUser.getEmail(), "");
+
+        String photoUrl = user.getPhotoUrl();
+        if ((photoUrl == null || photoUrl.trim().isEmpty()) && firebaseUser.getPhotoUrl() != null) {
+            photoUrl = firebaseUser.getPhotoUrl().toString();
+        }
+
+        session.setUserId(firebaseUser.getUid());
+        session.setUserName(resolvedName);
+        session.setUserPhone(resolvedPhone);
+        session.setUserEmail(resolvedEmail);
+        session.setUserPhotoUrl(photoUrl);
+
+        stateHolder.setLoading(false);
+        navigateToMain();
+    }
+
+    private User buildGoogleUser(FirebaseUser firebaseUser) {
+        User user = new User(
+                firebaseUser.getUid(),
+                firstNonBlank(firebaseUser.getDisplayName(), "User"),
+                "",
+                firstNonBlank(firebaseUser.getEmail(), ""),
+                null,
+                "google"
+        );
+
+        if (firebaseUser.getPhotoUrl() != null) {
+            user.setPhotoUrl(firebaseUser.getPhotoUrl().toString());
+        }
+        return user;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+        }
+        return "";
     }
 
     private void navigateToMain() {
@@ -243,37 +334,5 @@ public class LoginActivity extends AppCompatActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
-    }
-
-    private void showEmailVerificationDialog(String email) {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Verify Your Email")
-                .setMessage("A verification link has been sent to " + email + ".\n\nPlease check your inbox and click the link, then come back to login.")
-                .setPositiveButton("OK, I'll verify", null)
-                .setNegativeButton("Resend Email", (d, w) -> {
-                    // Note: Cannot resend without re-authentication
-                    Toast.makeText(this, "Please try registering again to resend", Toast.LENGTH_SHORT).show();
-                })
-                .show();
-    }
-
-    private void showResendVerificationDialog(String email, String password) {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Email Not Verified")
-                .setMessage("Please verify your email before logging in.\n\nCheck your inbox for the verification link.")
-                .setPositiveButton("Resend Email", (d, w) -> {
-                    // Sign in temporarily to resend
-                    auth.signInWithEmailAndPassword(email, password)
-                            .addOnSuccessListener(r -> {
-                                if (r.getUser() != null) {
-                                    r.getUser().sendEmailVerification()
-                                            .addOnSuccessListener(unused ->
-                                                    Toast.makeText(this, "Verification email resent!", Toast.LENGTH_SHORT).show());
-                                    auth.signOut();
-                                }
-                            });
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
     }
 }

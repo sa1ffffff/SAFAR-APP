@@ -1,13 +1,16 @@
 package com.safar.app.views.activities
 
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.google.android.gms.maps.GoogleMap
 import com.safar.app.views.ui.screens.LocationPickerScreen
 import com.safar.app.views.ui.theme.SafarTheme
+import kotlinx.coroutines.delay
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LOCATION PICKER BRIDGE
@@ -112,6 +115,23 @@ fun LocationPickerActivity.setupComposeUI(
 ) {
     setContent {
         SafarTheme(darkTheme = true) {
+            // Debounced search query - only fetch suggestions after user stops typing
+            var debouncedQuery by remember { mutableStateOf("") }
+            
+            // Debounce effect: wait 400ms after user stops typing before fetching suggestions
+            LaunchedEffect(stateHolder.searchQuery) {
+                if (stateHolder.searchQuery.length >= 2) {
+                    stateHolder.isSearching = true
+                    delay(400) // Wait 400ms before searching
+                    debouncedQuery = stateHolder.searchQuery
+                    // Fetch suggestions (not auto-select) - only populate the dropdown
+                    fetchSuggestionsOnly(stateHolder.searchQuery, stateHolder)
+                } else {
+                    stateHolder.clearSuggestions()
+                    stateHolder.isSearching = false
+                }
+            }
+            
             LocationPickerScreen(
                 title = title,
                 placeName = stateHolder.placeName,
@@ -125,15 +145,12 @@ fun LocationPickerActivity.setupComposeUI(
                 showSuggestions = stateHolder.showSuggestions,
                 showRecentLocations = stateHolder.showRecentLocations,
                 onSearchQueryChange = { query ->
+                    // Only update the query - suggestions are fetched via debounced LaunchedEffect
+                    // This allows the user to type freely without interruption
                     stateHolder.searchQuery = query
-                    if (query.length >= 2) {
-                        stateHolder.isSearching = true
-                        handleSearch(query)
-                    } else {
-                        stateHolder.clearSuggestions()
-                    }
                 },
                 onSuggestionClick = { suggestion ->
+                    // User explicitly selected a suggestion - NOW we navigate to it
                     stateHolder.searchQuery = suggestion.primaryText
                     stateHolder.placeName = suggestion.primaryText
                     stateHolder.isConfirmEnabled = true
@@ -158,7 +175,7 @@ fun LocationPickerActivity.setupComposeUI(
                     }
                 },
                 onBack = { onBackPressedDispatcher.onBackPressed() },
-                onMapReady = { map: GoogleMap ->          // ✅ FIX: explicit type
+                onMapReady = { map: GoogleMap ->
                     this@setupComposeUI.onMapReady(map)
                 },
                 onMapDragStart = { stateHolder.updateMapDragging(true) },
@@ -171,4 +188,15 @@ fun LocationPickerActivity.setupComposeUI(
             )
         }
     }
+}
+
+/**
+ * Fetches location suggestions without auto-selecting or navigating.
+ * This populates the suggestions dropdown while allowing the user to continue typing.
+ */
+private fun LocationPickerActivity.fetchSuggestionsOnly(
+    query: String,
+    stateHolder: LocationPickerStateHolder
+) {
+    fetchLocationSuggestions(query, stateHolder)
 }

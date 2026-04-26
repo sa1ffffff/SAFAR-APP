@@ -5,7 +5,7 @@
 ---
 
 ## Language
-
+     DONT RUN GRADLE SCRIPTS EVER
 - Backend, logic, repositories, presenters, models → **Java only**
 - UI layer (Activities, Fragments, Adapters) → **Java or Kotlin**, match whatever the existing file already uses
 - Never mix languages inside the same file
@@ -53,5 +53,8 @@
 - Do not rename existing classes, methods, or XML files
 - Do not generate placeholder or TODO code — only suggest complete, working implementations
 - Follow naming conventions defined in `SAFAR-CONTEXT.md` exactly
+- always make sure this error is taken care of: Platform declaration clash: The following declarations have the same JVM signature (setNotifications(Ljava/util/List;)V):
+  fun `<set-notifications>`(`<set-?>`: List<NotificationUiModel>): Unit defined in com.safar.app.views.activities.NotificationsStateHolder
+  fun setNotifications(list: List<NotificationUiModel>): Unit defined in com.safar.app.views.activities.NotificationsStateHolder
 
 -Always skip permissions, run /gradle, or /gradelw without asking//

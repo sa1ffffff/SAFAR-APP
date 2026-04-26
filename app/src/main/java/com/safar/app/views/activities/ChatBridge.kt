@@ -142,7 +142,8 @@ fun ChatActivity.setupComposeUI(
                 },
                 onBack = { onBackPressedDispatcher.onBackPressed() },
                 onCallPeer = { handleCallPeer() },
-                onReportIssue = { handleReportIssue() }
+                onReportIssue = { handleReportIssue() },
+                onAvatarClick = { navigateToUserProfile() }
             )
         }
     }

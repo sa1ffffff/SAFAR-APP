@@ -8,6 +8,7 @@ public class JoinRequest {
     public static final String STATUS_PENDING = "PENDING";
     public static final String STATUS_ACCEPTED = "ACCEPTED";
     public static final String STATUS_REJECTED = "REJECTED";
+    public static final String STATUS_COMPLETED = "COMPLETED";
 
     private String requestId;
     private String adId;
@@ -18,6 +19,16 @@ public class JoinRequest {
     private String status;
     private long timestamp;
     private String chatRoomId;
+    
+    // Ride completion fields
+    private boolean rideCompleted;
+    private long completedAt;
+    private boolean requesterMarkedComplete;
+    private boolean creatorMarkedComplete;
+    
+    // Review tracking
+    private boolean requesterReviewedCreator;
+    private boolean creatorReviewedRequester;
     
     // Last message info for Inbox
     private String lastMessage;
@@ -77,4 +88,47 @@ public class JoinRequest {
 
     public boolean isLastMessageRead() { return lastMessageRead; }
     public void setLastMessageRead(boolean lastMessageRead) { this.lastMessageRead = lastMessageRead; }
+    
+    // Ride completion getters and setters
+    public boolean isRideCompleted() { return rideCompleted; }
+    public void setRideCompleted(boolean rideCompleted) { this.rideCompleted = rideCompleted; }
+    
+    public long getCompletedAt() { return completedAt; }
+    public void setCompletedAt(long completedAt) { this.completedAt = completedAt; }
+    
+    public boolean isRequesterMarkedComplete() { return requesterMarkedComplete; }
+    public void setRequesterMarkedComplete(boolean requesterMarkedComplete) { this.requesterMarkedComplete = requesterMarkedComplete; }
+    
+    public boolean isCreatorMarkedComplete() { return creatorMarkedComplete; }
+    public void setCreatorMarkedComplete(boolean creatorMarkedComplete) { this.creatorMarkedComplete = creatorMarkedComplete; }
+    
+    public boolean isRequesterReviewedCreator() { return requesterReviewedCreator; }
+    public void setRequesterReviewedCreator(boolean requesterReviewedCreator) { this.requesterReviewedCreator = requesterReviewedCreator; }
+    
+    public boolean isCreatorReviewedRequester() { return creatorReviewedRequester; }
+    public void setCreatorReviewedRequester(boolean creatorReviewedRequester) { this.creatorReviewedRequester = creatorReviewedRequester; }
+    
+    /**
+     * Checks if both parties have marked the ride as complete
+     */
+    public boolean isBothPartiesMarkedComplete() {
+        return requesterMarkedComplete && creatorMarkedComplete;
+    }
+    
+    /**
+     * Checks if current user can review the other party
+     */
+    public boolean canUserReview(String currentUserId, boolean isCreator) {
+        // Must be completed by both parties
+        if (!rideCompleted || !isBothPartiesMarkedComplete()) {
+            return false;
+        }
+        
+        // Check if already reviewed
+        if (isCreator) {
+            return !creatorReviewedRequester;
+        } else {
+            return !requesterReviewedCreator;
+        }
+    }
 }

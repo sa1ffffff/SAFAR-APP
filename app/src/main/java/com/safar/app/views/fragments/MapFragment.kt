@@ -57,8 +57,11 @@ import com.safar.app.utils.SessionManager
 import com.safar.app.views.activities.AdDetailActivity
 import com.safar.app.views.activities.MainActivity
 import com.safar.app.views.activities.MyAdsActivity
+import com.safar.app.views.activities.NotificationsActivity
 import com.safar.app.views.activities.PostAdActivity
 import com.safar.app.views.activities.ProfileActivity
+import com.safar.app.presenters.NotificationPresenter
+import com.safar.app.models.Notification
 import com.safar.app.views.ui.theme.SafarTheme
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -76,7 +79,8 @@ data class MapUiState(
     val ride2Meta: String = "",
     val showRide2: Boolean = false,
     val userName: String = "",
-    val userAvatarUrl: String? = null
+    val userAvatarUrl: String? = null,
+    val notificationCount: Int = 0
 )
 
 // ── State Holder ──────────────────────────────────────────────────────────────
@@ -103,18 +107,23 @@ class MapStateHolder {
     fun setUserInfo(name: String, avatarUrl: String?) {
         state = state.copy(userName = name, userAvatarUrl = avatarUrl)
     }
+
+    fun setNotificationCount(count: Int) {
+        state = state.copy(notificationCount = count)
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // FRAGMENT
 // ══════════════════════════════════════════════════════════════════════════════
 
-class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView {
+class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView, NotificationPresenter.NotificationView {
 
     private val stateHolder = MapStateHolder()
     private var mapViewRef: MapView? = null
     private var googleMap: GoogleMap? = null
     private var presenter: AdsPresenter? = null
+    private var notificationPresenter: NotificationPresenter? = null
 
     private val markerAdMap = HashMap<String, RideAd>()
     private val recentAds = mutableListOf<RideAd>()
@@ -148,15 +157,13 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView {
                         startActivity(Intent(requireContext(), PostAdActivity::class.java))
                     },
                     onExplore = { openListTab() },
-                    onMyRides = {
-                        startActivity(Intent(requireContext(), MyAdsActivity::class.java))
-                    },
                     onMyLocation = { centerOnMyLocation() },
                     onSearchTap = { openListTab() },
                     onSeeAllRides = { openListTab() },
                     onRide1Click = { openFirstAd() },
                     onRide2Click = { openSecondAd() },
-                    onProfileClick = { openProfile() }
+                    onProfileClick = { openProfile() },
+                    onNotificationClick = { openNotifications() }
                 )
             }
         }
@@ -167,6 +174,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView {
         presenter = AdsPresenter(this)
         presenter?.loadActiveAds()
         loadUserInfo()
+        loadNotificationCount()
     }
 
     private fun loadUserInfo() {
@@ -175,6 +183,39 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView {
         val userName = session.userName ?: ""
         val userAvatarUrl = session.userPhotoUrl
         stateHolder.setUserInfo(userName, userAvatarUrl)
+    }
+
+    private fun loadNotificationCount() {
+        if (!isAdded) return
+        val session = SessionManager(requireContext())
+        val userId = session.currentUserId ?: return
+        notificationPresenter = NotificationPresenter(this)
+        notificationPresenter?.listenForUnreadCount(userId)
+    }
+
+    // ── Shared Presenter Callbacks (Satisfies both AdsPresenter.AdsView and NotificationPresenter.NotificationView) ──
+    override fun onError(message: String?) {
+        // Shared error handler for notification count and ads loading
+    }
+
+    override fun onLoading(isLoading: Boolean) {
+        stateHolder.setLoading(isLoading)
+    }
+
+    // ── NotificationPresenter.NotificationView Implementation ────────────────
+    override fun onNotificationsLoaded(notifications: MutableList<Notification>?) {
+        // Not needed in this fragment
+    }
+
+    override fun onUnreadCountUpdated(count: Int) {
+        if (!isAdded) return
+        requireActivity().runOnUiThread {
+            stateHolder.setNotificationCount(count)
+        }
+    }
+
+    override fun onNotificationSent() {
+        // Not needed in this fragment
     }
 
     // ── Navigation Helpers ────────────────────────────────────────────────────
@@ -194,6 +235,11 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView {
     private fun openProfile() {
         if (!isAdded) return
         startActivity(Intent(requireContext(), ProfileActivity::class.java))
+    }
+
+    private fun openNotifications() {
+        if (!isAdded) return
+        startActivity(Intent(requireContext(), NotificationsActivity::class.java))
     }
 
     private fun openFirstAd() {
@@ -363,10 +409,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView {
 
     override fun onAdPosted(adId: String) {}
     override fun onAdDeleted() {}
-    override fun onError(msg: String) {}
-    override fun onLoading(loading: Boolean) {
-        stateHolder.setLoading(loading)
-    }
 
     // ── MapView Lifecycle Forwarding ──────────────────────────────────────────
     override fun onResume() {
@@ -402,6 +444,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView {
     override fun onDestroyView() {
         super.onDestroyView()
         presenter?.detach()
+        notificationPresenter?.detach()
         mapViewRef?.onDestroy()
         mapViewRef = null
         googleMap = null
@@ -419,13 +462,13 @@ fun MapScreen(
     onMapReady: (MapView) -> Unit,
     onPostRide: () -> Unit,
     onExplore: () -> Unit,
-    onMyRides: () -> Unit,
     onMyLocation: () -> Unit,
     onSearchTap: () -> Unit,
     onSeeAllRides: () -> Unit,
     onRide1Click: () -> Unit,
     onRide2Click: () -> Unit,
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {}
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Map View
@@ -451,12 +494,14 @@ fun MapScreen(
                 )
         )
 
-        // Top Bar with Search and Profile Avatar
+        // Top Bar with Search, Profile Avatar, and Notification Bell
         TopSearchBar(
             userAvatarUrl = state.userAvatarUrl,
             userName = state.userName,
+            notificationCount = state.notificationCount,
             onSearchTap = onSearchTap,
             onProfileClick = onProfileClick,
+            onNotificationClick = onNotificationClick,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 48.dp, start = 16.dp, end = 16.dp)
@@ -465,7 +510,6 @@ fun MapScreen(
         // Floating Action Buttons (Right Side)
         FloatingActionColumn(
             onMyLocation = onMyLocation,
-            onMyRides = onMyRides,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 16.dp)
@@ -488,8 +532,10 @@ fun MapScreen(
 private fun TopSearchBar(
     userAvatarUrl: String?,
     userName: String,
+    notificationCount: Int = 0,
     onSearchTap: () -> Unit,
     onProfileClick: () -> Unit,
+    onNotificationClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -567,13 +613,53 @@ private fun TopSearchBar(
                 )
             }
         }
+
+        // Notification Bell Icon with Badge (Instagram style)
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+                .shadow(4.dp, CircleShape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(bounded = false)
+                ) { onNotificationClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (notificationCount > 0) Icons.Filled.Notifications else Icons.Outlined.Notifications,
+                contentDescription = "Notifications",
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            // Badge for unread count
+            if (notificationCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 2.dp, y = (-2).dp)
+                        .size(if (notificationCount > 9) 20.dp else 16.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFF3B30)), // Instagram red
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (notificationCount > 99) "99+" else notificationCount.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun FloatingActionColumn(
     onMyLocation: () -> Unit,
-    onMyRides: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -595,25 +681,6 @@ private fun FloatingActionColumn(
             Icon(
                 imageVector = Icons.Filled.MyLocation,
                 contentDescription = "My Location",
-                modifier = Modifier.size(22.dp)
-            )
-        }
-
-        // My Rides Button
-        FloatingActionButton(
-            onClick = onMyRides,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary,
-            shape = CircleShape,
-            elevation = FloatingActionButtonDefaults.elevation(
-                defaultElevation = 4.dp,
-                pressedElevation = 8.dp
-            ),
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.DirectionsCar,
-                contentDescription = "My Rides",
                 modifier = Modifier.size(22.dp)
             )
         }

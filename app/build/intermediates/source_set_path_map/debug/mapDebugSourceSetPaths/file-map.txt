@@ -1,82 +1,82 @@
-com.safar.app-jetified-annotation-experimental-1.4.1-0 C:\Users\hp\.gradle\caches\8.9\transforms\06123944d479c94e7a7abd340f83b416\transformed\jetified-annotation-experimental-1.4.1\res
-com.safar.app-jetified-ui-tooling-preview-release-1 C:\Users\hp\.gradle\caches\8.9\transforms\061499244112a192ab0d5c9ec60b7672\transformed\jetified-ui-tooling-preview-release\res
-com.safar.app-jetified-runtime-saveable-release-2 C:\Users\hp\.gradle\caches\8.9\transforms\083bfdcdfd808b854bff472478f88971\transformed\jetified-runtime-saveable-release\res
-com.safar.app-jetified-activity-1.9.3-3 C:\Users\hp\.gradle\caches\8.9\transforms\0ec0060618b2aa215fe825bdd121d565\transformed\jetified-activity-1.9.3\res
-com.safar.app-recyclerview-1.3.2-4 C:\Users\hp\.gradle\caches\8.9\transforms\1475696bfead9e0fee3d6cfea5bb5a89\transformed\recyclerview-1.3.2\res
-com.safar.app-jetified-ui-geometry-release-5 C:\Users\hp\.gradle\caches\8.9\transforms\16d9a34fa459d4219df817739c870f9c\transformed\jetified-ui-geometry-release\res
-com.safar.app-jetified-profileinstaller-1.3.1-6 C:\Users\hp\.gradle\caches\8.9\transforms\18cba9416dbb40984b066845e0dd3912\transformed\jetified-profileinstaller-1.3.1\res
-com.safar.app-jetified-ui-unit-release-7 C:\Users\hp\.gradle\caches\8.9\transforms\1b8fd48a70e0fed7cc60ad9045869404\transformed\jetified-ui-unit-release\res
-com.safar.app-jetified-ui-release-8 C:\Users\hp\.gradle\caches\8.9\transforms\1f6eb908123c5feaf54b4b7b1ca14eb7\transformed\jetified-ui-release\res
-com.safar.app-navigation-common-ktx-2.8.3-9 C:\Users\hp\.gradle\caches\8.9\transforms\20b0a48beea07a2f7f83f247e26222c3\transformed\navigation-common-ktx-2.8.3\res
-com.safar.app-jetified-play-services-base-18.1.0-10 C:\Users\hp\.gradle\caches\8.9\transforms\2593c7e091841e5ea672191048ab94b7\transformed\jetified-play-services-base-18.1.0\res
-com.safar.app-jetified-coil-base-2.5.0-11 C:\Users\hp\.gradle\caches\8.9\transforms\29fe994154bd8b62fea326f6ad8c2dbe\transformed\jetified-coil-base-2.5.0\res
-com.safar.app-jetified-viewpager2-1.1.0-beta02-12 C:\Users\hp\.gradle\caches\8.9\transforms\2cf753fa80dca5cb8112a2372fb4bae4\transformed\jetified-viewpager2-1.1.0-beta02\res
-com.safar.app-material-1.11.0-13 C:\Users\hp\.gradle\caches\8.9\transforms\2f4f3353468d7e6075da9ebd55f9d932\transformed\material-1.11.0\res
-com.safar.app-jetified-foundation-layout-release-14 C:\Users\hp\.gradle\caches\8.9\transforms\2ff0f12aa893db2fe4cc8a09c40fca3c\transformed\jetified-foundation-layout-release\res
-com.safar.app-jetified-runtime-release-15 C:\Users\hp\.gradle\caches\8.9\transforms\30101749994ed3d856d6d89b415e87af\transformed\jetified-runtime-release\res
-com.safar.app-jetified-lifecycle-runtime-compose-release-16 C:\Users\hp\.gradle\caches\8.9\transforms\34aa826e270f1335f04d931f09832bce\transformed\jetified-lifecycle-runtime-compose-release\res
-com.safar.app-jetified-lifecycle-viewmodel-compose-release-17 C:\Users\hp\.gradle\caches\8.9\transforms\384a7168076e158705a33b3ebf392857\transformed\jetified-lifecycle-viewmodel-compose-release\res
-com.safar.app-jetified-animation-release-18 C:\Users\hp\.gradle\caches\8.9\transforms\396f8a7c29387f995b2d1ee38930a333\transformed\jetified-animation-release\res
-com.safar.app-jetified-ui-test-manifest-1.7.5-19 C:\Users\hp\.gradle\caches\8.9\transforms\3b31da6a5444b788c4dafd4330cca37d\transformed\jetified-ui-test-manifest-1.7.5\res
-com.safar.app-jetified-ui-tooling-data-release-20 C:\Users\hp\.gradle\caches\8.9\transforms\3b9f2c5559a02d7bcad9cec256dc4a0e\transformed\jetified-ui-tooling-data-release\res
-com.safar.app-jetified-emoji2-views-helper-1.3.0-21 C:\Users\hp\.gradle\caches\8.9\transforms\44a6938e4d74e5e3aabd726a492ddc1a\transformed\jetified-emoji2-views-helper-1.3.0\res
-com.safar.app-fragment-1.5.7-22 C:\Users\hp\.gradle\caches\8.9\transforms\4512f8b9cd8402193dc157522a594042\transformed\fragment-1.5.7\res
-com.safar.app-jetified-startup-runtime-1.1.1-23 C:\Users\hp\.gradle\caches\8.9\transforms\48e6e0a9df83992fcd835d2dd1884eef\transformed\jetified-startup-runtime-1.1.1\res
-com.safar.app-jetified-play-services-auth-21.0.0-24 C:\Users\hp\.gradle\caches\8.9\transforms\4ad2d26bd346086842ac1b7131d7667e\transformed\jetified-play-services-auth-21.0.0\res
-com.safar.app-jetified-core-ktx-1.13.1-25 C:\Users\hp\.gradle\caches\8.9\transforms\4bc11643bfeef3ce05c53feaa3718013\transformed\jetified-core-ktx-1.13.1\res
-com.safar.app-jetified-graphics-path-1.0.1-26 C:\Users\hp\.gradle\caches\8.9\transforms\4c8ae560c089689185901b3a59df54ce\transformed\jetified-graphics-path-1.0.1\res
-com.safar.app-jetified-firebase-common-20.4.2-27 C:\Users\hp\.gradle\caches\8.9\transforms\4d4aaa245dd7e2fd3295a2df149a1c65\transformed\jetified-firebase-common-20.4.2\res
-com.safar.app-jetified-firebase-messaging-23.4.0-28 C:\Users\hp\.gradle\caches\8.9\transforms\52df0f47a08edf559cb3f2a44fa36195\transformed\jetified-firebase-messaging-23.4.0\res
-com.safar.app-jetified-lifecycle-process-2.8.7-29 C:\Users\hp\.gradle\caches\8.9\transforms\57713eeb21dec92967f9297d113f6243\transformed\jetified-lifecycle-process-2.8.7\res
-com.safar.app-appcompat-1.6.1-30 C:\Users\hp\.gradle\caches\8.9\transforms\5d39d6d35e330470cac808997182b92b\transformed\appcompat-1.6.1\res
-com.safar.app-jetified-lifecycle-viewmodel-ktx-2.8.7-31 C:\Users\hp\.gradle\caches\8.9\transforms\5d8e7326b32341f8467ed25b86f5d65f\transformed\jetified-lifecycle-viewmodel-ktx-2.8.7\res
-com.safar.app-jetified-animation-core-release-32 C:\Users\hp\.gradle\caches\8.9\transforms\5ebc16e0f78731537769f5db44909c5e\transformed\jetified-animation-core-release\res
-com.safar.app-browser-1.4.0-33 C:\Users\hp\.gradle\caches\8.9\transforms\6217cf38eff656c4e7aeef412e21d014\transformed\browser-1.4.0\res
-com.safar.app-jetified-ccp-2.7.0-34 C:\Users\hp\.gradle\caches\8.9\transforms\62dc0ed167bd18309aadfaffc7ba7d01\transformed\jetified-ccp-2.7.0\res
-com.safar.app-cardview-1.0.0-35 C:\Users\hp\.gradle\caches\8.9\transforms\6a2a5ffe05ee115390dcd96fa6d2a948\transformed\cardview-1.0.0\res
-com.safar.app-transition-1.2.0-36 C:\Users\hp\.gradle\caches\8.9\transforms\6c6b25080b84a04291c2e82347826ca5\transformed\transition-1.2.0\res
-com.safar.app-jetified-savedstate-1.2.1-37 C:\Users\hp\.gradle\caches\8.9\transforms\6dc51757c3270d69eec19c0c0a9c1f21\transformed\jetified-savedstate-1.2.1\res
-com.safar.app-jetified-material-release-38 C:\Users\hp\.gradle\caches\8.9\transforms\735f5d5dcce3661ee9057d9ae59cae2c\transformed\jetified-material-release\res
-com.safar.app-jetified-circleimageview-3.1.0-39 C:\Users\hp\.gradle\caches\8.9\transforms\7b1171cf7f6234b33bee7b16565cb50f\transformed\jetified-circleimageview-3.1.0\res
-com.safar.app-jetified-maps-compose-4.3.3-40 C:\Users\hp\.gradle\caches\8.9\transforms\849ccb395ce190e2172ea7def38c6489\transformed\jetified-maps-compose-4.3.3\res
-com.safar.app-jetified-lifecycle-viewmodel-release-41 C:\Users\hp\.gradle\caches\8.9\transforms\8ccf4422ce1eb4ff0c54b5a9d59507c8\transformed\jetified-lifecycle-viewmodel-release\res
-com.safar.app-jetified-lifecycle-runtime-ktx-release-42 C:\Users\hp\.gradle\caches\8.9\transforms\949f29b8d18c5b73ebfb35f36ac6efc4\transformed\jetified-lifecycle-runtime-ktx-release\res
-com.safar.app-jetified-activity-ktx-1.9.3-43 C:\Users\hp\.gradle\caches\8.9\transforms\94f0302541e48700cad2c1b97aca32c5\transformed\jetified-activity-ktx-1.9.3\res
-com.safar.app-navigation-runtime-ktx-2.8.3-44 C:\Users\hp\.gradle\caches\8.9\transforms\98e7c4627e9935e449af5c23ebbb8da0\transformed\navigation-runtime-ktx-2.8.3\res
-com.safar.app-jetified-play-services-basement-18.2.0-45 C:\Users\hp\.gradle\caches\8.9\transforms\98fc6b61d24b10735d95182d5f83b485\transformed\jetified-play-services-basement-18.2.0\res
-com.safar.app-jetified-glide-4.16.0-46 C:\Users\hp\.gradle\caches\8.9\transforms\9abde5ccf6a1c6a399e97e74a2767a0e\transformed\jetified-glide-4.16.0\res
-com.safar.app-lifecycle-livedata-core-2.8.7-47 C:\Users\hp\.gradle\caches\8.9\transforms\9b4b84be5998faefe0acdb0e5032f28b\transformed\lifecycle-livedata-core-2.8.7\res
-com.safar.app-jetified-material-icons-extended-release-48 C:\Users\hp\.gradle\caches\8.9\transforms\a09b30b1c62f1fe4fcb88bb056737e75\transformed\jetified-material-icons-extended-release\res
-com.safar.app-drawerlayout-1.1.1-49 C:\Users\hp\.gradle\caches\8.9\transforms\a83fc40e9bea0103654fdc67b173c291\transformed\drawerlayout-1.1.1\res
-com.safar.app-jetified-ui-text-release-50 C:\Users\hp\.gradle\caches\8.9\transforms\a9c97da26e769df9e48f9543ea5edbe9\transformed\jetified-ui-text-release\res
-com.safar.app-jetified-emoji2-1.3.0-51 C:\Users\hp\.gradle\caches\8.9\transforms\acedad9ed752d09a0ccc77e925698bf3\transformed\jetified-emoji2-1.3.0\res
-com.safar.app-swiperefreshlayout-1.1.0-52 C:\Users\hp\.gradle\caches\8.9\transforms\b3c68ce2561d8886aee24f16b311b650\transformed\swiperefreshlayout-1.1.0\res
-com.safar.app-coordinatorlayout-1.1.0-53 C:\Users\hp\.gradle\caches\8.9\transforms\b5eeb37b3371128abcbe1048e38ba64a\transformed\coordinatorlayout-1.1.0\res
-com.safar.app-jetified-ui-graphics-release-54 C:\Users\hp\.gradle\caches\8.9\transforms\b62e1d754505dc7da81d07201991696f\transformed\jetified-ui-graphics-release\res
-com.safar.app-jetified-material-icons-core-release-55 C:\Users\hp\.gradle\caches\8.9\transforms\c115287a16f4f112b0b01097875622db\transformed\jetified-material-icons-core-release\res
-com.safar.app-jetified-material3-release-56 C:\Users\hp\.gradle\caches\8.9\transforms\c3acdfaf5d79053a1e9de94dd66b6b3d\transformed\jetified-material3-release\res
-com.safar.app-jetified-activity-compose-1.9.3-57 C:\Users\hp\.gradle\caches\8.9\transforms\c494cb282a514829d825f0ff30b24076\transformed\jetified-activity-compose-1.9.3\res
-com.safar.app-jetified-foundation-release-58 C:\Users\hp\.gradle\caches\8.9\transforms\c748850da37bd6b2986aa3a2e13f52f5\transformed\jetified-foundation-release\res
-com.safar.app-core-runtime-2.2.0-59 C:\Users\hp\.gradle\caches\8.9\transforms\c9ecd6bc58bce573ff2ddfcd3b48a894\transformed\core-runtime-2.2.0\res
-com.safar.app-navigation-common-2.8.3-60 C:\Users\hp\.gradle\caches\8.9\transforms\cb42897b9e824b46af4c1c29672faedb\transformed\navigation-common-2.8.3\res
-com.safar.app-jetified-ui-util-release-61 C:\Users\hp\.gradle\caches\8.9\transforms\cfb46e9c61b056be12f00e19f1c39aa0\transformed\jetified-ui-util-release\res
-com.safar.app-constraintlayout-2.1.4-62 C:\Users\hp\.gradle\caches\8.9\transforms\d5fed39cca6742f3ec6c406c834ff3f4\transformed\constraintlayout-2.1.4\res
-com.safar.app-jetified-lifecycle-viewmodel-savedstate-2.8.7-63 C:\Users\hp\.gradle\caches\8.9\transforms\da5f18adf92fcb16c8996d24c70902bf\transformed\jetified-lifecycle-viewmodel-savedstate-2.8.7\res
-com.safar.app-jetified-savedstate-ktx-1.2.1-64 C:\Users\hp\.gradle\caches\8.9\transforms\dcd37e314b2ccd369a27a67e72385e54\transformed\jetified-savedstate-ktx-1.2.1\res
-com.safar.app-jetified-material-ripple-release-65 C:\Users\hp\.gradle\caches\8.9\transforms\dd7005e7860131ef7827c07b7a77da86\transformed\jetified-material-ripple-release\res
-com.safar.app-jetified-ui-tooling-release-66 C:\Users\hp\.gradle\caches\8.9\transforms\e39485ab3df0c13a41e6d1be3c676554\transformed\jetified-ui-tooling-release\res
-com.safar.app-jetified-play-services-maps-18.2.0-67 C:\Users\hp\.gradle\caches\8.9\transforms\e98a667301ba21f03ddbbdc41d088f7c\transformed\jetified-play-services-maps-18.2.0\res
-com.safar.app-jetified-lifecycle-runtime-release-68 C:\Users\hp\.gradle\caches\8.9\transforms\ee5816fd48d99db317a3a28ccb9e2cad\transformed\jetified-lifecycle-runtime-release\res
-com.safar.app-jetified-appcompat-resources-1.6.1-69 C:\Users\hp\.gradle\caches\8.9\transforms\f190ba2dbf07484bf29c9ad9fcd23b35\transformed\jetified-appcompat-resources-1.6.1\res
-com.safar.app-jetified-customview-poolingcontainer-1.0.0-70 C:\Users\hp\.gradle\caches\8.9\transforms\f4cb9bd9724290f2ef0af42758fc2457\transformed\jetified-customview-poolingcontainer-1.0.0\res
-com.safar.app-navigation-runtime-2.8.3-71 C:\Users\hp\.gradle\caches\8.9\transforms\f61bdacfb8a69f7340f1142528220c75\transformed\navigation-runtime-2.8.3\res
-com.safar.app-core-1.13.1-72 C:\Users\hp\.gradle\caches\8.9\transforms\f9caf7af68f9aaf1c8f1f46f37aa70bf\transformed\core-1.13.1\res
-com.safar.app-jetified-navigation-compose-2.8.3-73 C:\Users\hp\.gradle\caches\8.9\transforms\fd7c99201bb90c4c2f160b718097ed2d\transformed\jetified-navigation-compose-2.8.3\res
-com.safar.app-pngs-74 D:\SAFAR ktjava\app\build\generated\res\pngs\debug
-com.safar.app-res-75 D:\SAFAR ktjava\app\build\generated\res\processDebugGoogleServices
-com.safar.app-resValues-76 D:\SAFAR ktjava\app\build\generated\res\resValues\debug
-com.safar.app-packageDebugResources-77 D:\SAFAR ktjava\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
-com.safar.app-packageDebugResources-78 D:\SAFAR ktjava\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
-com.safar.app-debug-79 D:\SAFAR ktjava\app\build\intermediates\merged_res\debug\mergeDebugResources
-com.safar.app-debug-80 D:\SAFAR ktjava\app\src\debug\res
-com.safar.app-main-81 D:\SAFAR ktjava\app\src\main\res
+com.safar.app-jetified-annotation-experimental-1.4.1-0 C:\Users\losta\.gradle\caches\8.9\transforms\0bd5315162dcfa8bdba7a1ceac7fe67c\transformed\jetified-annotation-experimental-1.4.1\res
+com.safar.app-jetified-customview-poolingcontainer-1.0.0-1 C:\Users\losta\.gradle\caches\8.9\transforms\0c0d85f3d9eb11a013165276f1ced4c4\transformed\jetified-customview-poolingcontainer-1.0.0\res
+com.safar.app-jetified-emoji2-1.3.0-2 C:\Users\losta\.gradle\caches\8.9\transforms\12dcd42e7f8ec0e5a95f2d8db18ea866\transformed\jetified-emoji2-1.3.0\res
+com.safar.app-jetified-ui-geometry-release-3 C:\Users\losta\.gradle\caches\8.9\transforms\150b972cd4a945bc7e76b83570722b36\transformed\jetified-ui-geometry-release\res
+com.safar.app-lifecycle-livedata-core-2.8.7-4 C:\Users\losta\.gradle\caches\8.9\transforms\1550937be25ffc15328d3de4ff3b2d12\transformed\lifecycle-livedata-core-2.8.7\res
+com.safar.app-transition-1.2.0-5 C:\Users\losta\.gradle\caches\8.9\transforms\1682e5faedc89fef3f7cc1f5c0f31cae\transformed\transition-1.2.0\res
+com.safar.app-jetified-savedstate-ktx-1.2.1-6 C:\Users\losta\.gradle\caches\8.9\transforms\17181370ff1057a69ddeb02493b24297\transformed\jetified-savedstate-ktx-1.2.1\res
+com.safar.app-jetified-foundation-release-7 C:\Users\losta\.gradle\caches\8.9\transforms\18acd275a2b76bfc99be436c0f5f5fbf\transformed\jetified-foundation-release\res
+com.safar.app-jetified-firebase-common-20.4.2-8 C:\Users\losta\.gradle\caches\8.9\transforms\1a7f08c36311efba72c2712485f7566f\transformed\jetified-firebase-common-20.4.2\res
+com.safar.app-jetified-material-release-9 C:\Users\losta\.gradle\caches\8.9\transforms\256eb0b7e25055d205ef87e40489f92b\transformed\jetified-material-release\res
+com.safar.app-jetified-play-services-basement-18.2.0-10 C:\Users\losta\.gradle\caches\8.9\transforms\26621aa598d69fbca22eb85d1d20b55b\transformed\jetified-play-services-basement-18.2.0\res
+com.safar.app-core-1.13.1-11 C:\Users\losta\.gradle\caches\8.9\transforms\28dc0e466f469822221dd68d59c03acd\transformed\core-1.13.1\res
+com.safar.app-jetified-runtime-saveable-release-12 C:\Users\losta\.gradle\caches\8.9\transforms\2fa17188802738352f684b87b4b61b96\transformed\jetified-runtime-saveable-release\res
+com.safar.app-jetified-lifecycle-viewmodel-savedstate-2.8.7-13 C:\Users\losta\.gradle\caches\8.9\transforms\355883f0e818c074c0089fb4e24a9118\transformed\jetified-lifecycle-viewmodel-savedstate-2.8.7\res
+com.safar.app-jetified-glide-4.16.0-14 C:\Users\losta\.gradle\caches\8.9\transforms\41618e67c3472c0ea306c91ecf690451\transformed\jetified-glide-4.16.0\res
+com.safar.app-jetified-graphics-path-1.0.1-15 C:\Users\losta\.gradle\caches\8.9\transforms\451edc388f60833c049454baef170a37\transformed\jetified-graphics-path-1.0.1\res
+com.safar.app-jetified-core-ktx-1.13.1-16 C:\Users\losta\.gradle\caches\8.9\transforms\4a1a7e01880baa176cd2493a42c11d5c\transformed\jetified-core-ktx-1.13.1\res
+com.safar.app-jetified-ui-tooling-data-release-17 C:\Users\losta\.gradle\caches\8.9\transforms\4fd8767de240ccd1fe418505aeef7799\transformed\jetified-ui-tooling-data-release\res
+com.safar.app-jetified-ui-release-18 C:\Users\losta\.gradle\caches\8.9\transforms\4fef9e5064f078ad8700b0e7d8795758\transformed\jetified-ui-release\res
+com.safar.app-jetified-material3-release-19 C:\Users\losta\.gradle\caches\8.9\transforms\52e2deeb669467b4f7765bbdbe19a20a\transformed\jetified-material3-release\res
+com.safar.app-jetified-ui-util-release-20 C:\Users\losta\.gradle\caches\8.9\transforms\55733dfe35729690d4d3d92c6cada2d8\transformed\jetified-ui-util-release\res
+com.safar.app-jetified-savedstate-1.2.1-21 C:\Users\losta\.gradle\caches\8.9\transforms\57ea52f84f808ff17c23dbdea7e3b27a\transformed\jetified-savedstate-1.2.1\res
+com.safar.app-jetified-ui-tooling-release-22 C:\Users\losta\.gradle\caches\8.9\transforms\58f15471ba54f4bb653028aca3ad30a4\transformed\jetified-ui-tooling-release\res
+com.safar.app-jetified-play-services-base-18.1.0-23 C:\Users\losta\.gradle\caches\8.9\transforms\5d70d2159651d09ea3fad986a042f1f5\transformed\jetified-play-services-base-18.1.0\res
+com.safar.app-coordinatorlayout-1.1.0-24 C:\Users\losta\.gradle\caches\8.9\transforms\5fed803c6ae7afb2f48ebb811d3bf742\transformed\coordinatorlayout-1.1.0\res
+com.safar.app-jetified-activity-ktx-1.9.3-25 C:\Users\losta\.gradle\caches\8.9\transforms\60e03475c5f3df602cc5e86b8f5d9ebe\transformed\jetified-activity-ktx-1.9.3\res
+com.safar.app-jetified-circleimageview-3.1.0-26 C:\Users\losta\.gradle\caches\8.9\transforms\61cfbc51860b6cfe702c47b016f5bd16\transformed\jetified-circleimageview-3.1.0\res
+com.safar.app-jetified-startup-runtime-1.1.1-27 C:\Users\losta\.gradle\caches\8.9\transforms\6218330762a33f4d1206a5263ceacb07\transformed\jetified-startup-runtime-1.1.1\res
+com.safar.app-jetified-coil-base-2.5.0-28 C:\Users\losta\.gradle\caches\8.9\transforms\785b50bee8e7a3ad726a6eafc1626df7\transformed\jetified-coil-base-2.5.0\res
+com.safar.app-jetified-play-services-maps-18.2.0-29 C:\Users\losta\.gradle\caches\8.9\transforms\7a561f2528eac61084b5bf3a0c625465\transformed\jetified-play-services-maps-18.2.0\res
+com.safar.app-jetified-play-services-auth-21.0.0-30 C:\Users\losta\.gradle\caches\8.9\transforms\7ca6e7a8fe1b91eb24643fe1d3098055\transformed\jetified-play-services-auth-21.0.0\res
+com.safar.app-jetified-ui-graphics-release-31 C:\Users\losta\.gradle\caches\8.9\transforms\8104d866f0843dbf7ad33a3772a99529\transformed\jetified-ui-graphics-release\res
+com.safar.app-core-runtime-2.2.0-32 C:\Users\losta\.gradle\caches\8.9\transforms\83c0beefddd95ba917f955ce6e7f4889\transformed\core-runtime-2.2.0\res
+com.safar.app-constraintlayout-2.1.4-33 C:\Users\losta\.gradle\caches\8.9\transforms\83e95668ee10ba69aa2c5832f6a33ab0\transformed\constraintlayout-2.1.4\res
+com.safar.app-appcompat-1.6.1-34 C:\Users\losta\.gradle\caches\8.9\transforms\85e99aae366e4694126edadfb260a64e\transformed\appcompat-1.6.1\res
+com.safar.app-jetified-lifecycle-process-2.8.7-35 C:\Users\losta\.gradle\caches\8.9\transforms\862834e69b05a8646600873cfd635e9d\transformed\jetified-lifecycle-process-2.8.7\res
+com.safar.app-jetified-animation-core-release-36 C:\Users\losta\.gradle\caches\8.9\transforms\8b5fae0ea15c061033f85971effcbabb\transformed\jetified-animation-core-release\res
+com.safar.app-jetified-lifecycle-viewmodel-ktx-2.8.7-37 C:\Users\losta\.gradle\caches\8.9\transforms\9750b9be644ea90282d65ec07dfccc03\transformed\jetified-lifecycle-viewmodel-ktx-2.8.7\res
+com.safar.app-jetified-activity-compose-1.9.3-38 C:\Users\losta\.gradle\caches\8.9\transforms\9826855903eb4f41a5d84b4d3e556f1c\transformed\jetified-activity-compose-1.9.3\res
+com.safar.app-jetified-lifecycle-viewmodel-compose-release-39 C:\Users\losta\.gradle\caches\8.9\transforms\98dd73566ead2883926487127e0d3ebf\transformed\jetified-lifecycle-viewmodel-compose-release\res
+com.safar.app-navigation-common-ktx-2.8.3-40 C:\Users\losta\.gradle\caches\8.9\transforms\99433cc96d82969da3fc145d7936e8b7\transformed\navigation-common-ktx-2.8.3\res
+com.safar.app-jetified-ui-text-release-41 C:\Users\losta\.gradle\caches\8.9\transforms\9d5369ce0c45f77fa9458648386ba684\transformed\jetified-ui-text-release\res
+com.safar.app-jetified-ui-unit-release-42 C:\Users\losta\.gradle\caches\8.9\transforms\9e61ccb98112fe532a36d059a054f1bb\transformed\jetified-ui-unit-release\res
+com.safar.app-jetified-appcompat-resources-1.6.1-43 C:\Users\losta\.gradle\caches\8.9\transforms\9fcba9257419df1b1fdb7420518199a0\transformed\jetified-appcompat-resources-1.6.1\res
+com.safar.app-navigation-runtime-2.8.3-44 C:\Users\losta\.gradle\caches\8.9\transforms\a00b5512fbcee6fe1e7184bd34d8be9b\transformed\navigation-runtime-2.8.3\res
+com.safar.app-jetified-viewpager2-1.1.0-beta02-45 C:\Users\losta\.gradle\caches\8.9\transforms\a18d0300102abc07590184eb409c8428\transformed\jetified-viewpager2-1.1.0-beta02\res
+com.safar.app-jetified-lifecycle-runtime-compose-release-46 C:\Users\losta\.gradle\caches\8.9\transforms\a2efbff635d88d027cf8671a4521df16\transformed\jetified-lifecycle-runtime-compose-release\res
+com.safar.app-browser-1.4.0-47 C:\Users\losta\.gradle\caches\8.9\transforms\a6456cd9ab1ebd228dd5cf2ea8b4ee34\transformed\browser-1.4.0\res
+com.safar.app-jetified-ui-test-manifest-1.7.5-48 C:\Users\losta\.gradle\caches\8.9\transforms\a69a048e088e8e8fe5c9a87afd30655e\transformed\jetified-ui-test-manifest-1.7.5\res
+com.safar.app-jetified-firebase-messaging-23.4.0-49 C:\Users\losta\.gradle\caches\8.9\transforms\a7a7e3e4f297573131d74dd21ce4e5a4\transformed\jetified-firebase-messaging-23.4.0\res
+com.safar.app-jetified-lifecycle-runtime-release-50 C:\Users\losta\.gradle\caches\8.9\transforms\a903f53ac92db167655285ae75928ba4\transformed\jetified-lifecycle-runtime-release\res
+com.safar.app-recyclerview-1.3.2-51 C:\Users\losta\.gradle\caches\8.9\transforms\a97eb0b3905cb4585618df0f208b0224\transformed\recyclerview-1.3.2\res
+com.safar.app-jetified-activity-1.9.3-52 C:\Users\losta\.gradle\caches\8.9\transforms\a9834419f7cb5e2b6e9b3e74aafd0f65\transformed\jetified-activity-1.9.3\res
+com.safar.app-cardview-1.0.0-53 C:\Users\losta\.gradle\caches\8.9\transforms\b008a49cc8f244e20fd2373e7c34f54a\transformed\cardview-1.0.0\res
+com.safar.app-fragment-1.5.7-54 C:\Users\losta\.gradle\caches\8.9\transforms\ba9c46f4ea8305df960527fe2b6db471\transformed\fragment-1.5.7\res
+com.safar.app-jetified-maps-compose-4.3.3-55 C:\Users\losta\.gradle\caches\8.9\transforms\bd781f916de7293bb13dfcaf69288c47\transformed\jetified-maps-compose-4.3.3\res
+com.safar.app-jetified-ui-tooling-preview-release-56 C:\Users\losta\.gradle\caches\8.9\transforms\c03658ca9da97b58caa947d34bebfab9\transformed\jetified-ui-tooling-preview-release\res
+com.safar.app-jetified-material-icons-extended-release-57 C:\Users\losta\.gradle\caches\8.9\transforms\c1d35064c5f1bf6740ae8cc8f2e40176\transformed\jetified-material-icons-extended-release\res
+com.safar.app-swiperefreshlayout-1.1.0-58 C:\Users\losta\.gradle\caches\8.9\transforms\c70f7146cd0a282916f8830ce247a7be\transformed\swiperefreshlayout-1.1.0\res
+com.safar.app-jetified-ccp-2.7.0-59 C:\Users\losta\.gradle\caches\8.9\transforms\c9684699bceb6090bd1ff0a1218d5f2b\transformed\jetified-ccp-2.7.0\res
+com.safar.app-material-1.11.0-60 C:\Users\losta\.gradle\caches\8.9\transforms\d68b793121a8e8e30b245ac2e20dd579\transformed\material-1.11.0\res
+com.safar.app-navigation-runtime-ktx-2.8.3-61 C:\Users\losta\.gradle\caches\8.9\transforms\de1dca7f5a141d336d378198b29cedf3\transformed\navigation-runtime-ktx-2.8.3\res
+com.safar.app-jetified-animation-release-62 C:\Users\losta\.gradle\caches\8.9\transforms\e1e7dc6cc15e0f33dc79962ae3e32b36\transformed\jetified-animation-release\res
+com.safar.app-jetified-material-icons-core-release-63 C:\Users\losta\.gradle\caches\8.9\transforms\e5d172ad7011f1a94aac2dc44cbedfe6\transformed\jetified-material-icons-core-release\res
+com.safar.app-jetified-runtime-release-64 C:\Users\losta\.gradle\caches\8.9\transforms\e76d874d001875cbe432b89f9665f5fd\transformed\jetified-runtime-release\res
+com.safar.app-jetified-lifecycle-runtime-ktx-release-65 C:\Users\losta\.gradle\caches\8.9\transforms\e85c5f229a31c78ad6e0e979d2e4a3b8\transformed\jetified-lifecycle-runtime-ktx-release\res
+com.safar.app-navigation-common-2.8.3-66 C:\Users\losta\.gradle\caches\8.9\transforms\ea476fe21bec11b6e55a4efdf48e58be\transformed\navigation-common-2.8.3\res
+com.safar.app-jetified-emoji2-views-helper-1.3.0-67 C:\Users\losta\.gradle\caches\8.9\transforms\ecbb6e8746f906fb23e3441689ab4b0c\transformed\jetified-emoji2-views-helper-1.3.0\res
+com.safar.app-jetified-lifecycle-viewmodel-release-68 C:\Users\losta\.gradle\caches\8.9\transforms\f2fc31c793e0d474c1a366343c022142\transformed\jetified-lifecycle-viewmodel-release\res
+com.safar.app-jetified-navigation-compose-2.8.3-69 C:\Users\losta\.gradle\caches\8.9\transforms\f3f18d1ddf6c8f673a216118d9d2a20d\transformed\jetified-navigation-compose-2.8.3\res
+com.safar.app-jetified-foundation-layout-release-70 C:\Users\losta\.gradle\caches\8.9\transforms\f4a63269f8f25919e4e04543ef2af4f8\transformed\jetified-foundation-layout-release\res
+com.safar.app-jetified-profileinstaller-1.3.1-71 C:\Users\losta\.gradle\caches\8.9\transforms\f5692dbf353e25c6364e61ea70a765b8\transformed\jetified-profileinstaller-1.3.1\res
+com.safar.app-jetified-material-ripple-release-72 C:\Users\losta\.gradle\caches\8.9\transforms\f85d9986370b73a8489429422756df94\transformed\jetified-material-ripple-release\res
+com.safar.app-drawerlayout-1.1.1-73 C:\Users\losta\.gradle\caches\8.9\transforms\fc6a6dd9ec33a98c68ab6197e504cc63\transformed\drawerlayout-1.1.1\res
+com.safar.app-pngs-74 E:\SAFAR ktjava\app\build\generated\res\pngs\debug
+com.safar.app-res-75 E:\SAFAR ktjava\app\build\generated\res\processDebugGoogleServices
+com.safar.app-resValues-76 E:\SAFAR ktjava\app\build\generated\res\resValues\debug
+com.safar.app-packageDebugResources-77 E:\SAFAR ktjava\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.safar.app-packageDebugResources-78 E:\SAFAR ktjava\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.safar.app-debug-79 E:\SAFAR ktjava\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.safar.app-debug-80 E:\SAFAR ktjava\app\src\debug\res
+com.safar.app-main-81 E:\SAFAR ktjava\app\src\main\res

@@ -4,6 +4,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.safar.app.utils.PhoneFormatUtils
 import com.safar.app.views.ui.screens.PostAdScreen
 import com.safar.app.views.ui.screens.PostAdUiState
 import com.safar.app.views.ui.theme.SafarTheme
@@ -80,7 +81,7 @@ data class FormValidation(
  * stateHolder.updateDateTimeLabel("Today, 3:00 PM");
  * stateHolder.updateSeats("2");
  * stateHolder.updateVehicle("Car");
- * stateHolder.updatePhone("+923001234567");
+ * stateHolder.updatePhone("0300-1234567");
  * stateHolder.updateNotes("AC available");
  * 
  * // Validation
@@ -150,7 +151,7 @@ class PostAdStateHolder {
      * Updates the phone number.
      */
     fun updatePhone(phone: String) {
-        state = state.copy(phone = phone)
+        state = state.copy(phone = PhoneFormatUtils.normalizeWhatsappLocalInput(phone))
         clearFieldError("phone")
     }
     
@@ -202,8 +203,8 @@ class PostAdStateHolder {
             errors["dateTime"] = "Please select departure time"
         }
         
-        if (state.phone.isBlank() || state.phone.length < 10) {
-            errors["phone"] = "Please enter a valid phone number"
+        if (!PhoneFormatUtils.isValidWhatsappLocalNumber(state.phone)) {
+            errors["phone"] = "Format must be 03xx-xxxxxxx"
         }
         
         val seatsNum = state.seats.toIntOrNull()

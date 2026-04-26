@@ -255,14 +255,14 @@ class ProfileStateHolder {
 
 /**
  * Sets up the Compose UI for ProfileActivity.
- * Uses light theme for profile screen following Uber's design pattern.
+ * Uses dark theme to match the rest of the app.
  *
  * @receiver The ProfileActivity instance
  * @param stateHolder The state holder managing profile state
  */
 fun ProfileActivity.setupComposeUI(stateHolder: ProfileStateHolder) {
     setContent {
-        SafarTheme(darkTheme = false) {
+        SafarTheme(darkTheme = true) {
             ProfileScreen(
                 state = stateHolder.state,
                 showLogoutDialog = stateHolder.showLogoutDialog,

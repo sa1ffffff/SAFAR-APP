@@ -97,9 +97,14 @@ class PhoneAuthStateHolder {
     
     /**
      * Returns the full phone number with country code.
+     * Removes leading zeros from the phone number as they're not valid
+     * in E.164 international format (e.g., +923001234567 not +9203001234567)
      */
     val fullPhoneNumber: String
-        get() = "$countryCode${phone.trim()}"
+        get() {
+            val normalizedPhone = phone.trim().trimStart('0')
+            return "$countryCode$normalizedPhone"
+        }
     
     /**
      * Clears any displayed error message.

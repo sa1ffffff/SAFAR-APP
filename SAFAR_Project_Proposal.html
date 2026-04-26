@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAFAR - Project Proposal</title>
+    <style>
+        @page {
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 4px solid #FFD600;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #0A0A0A;
+            font-size: 36px;
+            margin: 10px 0;
+            font-weight: 700;
+        }
+        
+        .header .subtitle {
+            color: #666;
+            font-size: 18px;
+            font-style: italic;
+        }
+        
+        .urdu {
+            font-size: 24px;
+            color: #FFD600;
+            font-weight: bold;
+        }
+        
+        h2 {
+            color: #0A0A0A;
+            border-left: 5px solid #FFD600;
+            padding-left: 15px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        h3 {
+            color: #333;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        p {
+            text-align: justify;
+            margin-bottom: 15px;
+        }
+        
+        .highlight-box {
+            background: #FFF9E6;
+            border-left: 4px solid #FFD600;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .tech-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .tech-item strong {
+            color: #0A0A0A;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        ul {
+            margin-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+        
+        .feature-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .requirements-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .requirements-table th {
+            background: #0A0A0A;
+            color: #FFD600;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .requirements-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+        
+        .requirements-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #FFD600;
+            color: #0A0A0A;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+        
+        @media print {
+            body {
+                max-width: 100%;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚗 SAFAR</h1>
+        <div class="urdu">سفر</div>
+        <div class="subtitle">Community Carpool Marketplace</div>
+        <p style="margin-top: 15px; font-size: 16px;">Android Application - Project Proposal</p>
+    </div>
+
+    <h2>1. Problem Statement</h2>
+    <p>
+        Transportation in Pakistan, particularly for intercity travel, faces significant challenges that affect millions of commuters daily:
+    </p>
+    
+    <ul>
+        <li><strong>High Transportation Costs:</strong> Individual car ownership and taxi services are expensive for long-distance travel. Public transport, while affordable, often lacks comfort and reliability.</li>
+        
+        <li><strong>Empty Seats, Wasted Resources:</strong> Thousands of private vehicles travel between major cities (Lahore, Islamabad, Karachi, etc.) with multiple empty seats. This represents wasted fuel, increased carbon emissions, and missed opportunities for cost sharing.</li>
+        
+        <li><strong>Lack of Trusted Ride-Sharing Platforms:</strong> While international ride-sharing platforms exist, they are not optimized for Pakistan's unique intercity carpooling needs. There is no dedicated, community-driven platform that connects drivers and passengers heading the same direction.</li>
+        
+        <li><strong>Safety and Trust Concerns:</strong> Informal carpooling arrangements lack proper verification, rating systems, and safety mechanisms, making users hesitant to share rides with strangers.</li>
+        
+        <li><strong>Communication Barriers:</strong> Even when drivers and passengers find each other through social media groups, coordination is fragmented across multiple platforms with no centralized communication or booking system.</li>
+    </ul>
+
+    <div class="highlight-box">
+        <strong>Core Problem:</strong> There is no simple, safe, and community-driven platform in Pakistan that allows drivers to monetize empty seats while providing affordable, flexible transportation options to passengers traveling the same route.
+    </div>
+
+    <h2>2. Proposed Solution</h2>
+    <p>
+        <strong>SAFAR</strong> (سفر — "Journey" in Urdu) is a peer-to-peer ride-sharing Android application designed specifically for Pakistan's intercity travel market. It connects drivers with available seats to passengers heading in the same direction, creating a community-driven carpool marketplace.
+    </p>
+
+    <h3>Key Features</h3>
+    <div class="feature-list">
+        <ul>
+            <li><strong>🔐 Secure Authentication:</strong> Firebase Phone OTP authentication ensures verified users, reducing fraud and increasing trust.</li>
+            
+            <li><strong>🚗 Post Ride Offers:</strong> Drivers can create ride ads specifying origin, destination, departure time, available seats, and price per seat.</li>
+            
+            <li><strong>🗺️ Map-Based Discovery:</strong> Passengers can discover available rides through an interactive Google Maps interface with custom yellow pin markers showing ride locations.</li>
+            
+            <li><strong>📋 List View Search:</strong> Alternative list-based browsing with search and filter options for finding rides quickly.</li>
+            
+            <li><strong>📩 Request System:</strong> Passengers send join requests to drivers, who can accept or reject based on their preferences. Seat availability is managed transactionally to prevent overbooking.</li>
+            
+            <li><strong>💬 Real-Time Chat:</strong> Once a request is accepted, passengers and drivers can communicate via an in-app Firebase-powered chat system for coordination.</li>
+            
+            <li><strong>🔔 Push Notifications:</strong> Firebase Cloud Messaging (FCM) keeps users informed about new requests, acceptances, ride updates, and messages.</li>
+            
+            <li><strong>⭐ Rating & Reporting:</strong> Post-ride rating system and user reporting mechanism to maintain community standards and safety.</li>
+            
+            <li><strong>👤 User Profiles:</strong> View driver/passenger profiles with ratings, total rides given/taken, and profile pictures.</li>
+        </ul>
+    </div>
+
+    <h3>How It Works</h3>
+    <p><strong>For Drivers:</strong></p>
+    <ol>
+        <li>Create a ride ad with route, date/time, available seats, and price</li>
+        <li>Receive join requests from interested passengers</li>
+        <li>Accept or reject requests based on preferences</li>
+        <li>Chat with confirmed passengers for pickup coordination</li>
+        <li>Complete the ride and receive ratings</li>
+    </ol>
+
+    <p><strong>For Passengers:</strong></p>
+    <ol>
+        <li>Browse available rides on map or list view</li>
+        <li>Send join requests for desired rides</li>
+        <li>Wait for driver approval</li>
+        <li>Chat with driver upon acceptance to finalize pickup details</li>
+        <li>Complete the ride and rate the experience</li>
+    </ol>
+
+    <div class="highlight-box">
+        <strong>Note:</strong> SAFAR focuses on coordination and community trust, not payment processing. Users arrange payment offline (cash, bank transfer, etc.), keeping the platform simple and accessible.
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2>3. Technology Stack</h2>
+    
+    <h3>3.1 Development Environment</h3>
+    <table class="requirements-table">
+        <thead>
+            <tr>
+                <th>Component</th>
+                <th>Specification</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>IDE</strong></td>
+                <td>Android Studio (Latest Stable Version)</td>
+            </tr>
+            <tr>
+                <td><strong>Programming Languages</strong></td>
+                <td>Java (Primary) + Kotlin (UI Components)</td>
+            </tr>
+            <tr>
+                <td><strong>Build System</strong></td>
+                <td>Gradle 8.7.0</td>
+            </tr>
+            <tr>
+                <td><strong>Minimum SDK</strong></td>
+                <td>API 24 (Android 7.0 Nougat)</td>
+            </tr>
+            <tr>
+                <td><strong>Target SDK</strong></td>
+                <td>API 35 (Android 15)</td>
+            </tr>
+            <tr>
+                <td><strong>Java Version</strong></td>
+                <td>Java 11</td>
+            </tr>
+            <tr>
+                <td><strong>Kotlin Version</strong></td>
+                <td>2.0.21</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>3.2 Core Technologies</h3>
+    <div class="tech-grid">
+        <div class="tech-item">
+            <strong>📱 Language & Architecture</strong>
+            <ul style="margin-top: 10px;">
+                <li><span class="badge">Java</span> Core business logic</li>
+                <li><span class="badge">Kotlin</span> UI components</li>
+                <li><span class="badge">MVP</span> Model-View-Presenter pattern</li>
+            </ul>
+        </div>
+        
+        <div class="tech-item">
+            <strong>🎨 UI Framework</strong>
+            <ul style="margin-top: 10px;">
+                <li><span class="badge">XML</span> Traditional layouts</li>
+                <li><span class="badge">Jetpack Compose</span> Modern UI</li>
+                <li><span class="badge">Material Design 3</span> Design system</li>
+            </ul>
+        </div>
+        
+        <div class="tech-item">
+            <strong>🔥 Backend (Firebase)</strong>
+            <ul style="margin-top: 10px;">
+                <li><span class="badge">Firebase Auth</span> Phone OTP</li>
+                <li><span class="badge">Firestore</span> User & ride data</li>
+                <li><span class="badge">Realtime DB</span> Chat messages</li>
+                <li><span class="badge">FCM</span> Push notifications</li>
+                <li><span class="badge">Storage</span> Profile images</li>
+            </ul>
+        </div>
+        
+        <div class="tech-item">
+            <strong>🗺️ Location Services</strong>
+            <ul style="margin-top: 10px;">
+                <li><span class="badge">Google Maps SDK</span> Map display</li>
+                <li><span class="badge">Maps Compose</span> Compose integration</li>
+                <li><span class="badge">Location Services</span> GPS tracking</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>3.3 Key Libraries</h3>
+    <ul>
+        <li><strong>Glide (4.16.0):</strong> Image loading and caching for profile pictures</li>
+        <li><strong>Coil Compose (2.5.0):</strong> Image loading for Jetpack Compose</li>
+        <li><strong>CircleImageView (3.1.0):</strong> Circular profile image displays</li>
+        <li><strong>Country Code Picker (2.7.0):</strong> International phone number input</li>
+        <li><strong>AndroidX Libraries:</strong> AppCompat, RecyclerView, ConstraintLayout, SwipeRefreshLayout</li>
+        <li><strong>Jetpack Compose BOM (2024.10.01):</strong> Compose UI toolkit</li>
+    </ul>
+
+    <h2>4. System Requirements</h2>
+    
+    <h3>4.1 Hardware Requirements</h3>
+    <table class="requirements-table">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Purpose</th>
+                <th>Specification</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Development Computer</strong></td>
+                <td>Running Android Studio and emulators</td>
+                <td>
+                    • 8GB RAM minimum (16GB recommended)<br>
+                    • Intel Core i5 / AMD Ryzen 5 or higher<br>
+                    • 20GB free disk space (SSD preferred)<br>
+                    • Windows 10/11, macOS, or Linux
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Android Debugging Phone</strong></td>
+                <td>Real device testing (GPS, camera, notifications)</td>
+                <td>
+                    • Android 7.0 (API 24) or higher<br>
+                    • GPS/Location services enabled<br>
+                    • Camera (for profile pictures)<br>
+                    • Internet connectivity (WiFi/Mobile data)<br>
+                    • USB debugging enabled
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><strong>Why a physical debugging phone is essential:</strong></p>
+    <ul>
+        <li><strong>GPS Testing:</strong> Emulators cannot accurately simulate real-world GPS behavior and movement patterns required for location-based ride discovery.</li>
+        <li><strong>Firebase Phone Auth:</strong> OTP verification requires actual SMS reception, which emulators cannot reliably handle.</li>
+        <li><strong>Push Notifications:</strong> FCM notifications work best on real devices for testing foreground/background behavior.</li>
+        <li><strong>Camera Integration:</strong> Profile picture uploads require a functioning camera.</li>
+        <li><strong>Performance Testing:</strong> Real-world performance, battery usage, and network conditions can only be tested on actual hardware.</li>
+    </ul>
+
+    <h3>4.2 Software Requirements</h3>
+    <ul>
+        <li><strong>Android Studio:</strong> Latest stable version with Android SDK</li>
+        <li><strong>JDK 11:</strong> Java Development Kit</li>
+        <li><strong>Git:</strong> Version control</li>
+        <li><strong>Firebase Account:</strong> Free tier with Firebase project setup</li>
+        <li><strong>Google Cloud Platform:</strong> For Google Maps API key (free tier with credit)</li>
+    </ul>
+
+    <h3>4.3 Internet & Cloud Services</h3>
+    <ul>
+        <li><strong>Firebase Hosting:</strong> Backend-as-a-Service (free tier: 1GB storage, 10GB/month transfer)</li>
+        <li><strong>Google Maps API:</strong> $200 monthly free credit (sufficient for development/testing)</li>
+        <li><strong>Stable Internet Connection:</strong> For real-time database sync and testing</li>
+    </ul>
+
+    <h2>5. Architecture & Design Patterns</h2>
+    
+    <h3>5.1 MVP (Model-View-Presenter) Pattern</h3>
+    <p>SAFAR strictly follows the MVP architectural pattern for clean code separation:</p>
+    <ul>
+        <li><strong>Models:</strong> Plain Java POJOs representing User, Ride, Message, JoinRequest, Report</li>
+        <li><strong>Views:</strong> Activities and Fragments handling only UI updates (implements View interface)</li>
+        <li><strong>Presenters:</strong> Business logic layer connecting Models and Views (implements Presenter interface)</li>
+        <li><strong>Repositories:</strong> Data access layer managing all Firebase operations</li>
+    </ul>
+
+    <h3>5.2 Firebase Schema</h3>
+    <p><strong>Firestore Collections:</strong></p>
+    <ul>
+        <li><code>/users/{uid}</code> — User profiles, ratings, ride statistics</li>
+        <li><code>/rides/{rideId}</code> — Ride advertisements with seats, pricing, routes</li>
+        <li><code>/requests/{reqId}</code> — Join requests with approval status</li>
+        <li><code>/reports/{reportId}</code> — User/ride reports for moderation</li>
+        <li><code>/ratings/{ratingId}</code> — Post-ride ratings and reviews</li>
+    </ul>
+
+    <p><strong>Realtime Database:</strong></p>
+    <ul>
+        <li><code>/chats/{rideId}/messages/{msgId}</code> — Real-time chat messages</li>
+    </ul>
+
+    <h3>5.3 UI Design Philosophy</h3>
+    <ul>
+        <li><strong>Dark Theme:</strong> Black (#0A0A0A) background with yellow (#FFD600) accent</li>
+        <li><strong>Material Design 3:</strong> Modern UI components with proper elevation and shadows</li>
+        <li><strong>Yango-Inspired:</strong> Clean, professional ride-hailing aesthetic</li>
+        <li><strong>Responsive Feedback:</strong> Every interaction provides immediate visual feedback</li>
+    </ul>
+
+    <h2>6. Project Timeline (Estimated)</h2>
+    <p><em>Note: This is an academic final year project timeline</em></p>
+    
+    <table class="requirements-table">
+        <thead>
+            <tr>
+                <th>Phase</th>
+                <th>Deliverables</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Phase 1: Core Authentication</strong></td>
+                <td>Firebase setup, phone OTP, user registration</td>
+                <td>✅ Completed</td>
+            </tr>
+            <tr>
+                <td><strong>Phase 2: Ride Management</strong></td>
+                <td>Post rides, view rides, map integration</td>
+                <td>✅ Completed</td>
+            </tr>
+            <tr>
+                <td><strong>Phase 3: Requests & Booking</strong></td>
+                <td>Join requests, transactional seat booking</td>
+                <td>✅ Completed</td>
+            </tr>
+            <tr>
+                <td><strong>Phase 4: Communication</strong></td>
+                <td>Real-time chat, push notifications</td>
+                <td>✅ Completed</td>
+            </tr>
+            <tr>
+                <td><strong>Phase 5: Safety & Trust</strong></td>
+                <td>Rating system UI, reporting, profile enhancements</td>
+                <td>🔄 In Progress</td>
+            </tr>
+            <tr>
+                <td><strong>Phase 6: Testing & Polish</strong></td>
+                <td>Bug fixes, UX improvements, performance optimization</td>
+                <td>⏳ Upcoming</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>7. Expected Outcomes & Benefits</h2>
+    
+    <h3>For Users</h3>
+    <ul>
+        <li><strong>Cost Savings:</strong> Passengers pay significantly less than taxi/ride-hailing services; drivers earn back fuel costs</li>
+        <li><strong>Environmental Impact:</strong> Reduced carbon footprint through shared transportation</li>
+        <li><strong>Social Connection:</strong> Community-building through shared travel experiences</li>
+        <li><strong>Flexibility:</strong> More departure time options than scheduled public transport</li>
+        <li><strong>Safety:</strong> Verified users, ratings, and reporting mechanisms</li>
+    </ul>
+
+    <h3>For the Developer</h3>
+    <ul>
+        <li>Hands-on experience with Firebase ecosystem (Auth, Firestore, Realtime DB, FCM, Storage)</li>
+        <li>Mastery of MVP architecture and clean code principles</li>
+        <li>Real-world integration of Google Maps SDK</li>
+        <li>Experience with both Java and Kotlin in a hybrid project</li>
+        <li>Understanding of real-time systems, transactional data, and push notifications</li>
+        <li>Portfolio-worthy project demonstrating full-stack mobile development skills</li>
+    </ul>
+
+    <h2>8. Future Enhancements (Post-MVP)</h2>
+    <ul>
+        <li><strong>In-App Payments:</strong> Integration with JazzCash, EasyPaisa, or Stripe</li>
+        <li><strong>Ride History:</strong> Track past rides for drivers and passengers</li>
+        <li><strong>Route Optimization:</strong> Suggest optimal pickup points along the route</li>
+        <li><strong>Recurring Rides:</strong> Daily commute scheduling for regular routes</li>
+        <li><strong>Driver Verification:</strong> License verification and background checks</li>
+        <li><strong>Emergency SOS:</strong> One-tap emergency contact notification</li>
+        <li><strong>Multi-Language Support:</strong> Urdu, Punjabi, Sindhi localization</li>
+    </ul>
+
+    <h2>9. Conclusion</h2>
+    <p>
+        SAFAR addresses a real transportation gap in Pakistan by providing a simple, trusted, and community-driven carpool marketplace. Built with industry-standard technologies (Java, Kotlin, Firebase, Google Maps) and following best practices (MVP architecture, Material Design 3), this project demonstrates comprehensive mobile development skills while solving a practical problem.
+    </p>
+    <p>
+        The application leverages modern Android development tools including <strong>Android Studio</strong> for development, <strong>Java</strong> as the primary programming language with <strong>Kotlin</strong> for enhanced UI components, and requires a <strong>physical debugging phone</strong> for real-world testing of GPS, authentication, and notification features.
+    </p>
+    <p>
+        With core features already implemented and safety/trust mechanisms in development, SAFAR is on track to become a viable solution for intercity carpooling in Pakistan, reducing transportation costs while promoting sustainable travel.
+    </p>
+
+    <div class="footer">
+        <p><strong>SAFAR — Community Carpool Marketplace</strong></p>
+        <p>سفر • Connecting Journeys, Building Community</p>
+        <p style="margin-top: 10px; font-size: 12px;">BSCS Final Year Project • SEECS, NUST • Pakistan</p>
+    </div>
+</body>
+</html>

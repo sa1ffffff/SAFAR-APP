@@ -8,6 +8,9 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class SessionManager {
 
+    private static final String PREF_USER_ID = "user_id";
+    private static final String PREF_USER_EMAIL = "user_email";
+    
     private final SharedPreferences prefs;
     private final SharedPreferences.Editor editor;
 
@@ -39,6 +42,29 @@ public class SessionManager {
     public void setUserPhone(String phone) {
         editor.putString(AppConstants.PREF_USER_PHONE, phone).apply();
     }
+    
+    public String getUserEmail() {
+        return prefs.getString(PREF_USER_EMAIL, "");
+    }
+    
+    public void setUserEmail(String email) {
+        editor.putString(PREF_USER_EMAIL, email).apply();
+    }
+    
+    public String getUserId() {
+        // First check SharedPreferences, then Firebase
+        String storedId = prefs.getString(PREF_USER_ID, null);
+        if (storedId != null && !storedId.isEmpty()) {
+            return storedId;
+        }
+        // Fallback to Firebase user ID
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        return user != null ? user.getUid() : null;
+    }
+    
+    public void setUserId(String userId) {
+        editor.putString(PREF_USER_ID, userId).apply();
+    }
 
     public String getUserLanguage() {
         return prefs.getString(AppConstants.PREF_USER_LANGUAGE, "en");
@@ -57,13 +83,18 @@ public class SessionManager {
     }
 
     public boolean isLoggedIn() {
+        // Check both Firebase auth and stored user ID
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        return user != null;
+        if (user != null) {
+            return true;
+        }
+        // Also check if we have a stored user ID (for phone-only auth)
+        String storedId = prefs.getString(PREF_USER_ID, null);
+        return storedId != null && !storedId.isEmpty();
     }
 
     public String getCurrentUserId() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        return user != null ? user.getUid() : null;
+        return getUserId();
     }
 
     public void logout(Context context) {

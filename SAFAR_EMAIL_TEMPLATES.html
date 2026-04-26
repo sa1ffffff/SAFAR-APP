@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAFAR Email Templates - Copy & Paste Ready</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #111111;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #FFD600 0%, #FFA000 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 48px;
+            font-weight: 800;
+            color: #000000;
+            letter-spacing: 6px;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 18px;
+            color: #333333;
+            font-weight: 500;
+        }
+        
+        .intro {
+            padding: 30px;
+            background-color: #1a1a1a;
+            border-bottom: 2px solid #FFD600;
+        }
+        
+        .intro h2 {
+            color: #FFD600;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        .intro p {
+            color: #b0b0b0;
+            margin-bottom: 10px;
+        }
+        
+        .intro ul {
+            margin-left: 20px;
+            color: #888888;
+        }
+        
+        .intro li {
+            margin-bottom: 5px;
+        }
+        
+        .template-section {
+            padding: 40px 30px;
+            border-bottom: 1px solid #222222;
+        }
+        
+        .template-section:last-child {
+            border-bottom: none;
+        }
+        
+        .template-header {
+            margin-bottom: 25px;
+        }
+        
+        .template-header h2 {
+            color: #FFD600;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .template-id {
+            display: inline-block;
+            background-color: #22C55E;
+            color: #000000;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .meta-info {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #FFD600;
+        }
+        
+        .meta-info h3 {
+            color: #FFD600;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .meta-info p {
+            color: #b0b0b0;
+            margin-bottom: 8px;
+        }
+        
+        .meta-info code {
+            background-color: #0a0a0a;
+            color: #22C55E;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .code-block {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .code-header {
+            background-color: #222222;
+            padding: 12px 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-header span {
+            color: #888888;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .copy-btn {
+            background-color: #FFD600;
+            color: #000000;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background-color 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background-color: #FFA000;
+        }
+        
+        .copy-btn:active {
+            background-color: #22C55E;
+        }
+        
+        pre {
+            background-color: #0a0a0a;
+            padding: 20px;
+            border-radius: 0 0 8px 8px;
+            overflow-x: auto;
+            margin: 0;
+            border: 1px solid #222222;
+            border-top: none;
+        }
+        
+        code {
+            color: #22C55E;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .variables {
+            background-color: #1a1a1a;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .variables h4 {
+            color: #FFD600;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .variables ul {
+            list-style: none;
+        }
+        
+        .variables li {
+            color: #888888;
+            margin-bottom: 5px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .variables li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #22C55E;
+        }
+        
+        footer {
+            padding: 30px;
+            text-align: center;
+            background-color: #0a0a0a;
+            border-top: 1px solid #222222;
+        }
+        
+        footer p {
+            color: #666666;
+            font-size: 14px;
+        }
+        
+        .success-msg {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #22C55E;
+            color: #000000;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 700;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .success-msg.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="success-msg" id="successMsg">✓ Copied to clipboard!</div>
+    
+    <div class="container">
+        <header>
+            <h1>SAFAR</h1>
+            <p>Email.js Templates - Ready to Copy & Paste</p>
+        </header>
+        
+        <div class="intro">
+            <h2>📧 Setup Instructions</h2>
+            <p>Copy these templates into your Email.js dashboard at <strong>https://www.emailjs.com/</strong></p>
+            <ul>
+                <li>Click the "Copy HTML" button for each template</li>
+                <li>Paste into Email.js template editor</li>
+                <li>Set the Template ID and Subject Line as specified</li>
+                <li>Add the template variables</li>
+            </ul>
+        </div>
+        
+        <!-- TEMPLATE 1: WELCOME EMAIL -->
+        <div class="template-section">
+            <div class="template-header">
+                <h2>📬 Template 1: Welcome Email</h2>
+                <span class="template-id">template_welcome</span>
+            </div>
+            
+            <div class="variables">
+                <h4>Template Variables:</h4>
+                <ul>
+                    <li><code>{{user_name}}</code> - User's full name</li>
+                    <li><code>{{user_email}}</code> - User's email address</li>
+                    <li><code>{{app_name}}</code> - App name (SAFAR)</li>
+                </ul>
+            </div>
+            
+            <div class="meta-info">
+                <h3>Subject Line:</h3>
+                <p><code>Welcome to SAFAR, {{user_name}}! 🚗</code></p>
+            </div>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>HTML Template</span>
+                    <button class="copy-btn" onclick="copyToClipboard('template1')">Copy HTML</button>
+                </div>
+                <pre><code id="template1">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Welcome to SAFAR&lt;/title&gt;
+&lt;/head&gt;
+&lt;body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0a0a0a;"&gt;
+    &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #111111;"&gt;
+        &lt;!-- Header --&gt;
+        &lt;tr&gt;
+            &lt;td style="padding: 40px 30px; text-align: center; background: linear-gradient(135deg, #FFD600 0%, #FFA000 100%);"&gt;
+                &lt;h1 style="margin: 0; font-size: 36px; font-weight: 800; color: #000000; letter-spacing: 4px;"&gt;SAFAR&lt;/h1&gt;
+                &lt;p style="margin: 8px 0 0 0; font-size: 14px; color: #333333;"&gt;Your Trusted Ride Companion&lt;/p&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        
+        &lt;!-- Main Content --&gt;
+        &lt;tr&gt;
+            &lt;td style="padding: 40px 30px;"&gt;
+                &lt;h2 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 600; color: #ffffff;"&gt;Welcome aboard, {{user_name}}! 👋&lt;/h2&gt;
+                
+                &lt;p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #b0b0b0;"&gt;
+                    Thank you for joining SAFAR — Pakistan's premier carpool marketplace. We're thrilled to have you as part of our growing community of smart commuters.
+                &lt;/p&gt;
+                
+                &lt;p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #b0b0b0;"&gt;
+                    With SAFAR, you can:
+                &lt;/p&gt;
+                
+                &lt;!-- Features List --&gt;
+                &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;"&gt;
+                    &lt;tr&gt;
+                        &lt;td style="padding: 15px 20px; background-color: #1a1a1a; border-radius: 8px; margin-bottom: 10px;"&gt;
+                            &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0"&gt;
+                                &lt;tr&gt;
+                                    &lt;td width="40" style="vertical-align: top;"&gt;
+                                        &lt;span style="font-size: 24px;"&gt;🚗&lt;/span&gt;
+                                    &lt;/td&gt;
+                                    &lt;td style="padding-left: 15px;"&gt;
+                                        &lt;p style="margin: 0; font-size: 15px; font-weight: 600; color: #ffffff;"&gt;Post &amp; Find Rides&lt;/p&gt;
+                                        &lt;p style="margin: 4px 0 0 0; font-size: 13px; color: #888888;"&gt;Share your journey or find the perfect ride&lt;/p&gt;
+                                    &lt;/td&gt;
+                                &lt;/tr&gt;
+                            &lt;/table&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                    &lt;tr&gt;&lt;td style="height: 10px;"&gt;&lt;/td&gt;&lt;/tr&gt;
+                    &lt;tr&gt;
+                        &lt;td style="padding: 15px 20px; background-color: #1a1a1a; border-radius: 8px;"&gt;
+                            &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0"&gt;
+                                &lt;tr&gt;
+                                    &lt;td width="40" style="vertical-align: top;"&gt;
+                                        &lt;span style="font-size: 24px;"&gt;💰&lt;/span&gt;
+                                    &lt;/td&gt;
+                                    &lt;td style="padding-left: 15px;"&gt;
+                                        &lt;p style="margin: 0; font-size: 15px; font-weight: 600; color: #ffffff;"&gt;Save Money&lt;/p&gt;
+                                        &lt;p style="margin: 4px 0 0 0; font-size: 13px; color: #888888;"&gt;Split costs and reduce travel expenses&lt;/p&gt;
+                                    &lt;/td&gt;
+                                &lt;/tr&gt;
+                            &lt;/table&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                    &lt;tr&gt;&lt;td style="height: 10px;"&gt;&lt;/td&gt;&lt;/tr&gt;
+                    &lt;tr&gt;
+                        &lt;td style="padding: 15px 20px; background-color: #1a1a1a; border-radius: 8px;"&gt;
+                            &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0"&gt;
+                                &lt;tr&gt;
+                                    &lt;td width="40" style="vertical-align: top;"&gt;
+                                        &lt;span style="font-size: 24px;"&gt;🌱&lt;/span&gt;
+                                    &lt;/td&gt;
+                                    &lt;td style="padding-left: 15px;"&gt;
+                                        &lt;p style="margin: 0; font-size: 15px; font-weight: 600; color: #ffffff;"&gt;Go Green&lt;/p&gt;
+                                        &lt;p style="margin: 4px 0 0 0; font-size: 13px; color: #888888;"&gt;Reduce your carbon footprint together&lt;/p&gt;
+                                    &lt;/td&gt;
+                                &lt;/tr&gt;
+                            &lt;/table&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/table&gt;
+                
+                &lt;!-- CTA Button --&gt;
+                &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0"&gt;
+                    &lt;tr&gt;
+                        &lt;td style="text-align: center; padding: 10px 0 30px 0;"&gt;
+                            &lt;a href="https://play.google.com/store/apps/details?id=com.safar.app" 
+                               style="display: inline-block; padding: 16px 40px; background-color: #FFD600; color: #000000; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 8px; letter-spacing: 0.5px;"&gt;
+                                START YOUR JOURNEY
+                            &lt;/a&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/table&gt;
+                
+                &lt;p style="margin: 0; font-size: 14px; line-height: 1.6; color: #888888;"&gt;
+                    If you have any questions, simply reply to this email — our team is here to help.
+                &lt;/p&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        
+        &lt;!-- Footer --&gt;
+        &lt;tr&gt;
+            &lt;td style="padding: 30px; background-color: #0a0a0a; border-top: 1px solid #222222;"&gt;
+                &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0"&gt;
+                    &lt;tr&gt;
+                        &lt;td style="text-align: center;"&gt;
+                            &lt;p style="margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color: #FFD600; letter-spacing: 2px;"&gt;SAFAR&lt;/p&gt;
+                            &lt;p style="margin: 0 0 15px 0; font-size: 12px; color: #666666;"&gt;Your Trusted Ride Companion&lt;/p&gt;
+                            &lt;p style="margin: 0; font-size: 11px; color: #444444;"&gt;
+                                © 2024 SAFAR. All rights reserved.&lt;br&gt;
+                                Karachi, Pakistan
+                            &lt;/p&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/table&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+            </div>
+        </div>
+        
+        <!-- TEMPLATE 2: PASSWORD RESET -->
+        <div class="template-section">
+            <div class="template-header">
+                <h2>🔐 Template 2: Password Reset</h2>
+                <span class="template-id">template_password_reset</span>
+            </div>
+            
+            <div class="variables">
+                <h4>Template Variables:</h4>
+                <ul>
+                    <li><code>{{user_name}}</code> - User's full name</li>
+                    <li><code>{{user_email}}</code> - User's email address</li>
+                    <li><code>{{reset_code}}</code> - 6-digit reset code</li>
+                    <li><code>{{app_name}}</code> - App name (SAFAR)</li>
+                </ul>
+            </div>
+            
+            <div class="meta-info">
+                <h3>Subject Line:</h3>
+                <p><code>Your SAFAR Password Reset Code: {{reset_code}}</code></p>
+            </div>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>HTML Template</span>
+                    <button class="copy-btn" onclick="copyToClipboard('template2')">Copy HTML</button>
+                </div>
+                <pre><code id="template2">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Password Reset - SAFAR&lt;/title&gt;
+&lt;/head&gt;
+&lt;body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0a0a0a;"&gt;
+    &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #111111;"&gt;
+        &lt;!-- Header --&gt;
+        &lt;tr&gt;
+            &lt;td style="padding: 40px 30px; text-align: center; background-color: #181818; border-bottom: 3px solid #FFD600;"&gt;
+                &lt;h1 style="margin: 0; font-size: 32px; font-weight: 800; color: #FFD600; letter-spacing: 4px;"&gt;SAFAR&lt;/h1&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        
+        &lt;!-- Security Icon --&gt;
+        &lt;tr&gt;
+            &lt;td style="padding: 40px 30px 20px 30px; text-align: center;"&gt;
+                &lt;div style="display: inline-block; width: 80px; height: 80px; background-color: #1a1a1a; border-radius: 50%; line-height: 80px;"&gt;
+                    &lt;span style="font-size: 40px;"&gt;🔐&lt;/span&gt;
+                &lt;/div&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        
+        &lt;!-- Main Content --&gt;
+        &lt;tr&gt;
+            &lt;td style="padding: 0 30px 40px 30px;"&gt;
+                &lt;h2 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 600; color: #ffffff; text-align: center;"&gt;Password Reset Request&lt;/h2&gt;
+                
+                &lt;p style="margin: 0 0 25px 0; font-size: 16px; line-height: 1.6; color: #b0b0b0; text-align: center;"&gt;
+                    Hi {{user_name}},&lt;br&gt;&lt;br&gt;
+                    We received a request to reset your SAFAR account password. Use the verification code below to complete the process:
+                &lt;/p&gt;
+                
+                &lt;!-- Reset Code Box --&gt;
+                &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;"&gt;
+                    &lt;tr&gt;
+                        &lt;td style="text-align: center;"&gt;
+                            &lt;div style="display: inline-block; padding: 25px 50px; background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%); border: 2px solid #FFD600; border-radius: 12px;"&gt;
+                                &lt;p style="margin: 0 0 8px 0; font-size: 12px; color: #888888; text-transform: uppercase; letter-spacing: 2px;"&gt;Your Verification Code&lt;/p&gt;
+                                &lt;p style="margin: 0; font-size: 40px; font-weight: 800; color: #FFD600; letter-spacing: 8px; font-family: 'Courier New', monospace;"&gt;{{reset_code}}&lt;/p&gt;
+                            &lt;/div&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/table&gt;
+                
+                &lt;!-- Timer Warning --&gt;
+                &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;"&gt;
+                    &lt;tr&gt;
+                        &lt;td style="padding: 15px 20px; background-color: #2a1a00; border-radius: 8px; border-left: 4px solid #FFD600;"&gt;
+                            &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0"&gt;
+                                &lt;tr&gt;
+                                    &lt;td width="30" style="vertical-align: top;"&gt;
+                                        &lt;span style="font-size: 18px;"&gt;⏱️&lt;/span&gt;
+                                    &lt;/td&gt;
+                                    &lt;td style="padding-left: 10px;"&gt;
+                                        &lt;p style="margin: 0; font-size: 14px; color: #FFD600; font-weight: 600;"&gt;This code expires in 15 minutes&lt;/p&gt;
+                                        &lt;p style="margin: 4px 0 0 0; font-size: 13px; color: #b0b0b0;"&gt;For security reasons, this code can only be used once.&lt;/p&gt;
+                                    &lt;/td&gt;
+                                &lt;/tr&gt;
+                            &lt;/table&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/table&gt;
+                
+                &lt;!-- Security Notice --&gt;
+                &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0"&gt;
+                    &lt;tr&gt;
+                        &lt;td style="padding: 15px 20px; background-color: #1a1a1a; border-radius: 8px;"&gt;
+                            &lt;p style="margin: 0 0 10px 0; font-size: 14px; color: #ffffff; font-weight: 600;"&gt;🛡️ Security Notice&lt;/p&gt;
+                            &lt;p style="margin: 0; font-size: 13px; line-height: 1.5; color: #888888;"&gt;
+                                If you didn't request this password reset, please ignore this email. Your account remains secure, and no changes have been made.
+                            &lt;/p&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/table&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        
+        &lt;!-- Footer --&gt;
+        &lt;tr&gt;
+            &lt;td style="padding: 30px; background-color: #0a0a0a; border-top: 1px solid #222222;"&gt;
+                &lt;table role="presentation" width="100%" cellspacing="0" cellpadding="0"&gt;
+                    &lt;tr&gt;
+                        &lt;td style="text-align: center;"&gt;
+                            &lt;p style="margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color: #FFD600; letter-spacing: 2px;"&gt;SAFAR&lt;/p&gt;
+                            &lt;p style="margin: 0 0 15px 0; font-size: 12px; color: #666666;"&gt;Your Trusted Ride Companion&lt;/p&gt;
+                            &lt;p style="margin: 0 0 10px 0; font-size: 11px; color: #444444;"&gt;
+                                This is an automated security email. Please do not reply.
+                            &lt;/p&gt;
+                            &lt;p style="margin: 0; font-size: 11px; color: #444444;"&gt;
+                                © 2024 SAFAR. All rights reserved.
+                            &lt;/p&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/table&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+            </div>
+        </div>
+        
+        <footer>
+            <p>✅ 2 Templates Ready for Email.js</p>
+            <p style="margin-top: 10px;">© 2024 SAFAR - All templates use inline CSS for email client compatibility</p>
+        </footer>
+    </div>
+    
+    <script>
+        function copyToClipboard(elementId) {
+            const codeElement = document.getElementById(elementId);
+            const textArea = document.createElement('textarea');
+            textArea.value = codeElement.textContent;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showSuccessMessage();
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        function showSuccessMessage() {
+            const msg = document.getElementById('successMsg');
+            msg.classList.add('show');
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
