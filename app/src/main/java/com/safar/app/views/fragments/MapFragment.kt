@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -41,6 +42,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -124,18 +128,35 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView, Notifi
     private var googleMap: GoogleMap? = null
     private var presenter: AdsPresenter? = null
     private var notificationPresenter: NotificationPresenter? = null
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private val markerAdMap = HashMap<String, RideAd>()
     private val recentAds = mutableListOf<RideAd>()
     private var pendingAds: List<RideAd>? = null
     private var mapReady = false
+    private var centerAfterPermissionGrant = false
 
     // ── Location Permission Launcher ──────────────────────────────────────────
     private val locationLauncher: ActivityResultLauncher<Array<String>> =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             val fine = result[Manifest.permission.ACCESS_FINE_LOCATION] == true
             val coarse = result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-            if ((fine || coarse) && googleMap != null) enableMyLocation()
+            if (fine || coarse) {
+                if (googleMap != null) enableMyLocation()
+                if (centerAfterPermissionGrant) {
+                    centerAfterPermissionGrant = false
+                    centerOnMyLocation()
+                }
+            } else {
+                centerAfterPermissionGrant = false
+                if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Location permission is required to center on your location.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
 
     override fun onCreateView(
@@ -171,6 +192,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView, Notifi
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         presenter = AdsPresenter(this)
         presenter?.loadActiveAds()
         loadUserInfo()
@@ -294,13 +316,32 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView, Notifi
     }
 
     // ── Location ──────────────────────────────────────────────────────────────
-    private fun requestLocationPermission() {
+    private fun requestLocationPermission(centerOnGrant: Boolean = false) {
         if (!isAdded) return
-        val hasFine = ContextCompat.checkSelfPermission(
-            requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        if (hasLocationPermission()) {
+            enableMyLocation()
+            if (centerOnGrant) centerOnMyLocation()
+            return
+        }
+        centerAfterPermissionGrant = centerOnGrant
+        locationLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+
+    private fun hasLocationPermission(): Boolean {
+        if (!isAdded) return false
+        val context = requireContext()
+        val fine = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
-        if (hasFine) enableMyLocation()
-        else locationLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
+        val coarse = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        return fine || coarse
     }
 
     @Suppress("MissingPermission")
@@ -310,10 +351,60 @@ class MapFragment : Fragment(), OnMapReadyCallback, AdsPresenter.AdsView, Notifi
 
     @Suppress("MissingPermission")
     private fun centerOnMyLocation() {
-        val loc = googleMap?.myLocation ?: return
-        googleMap?.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(LatLng(loc.latitude, loc.longitude), 15f)
-        )
+        if (!isAdded) return
+        if (!hasLocationPermission()) {
+            requestLocationPermission(centerOnGrant = true)
+            return
+        }
+        enableMyLocation()
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    googleMap?.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(location.latitude, location.longitude),
+                            15f
+                        )
+                    )
+                } else {
+                    fusedLocationClient
+                        .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                        .addOnSuccessListener { currentLocation ->
+                            if (currentLocation != null) {
+                                googleMap?.animateCamera(
+                                    CameraUpdateFactory.newLatLngZoom(
+                                        LatLng(currentLocation.latitude, currentLocation.longitude),
+                                        15f
+                                    )
+                                )
+                            } else if (isAdded) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Could not determine current location.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                        .addOnFailureListener {
+                            if (isAdded) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Could not determine current location.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                }
+            }
+            .addOnFailureListener {
+                if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Could not determine current location.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
     }
 
     // ── Ride Marker Creation ──────────────────────────────────────────────────
@@ -614,7 +705,7 @@ private fun TopSearchBar(
             }
         }
 
-        // Notification Bell Icon with Badge (Instagram style)
+        // Notification Bell Icon with subtle unread indicator
         Box(
             modifier = Modifier
                 .size(44.dp)
@@ -633,25 +724,16 @@ private fun TopSearchBar(
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            // Badge for unread count
+            // Small unread dot
             if (notificationCount > 0) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = 2.dp, y = (-2).dp)
-                        .size(if (notificationCount > 9) 20.dp else 16.dp)
+                        .offset(x = 1.dp, y = (-1).dp)
+                        .size(8.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFF3B30)), // Instagram red
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (notificationCount > 99) "99+" else notificationCount.toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
+                        .background(MaterialTheme.colorScheme.error)
+                )
             }
         }
     }

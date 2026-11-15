@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * SAFAR Conversation Model
  * 
- * Represents a user-to-user conversation (WhatsApp-style).
+ * Represents a user-to-user conversation
  * Conversations are NOT linked to specific rides - they persist between users.
  */
 @IgnoreExtraProperties
