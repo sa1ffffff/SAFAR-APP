@@ -22,3 +22,7 @@ keytool
 
 # Agent tooling
 .agents/
+
+# Local tooling
+.claude/
+skills-lock.json

@@ -1,90 +1,63 @@
-# SAFAR — Community Carpool Marketplace 🚗
+# Safar
 
-A peer-to-peer ride-sharing platform built for Pakistan, connecting drivers with empty seats to passengers heading the same way.
+Community carpooling for Pakistan. Drivers post rides with empty seats; riders heading the same way request a seat, chat, and split the fuel. No in-app payments.
 
----
+## Features
 
-## 📌 Overview
+- Sign in with phone (SMS code) or Google
+- Map of open rides with seat markers, nearest first
+- Post a ride: pickup/drop-off on the map, date and time, seats, optional price per seat
+- Seat requests with accept/decline; seats are reserved in a transaction so rides can't be overbooked
+- One-to-one chat
+- Mark rides complete, then rate each other
+- In-app notifications (system push when the Cloud Function is deployed)
+- Reporting from profiles and rides
+- Light and dark themes following the system, with a manual override
 
-SAFAR is an Android application that allows users to:
-- Post ride offers (e.g., Lahore → Islamabad)
-- Discover available rides via map or list view
-- Request to join rides
-- Chat with drivers/passengers after approval
+## Stack
 
-The app focuses on simplicity, real-time interaction, and community-driven transport — no in-app payments, just coordination.
+| | |
+|---|---|
+| Language | Kotlin |
+| UI | Jetpack Compose, Material 3, Haze (backdrop blur) |
+| Architecture | MVVM, single activity, Navigation Compose |
+| Backend | Firebase Auth, Realtime Database, Storage, Cloud Messaging |
+| Maps | Google Maps SDK + maps-compose, Android Geocoder |
 
----
+## Project layout
 
-## 🛠 Tech Stack
+```
+app/src/main/java/com/safar/app/
+├── SafarApp.kt              App class + AppContainer (manual dependency injection)
+├── MainActivity.kt          The only activity
+├── SafarMessagingService.kt FCM
+├── data/
+│   ├── model/Models.kt      Domain models, mapped to/from Realtime Database by hand
+│   ├── Repositories.kt      All Firebase access (auth, users, rides, requests, chat, reviews, notifications, reports)
+│   ├── Session.kt           Signed-in user + start gate shared by every screen
+│   ├── FirebaseFlows.kt     Listener → Flow and transaction helpers
+│   └── Preferences.kt       Device-local settings
+└── ui/
+    ├── Navigation.kt        Routes and nav graphs
+    ├── Base.kt              SafarViewModel, error messages, ViewModel factory
+    ├── theme/               Colors, type, shapes
+    ├── components/          Buttons, fields, cards, glass surfaces, scaffold
+    └── <feature>/           One file per feature: ViewModel + screen
+```
 
-- **Language:** Java  
-- **Architecture:** MVP (Model-View-Presenter)  
-- **UI:** XML + Material Design 3  
-- **Backend:** Firebase Realtime Database  
-- **Authentication:** Firebase Phone Auth (OTP)  
-- **Maps:** Google Maps SDK  
-- **Notifications:** Firebase Cloud Messaging (FCM)  
+Rules of the road for contributors:
+- Screens never touch Firebase. They call a ViewModel, which calls a repository.
+- Repositories expose `Flow`s for live data and `suspend` functions for writes.
+- New database nodes need a matching entry in `database.rules.json`.
 
----
+## Running it
 
-## 🧱 Architecture (MVP)
+See [SETUP.md](SETUP.md) for the Firebase and Google Cloud steps. Then:
 
-- **Model:** Data classes (`RideAd`, `User`, `ChatMessage`, `JoinRequest`)
-- **View:** Activities & Fragments (UI layer)
-- **Presenter:** Handles logic, Firebase operations, and communication between Model & View
+```bash
+./gradlew :app:assembleDebug
+```
 
----
+Designs live in Figma: `Safar — App Revamp`.
 
-## 📂 Project Structure
-com.safar.app/
-├── models/ # Data classes
-├── presenters/ # Business logic
-├── views/
-│ ├── activities/ # Screens
-│ ├── fragments/ # UI components (Map, List, Inbox)
-│ └── adapters/ # RecyclerView adapters
-├── firebase/ # Firebase manager & messaging
-└── utils/ # Helper classes
-
-📱 Features
-🔐 Authentication
-Google Login
-
-Phone number login with OTP
-
-🗺 Ride Discovery
-
-Map view with ride pins
-
-List view with search
-
-🚗 Ride Posting
-
-Add origin, destination, time, seats
-
-📩 Requests System
-
-Send join requests
-
-Accept or reject requests
-
-💬 Real-Time Chat
-
-Chat unlocked after request acceptance
-
-Firebase-powered instant messaging
----
-
-## ⚙️ Setup
-
-### 1. Firebase
-- Create a Firebase project
-- Add Android app (`com.safar.app`)
-- Download and replace `google-services.json`
-- Enable:
-  - Phone Authentication
-  - Realtime Database
-  - Cloud Messaging
-
-
+Earlier documentation (v1, Java/MVP) is kept in `docs/archive/`.

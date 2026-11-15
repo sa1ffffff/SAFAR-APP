@@ -1,0 +1,100 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+
+    "pushTokens": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+
+    "ads": {
+      ".read": "auth != null",
+      ".indexOn": ["creatorUid", "departureTime", "expiresAt"],
+      "$adId": {
+        ".write": "auth != null && (data.exists() ? data.child('creatorUid').val() == auth.uid : newData.child('creatorUid').val() == auth.uid)",
+        ".validate": "!newData.exists() || newData.hasChildren(['creatorUid', 'origin', 'destination', 'departureTime', 'availableSeats'])",
+        "availableSeats": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 8"
+        }
+      }
+    },
+
+    "joinRequests": {
+      ".indexOn": ["adId", "requestorUid", "adCreatorUid"],
+      ".read": "auth != null && (query.orderByChild == 'adCreatorUid' || query.orderByChild == 'requestorUid') && query.equalTo == auth.uid",
+      "$requestId": {
+        ".read": "auth != null && (data.child('requestorUid').val() == auth.uid || data.child('adCreatorUid').val() == auth.uid)",
+        ".write": "auth != null && (data.exists() ? (data.child('requestorUid').val() == auth.uid || data.child('adCreatorUid').val() == auth.uid) : newData.child('requestorUid').val() == auth.uid)"
+      }
+    },
+
+    "conversations": {
+      "$cid": {
+        ".read": "auth != null && ($cid.beginsWith(auth.uid + '_') || $cid.endsWith('_' + auth.uid))",
+        ".write": "auth != null && ($cid.beginsWith(auth.uid + '_') || $cid.endsWith('_' + auth.uid))"
+      }
+    },
+
+    "userConversations": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        "$cid": {
+          ".write": "auth != null && ($cid.beginsWith(auth.uid + '_') || $cid.endsWith('_' + auth.uid))"
+        }
+      }
+    },
+
+    "messages": {
+      "$cid": {
+        ".read": "auth != null && ($cid.beginsWith(auth.uid + '_') || $cid.endsWith('_' + auth.uid))",
+        ".indexOn": ["timestamp"],
+        "$mid": {
+          ".write": "auth != null && !data.exists() && ($cid.beginsWith(auth.uid + '_') || $cid.endsWith('_' + auth.uid))",
+          ".validate": "newData.child('senderId').val() == auth.uid && newData.child('text').isString() && newData.child('text').val().length <= 2000"
+        }
+      }
+    },
+
+    "reviews": {
+      ".read": "auth != null",
+      ".indexOn": ["revieweeId"],
+      "$reviewId": {
+        ".write": "auth != null && !data.exists() && newData.child('reviewerId').val() == auth.uid",
+        ".validate": "newData.child('rating').isNumber() && newData.child('rating').val() >= 1 && newData.child('rating').val() <= 5 && newData.child('revieweeId').val() != auth.uid"
+      }
+    },
+
+    "ratings": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid != $uid",
+        ".validate": "newData.child('count').val() == (data.exists() ? data.child('count').val() : 0) + 1 && newData.child('sum').val() - (data.exists() ? data.child('sum').val() : 0) >= 1 && newData.child('sum').val() - (data.exists() ? data.child('sum').val() : 0) <= 5"
+      }
+    },
+
+    "reports": {
+      "$reportId": {
+        ".write": "auth != null && !data.exists() && newData.child('reporterId').val() == auth.uid",
+        ".validate": "newData.hasChildren(['reporterId', 'targetUserId', 'reason', 'timestamp'])"
+      }
+    },
+
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid",
+        ".indexOn": ["timestamp"],
+        "$nid": {
+          ".write": "auth != null && !data.exists() && newData.child('fromUserId').val() == auth.uid"
+        }
+      }
+    }
+  }
+}

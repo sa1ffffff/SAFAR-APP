@@ -1,7 +1,19 @@
-apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'org.jetbrains.kotlin.android'
-apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+// Secrets and signing live in local.properties / keystore.properties, never in git.
+def localProps = new Properties()
+def localFile = rootProject.file('local.properties')
+if (localFile.exists()) localFile.withInputStream { localProps.load(it) }
+
+def keystoreProps = new Properties()
+def keystoreFile = rootProject.file('keystore.properties')
+if (keystoreFile.exists()) keystoreFile.withInputStream { keystoreProps.load(it) }
 
 android {
     namespace 'com.safar.app'
@@ -11,48 +23,50 @@ android {
         applicationId "com.safar.app"
         minSdk 24
         targetSdk 35
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        versionCode 2
+        versionName "2.0.0"
+        manifestPlaceholders = [MAPS_API_KEY: localProps.getProperty('MAPS_API_KEY', '')]
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreFile.exists()) {
+                storeFile rootProject.file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug
+            signingConfig keystoreFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
-    }
-
-    buildFeatures {
-        viewBinding true
-        compose true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        compose true
+        buildConfig true
     }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.recyclerview:recyclerview:1.3.2'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    implementation 'androidx.annotation:annotation:1.7.1'
-
-    // Jetpack Compose
+    // Compose
     def composeBom = platform('androidx.compose:compose-bom:2024.10.01')
     implementation composeBom
-    androidTestImplementation composeBom
-
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
@@ -61,36 +75,36 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.9.3'
     implementation 'androidx.navigation:navigation-compose:2.8.3'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.8.7'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
 
-    // Firebase BoM - manages all Firebase versions
-    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    // Backdrop blur for the translucent "glass" surfaces
+    implementation 'dev.chrisbanes.haze:haze:1.0.2'
+
+    // Firebase
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.firebase:firebase-messaging'
     implementation 'com.google.firebase:firebase-storage'
+    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'com.google.firebase:firebase-appcheck-playintegrity'
+    debugImplementation 'com.google.firebase:firebase-appcheck-debug'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1'
 
-    // Coil for Compose image loading
-    implementation 'io.coil-kt:coil-compose:2.5.0'
+    // Google sign-in through Credential Manager
+    implementation 'androidx.credentials:credentials:1.3.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
 
-    // Google Sign-In
-    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+    // Maps and location
+    implementation 'com.google.android.gms:play-services-maps:19.0.0'
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation 'com.google.maps.android:maps-compose:6.2.1'
 
-    // Google Maps
-    implementation 'com.google.android.gms:play-services-maps:18.2.0'
-    implementation 'com.google.android.gms:play-services-location:21.1.0'
-    implementation 'com.google.maps.android:maps-compose:4.3.3'
-
-    // Glide
-    implementation 'com.github.bumptech.glide:glide:4.16.0'
-    implementation 'androidx.core:core-ktx:1.13.1'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
-
-    implementation 'de.hdodenhof:circleimageview:3.1.0'
-    implementation 'com.hbb20:ccp:2.7.0'
+    // Images
+    implementation 'io.coil-kt:coil-compose:2.7.0'
 
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    debugImplementation 'androidx.compose.ui:ui-tooling'
-    debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }

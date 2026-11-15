@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Route mark: pickup ring, curved route, drop-off square (same motif as the app's route cards). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-  <!-- Car icon in black on yellow background -->
-  <path android:fillColor="#0D0D0D"
-        android:pathData="M76,52l-4,-12a4,4 0,0 0,-3.8,-2.7H40a4,4 0,0 0,-3.8,2.7L32,52a6,6 0,0 0,-4,5.6V66a2,2 0,0 0,2,2h2a6,6 0,0 0,12,0H64a6,6 0,0 0,12,0h2a2,2 0,0 0,2,-2V57.6A6,6 0,0 0,76,52zM40,44H68l2.8,8H37.2L40,44zM40,70a2,2 0,1 1,2,-2A2,2 0,0 1,40,70zM68,70a2,2 0,1 1,2,-2A2,2 0,0 1,68,70zM74,62H34V57.6A2,2 0,0 1,36,56H72a2,2 0,0 1,2,1.6V62z"/>
-  <!-- S letter mark -->
-  <path android:fillColor="#0D0D0D"
-        android:pathData="M48,33c0,-1.1 0.9,-2 2,-2h8c1.1,0 2,0.9 2,2v2h-3v-1h-6v2h6c1.1,0 2,0.9 2,2v3c0,1.1-0.9,2-2,2h-8c-1.1,0-2-0.9-2-2v-2h3v1h6v-2h-6c-1.1,0-2-0.9-2-2v-3z"/>
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="5" android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M40,68 C44,56 50,52 56,50 C62,48 66,44 68,40" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="4.5" android:fillColor="#000000"
+        android:pathData="M40,64.5 a6.5,6.5 0 1,0 0.01,0 z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M63,31 h11 a2,2 0 0,1 2,2 v11 a2,2 0 0,1 -2,2 h-11 a2,2 0 0,1 -2,-2 v-11 a2,2 0 0,1 2,-2 z" />
 </vector>
