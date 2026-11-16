@@ -177,6 +177,8 @@ class PostRideViewModel(private val app: AppContainer, private val editId: Strin
             val ride = base.copy(
                 creatorUid = me.uid, creatorName = me.name, creatorPhone = me.phone.takeIf { me.hasCallablePhone }.orEmpty(), creatorPhotoUrl = me.photoUrl,
                 origin = f.from!!, destination = f.to!!, departureTime = f.departure, availableSeats = f.seats,
+                // Seats already booked stay booked when the driver edits the number offered.
+                totalSeats = f.seats + (base.totalSeats - base.availableSeats).coerceAtLeast(0),
                 pricePerSeat = f.price.toIntOrNull() ?: 0, vehicleDetails = f.vehicle.trim(), notes = f.notes.trim(),
             )
             savedId = when {

@@ -1,5 +1,11 @@
 package com.safar.app.ui.components
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material3.Icon
@@ -68,19 +74,38 @@ fun RideCard(
     }
 }
 
+/**
+ * A ride's availability, said quietly: a small seat meter and plain text, no pill.
+ * [long] reads "2 of 4 seats left" (ride page); otherwise "2 left" (cards).
+ */
 @Composable
-fun SeatsBadge(ride: Ride) {
+fun SeatsBadge(ride: Ride, long: Boolean = false) {
     val c = Safar.colors
-    when {
-        ride.status == RideStatus.CANCELLED -> Pill("Cancelled", background = c.negativeMuted, color = c.negative)
-        ride.status == RideStatus.COMPLETED -> Pill("Completed")
-        ride.status == RideStatus.STARTED -> Pill("On the way", background = c.positiveMuted, color = c.positive, icon = Icons.Rounded.DirectionsCar)
-        ride.status == RideStatus.FILLED || ride.availableSeats == 0 -> Pill("Full")
-        ride.isExpired() -> Pill("Expired")
-        else -> Pill(
-            if (ride.availableSeats == 1) "1 seat left" else "${ride.availableSeats} seats left",
-            background = c.positiveMuted, color = c.positive, icon = Icons.Rounded.AirlineSeatReclineNormal,
-        )
+    val total = maxOf(ride.totalSeats, ride.availableSeats)
+    val (text, color, meter) = when {
+        ride.status == RideStatus.CANCELLED -> Triple("Cancelled", c.negative, false)
+        ride.status == RideStatus.COMPLETED -> Triple("Completed", c.contentSecondary, false)
+        ride.status == RideStatus.STARTED -> Triple("On the way", c.content, false)
+        ride.isExpired() -> Triple("Expired", c.contentTertiary, false)
+        ride.status == RideStatus.FILLED || ride.availableSeats == 0 -> Triple("Full", c.contentSecondary, true)
+        long -> Triple("${ride.availableSeats} of $total ${if (total == 1) "seat" else "seats"} left", c.contentSecondary, true)
+        else -> Triple("${ride.availableSeats} left", c.contentSecondary, true)
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (meter && total in 1..8) SeatMeter(free = ride.availableSeats, total = total)
+        if (ride.status == RideStatus.STARTED) Box(Modifier.size(6.dp).clip(CircleShape).background(c.content))
+        Text(text, style = Safar.type.caption, color = color)
+    }
+}
+
+/** One short bar per seat; filled bars are the seats still free. */
+@Composable
+fun SeatMeter(free: Int, total: Int, modifier: Modifier = Modifier) {
+    val c = Safar.colors
+    Row(modifier.semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        repeat(total) { i ->
+            Box(Modifier.size(width = 10.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(if (i < free) c.content else c.border))
+        }
     }
 }
 

@@ -23,9 +23,11 @@ import com.safar.app.R
 import com.safar.app.data.ThemeMode
 
 /*
- * Monochrome system in the spirit of Uber's Base: black and white carry the
- * interface, greys build hierarchy, and color appears only when it means something
- * (positive, negative, info). No brand-colored chrome.
+ * Slate & Bone. One tonal family: bone (#E3DCCB), slate (#4A5868), deep slate
+ * (#263038) and ink (#1B1E26). Light mode sets ink on warm bone paper; dark mode
+ * sets bone on ink. The accent is contrast, never saturation, and appears only on
+ * each screen's main action, the user's selection and the route. Status colours
+ * are muted so they sit inside the palette instead of shouting over it.
  */
 @Immutable
 data class SafarColors(
@@ -53,50 +55,50 @@ data class SafarColors(
 )
 
 val LightColors = SafarColors(
-    background = Color(0xFFFFFFFF),
-    surface = Color(0xFFFFFFFF),
-    surfaceMuted = Color(0xFFF3F3F3),
-    surfaceRaised = Color(0xFFFFFFFF),
-    border = Color(0xFFE8E8E8),
-    content = Color(0xFF000000),
-    contentSecondary = Color(0xFF5E5E5E),
-    contentTertiary = Color(0xFF8A8A8A),
-    primary = Color(0xFF000000),
-    onPrimary = Color(0xFFFFFFFF),
-    positive = Color(0xFF05A357),
-    positiveMuted = Color(0xFFE6F6EE),
-    negative = Color(0xFFE11900),
-    negativeMuted = Color(0xFFFDE9E7),
-    warning = Color(0xFF9F6402),
-    warningMuted = Color(0xFFFFF4DE),
-    info = Color(0xFF276EF1),
-    glassTint = Color(0xFFFFFFFF).copy(alpha = 0.72f),
-    glassHighlight = Color(0xFFFFFFFF).copy(alpha = 0.65f),
-    scrim = Color(0xFF000000).copy(alpha = 0.32f),
+    background = Color(0xFFF3F0E8),
+    surface = Color(0xFFFBFAF6),
+    surfaceMuted = Color(0xFFECE7DB),
+    surfaceRaised = Color(0xFFFBFAF6),
+    border = Color(0xFFE0DACB),
+    content = Color(0xFF1B1E26),
+    contentSecondary = Color(0xFF5A6170),
+    contentTertiary = Color(0xFF949AA4),
+    primary = Color(0xFF263038),
+    onPrimary = Color(0xFFF3F0E8),
+    positive = Color(0xFF3F7A62),
+    positiveMuted = Color(0xFFE2EAE2),
+    negative = Color(0xFFA9483D),
+    negativeMuted = Color(0xFFF3E1DC),
+    warning = Color(0xFF8E6420),
+    warningMuted = Color(0xFFF2E8D3),
+    info = Color(0xFF4A5868),
+    glassTint = Color(0xFFFBFAF6).copy(alpha = 0.78f),
+    glassHighlight = Color(0xFFFFFFFF).copy(alpha = 0.60f),
+    scrim = Color(0xFF1B1E26).copy(alpha = 0.32f),
     isDark = false,
 )
 
 val DarkColors = SafarColors(
-    background = Color(0xFF000000),
-    surface = Color(0xFF141414),
-    surfaceMuted = Color(0xFF1F1F1F),
-    surfaceRaised = Color(0xFF1C1C1E),
-    border = Color(0xFF2B2B2B),
-    content = Color(0xFFFFFFFF),
-    contentSecondary = Color(0xFFA6A6A6),
-    contentTertiary = Color(0xFF737373),
-    primary = Color(0xFFFFFFFF),
-    onPrimary = Color(0xFF000000),
-    positive = Color(0xFF3CCB7F),
-    positiveMuted = Color(0xFF0F2A1C),
-    negative = Color(0xFFFF5A4E),
-    negativeMuted = Color(0xFF2E1210),
-    warning = Color(0xFFFFC043),
-    warningMuted = Color(0xFF2C2210),
-    info = Color(0xFF5B91F5),
-    glassTint = Color(0xFF1C1C1E).copy(alpha = 0.62f),
-    glassHighlight = Color(0xFFFFFFFF).copy(alpha = 0.10f),
-    scrim = Color(0xFF000000).copy(alpha = 0.55f),
+    background = Color(0xFF15181F),
+    surface = Color(0xFF1B1E26),
+    surfaceMuted = Color(0xFF232831),
+    surfaceRaised = Color(0xFF232831),
+    border = Color(0xFF2C333D),
+    content = Color(0xFFECE6D8),
+    contentSecondary = Color(0xFF9AA3AE),
+    contentTertiary = Color(0xFF6A7380),
+    primary = Color(0xFFE3DCCB),
+    onPrimary = Color(0xFF1B1E26),
+    positive = Color(0xFF8DBFA5),
+    positiveMuted = Color(0xFF1E2E29),
+    negative = Color(0xFFE08D80),
+    negativeMuted = Color(0xFF34211F),
+    warning = Color(0xFFD8B46E),
+    warningMuted = Color(0xFF2F2919),
+    info = Color(0xFF9FB0C2),
+    glassTint = Color(0xFF232831).copy(alpha = 0.70f),
+    glassHighlight = Color(0xFFE3DCCB).copy(alpha = 0.08f),
+    scrim = Color(0xFF0B0D12).copy(alpha = 0.60f),
     isDark = true,
 )
 
@@ -125,14 +127,14 @@ private fun style(size: Int, line: Int, weight: FontWeight, tracking: Float = 0f
 )
 
 val SafarTypography = SafarType(
-    display = style(30, 36, FontWeight.Bold, -0.6f),
-    title = style(22, 28, FontWeight.Bold, -0.3f),
-    headline = style(17, 22, FontWeight.SemiBold, -0.1f),
+    display = style(30, 36, FontWeight.SemiBold, -0.5f),
+    title = style(22, 28, FontWeight.SemiBold, -0.3f),
+    headline = style(17, 22, FontWeight.Medium, -0.1f),
     body = style(15, 21, FontWeight.Normal),
-    bodyStrong = style(15, 21, FontWeight.SemiBold),
+    bodyStrong = style(15, 21, FontWeight.Medium),
     label = style(13, 18, FontWeight.Medium),
     caption = style(12, 16, FontWeight.Medium),
-    overline = style(11, 14, FontWeight.SemiBold, 0.6f),
+    overline = style(11, 14, FontWeight.Medium, 0.9f),
 )
 
 object Radii {

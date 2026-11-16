@@ -323,7 +323,7 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
                 "${dayLabel(ride.departureTime)} · ${countdownLabel(ride.departureTime)}".uppercase(),
                 style = Safar.type.overline, color = c.contentSecondary, modifier = Modifier.weight(1f),
             )
-            SeatsBadge(ride)
+            SeatsBadge(ride, long = true)
         }
         Text("${shortPlace(ride.origin.name)} → ${shortPlace(ride.destination.name)}", style = Safar.type.display, color = c.content)
         if (ride.isRepeating) Row(
