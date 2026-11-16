@@ -50,6 +50,13 @@ class SafarApi(private val auth: FirebaseAuth, private val baseUrl: String = Bui
         background.launch { runCatching { block() }.onFailure { Log.w(TAG, "Background task failed", it) } }
     }
 
+    /** Road route between two points (see the Worker's /route), or null if there isn't one. */
+    suspend fun route(fromLat: Double, fromLng: Double, toLat: Double, toLng: Double): RoadRoute? {
+        val q = "/route?from=%.5f,%.5f&to=%.5f,%.5f".format(java.util.Locale.US, fromLat, fromLng, toLat, toLng)
+        val json = JSONObject(call("GET", q))
+        return RoadRoute(decodePolyline(json.getString("polyline")), json.optInt("meters"), json.optInt("seconds"))
+    }
+
     private fun push(body: JSONObject) = inBackground {
         // Retry network failures and server errors; a 4xx means the Worker refused it, so stop.
         for (attempt in 0 until PUSH_ATTEMPTS) {
@@ -100,4 +107,32 @@ class SafarApi(private val auth: FirebaseAuth, private val baseUrl: String = Bui
             }
         }
     }
+}
+
+/** A driving route: its path as (lat, lng) points, length and typical duration. */
+data class RoadRoute(val points: List<Pair<Double, Double>>, val meters: Int, val seconds: Int)
+
+/** Decodes Google's encoded polyline format (precision 5), as returned by OSRM. */
+fun decodePolyline(encoded: String): List<Pair<Double, Double>> {
+    val out = ArrayList<Pair<Double, Double>>(encoded.length / 4)
+    var index = 0
+    var lat = 0
+    var lng = 0
+    fun next(): Int {
+        var result = 0
+        var shift = 0
+        var b: Int
+        do {
+            b = encoded[index++].code - 63
+            result = result or ((b and 0x1f) shl shift)
+            shift += 5
+        } while (b >= 0x20)
+        return if (result and 1 != 0) (result shr 1).inv() else result shr 1
+    }
+    while (index < encoded.length) {
+        lat += next()
+        lng += next()
+        out += lat / 1e5 to lng / 1e5
+    }
+    return out
 }

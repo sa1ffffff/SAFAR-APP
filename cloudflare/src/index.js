@@ -5,7 +5,8 @@
  *   DELETE /avatar               remove it (account deletion)
  *   GET    /avatars/{uid}.jpg    serve a profile photo
  *   POST   /notify               push an in-app notification or chat message the caller just wrote
- *   cron                         daily cleanup of expired rides
+ *   GET    /route?from=&to=      driving route between two points (OpenStreetMap data via OSRM)
+ *   cron (hourly)                close expired rides, and post weekly repeats a week ahead
  *
  * Callers prove who they are with their Firebase ID token. The Worker reaches Firebase with a
  * service account (secret FIREBASE_SERVICE_ACCOUNT), which bypasses database rules, so every
@@ -16,6 +17,10 @@ import { verifyIdToken, googleAccessToken } from "./google.js";
 const DAY = 24 * 60 * 60 * 1000;
 const EXPIRY_WINDOW = 3 * DAY; // matches Ride.EXPIRY_WINDOW_MS in the app
 const KEEP_BOOKED_RIDES = 14 * DAY; // time riders get to mark a booked ride complete and review it
+const RIDE_LIFETIME = 60 * 60 * 1000; // matches Ride.RIDE_LIFETIME_MS: a ride closes an hour after it leaves
+const SERIES_HORIZON_DAYS = 7; // matches RideSeries.HORIZON_DAYS
+const SERIES_MIN_LEAD = 30 * 60 * 1000; // matches RideSeries.MIN_LEAD_MS
+const ROUTE_CACHE_SECONDS = 30 * 24 * 60 * 60;
 const PUSH_WINDOW = 10 * 60 * 1000; // only push things written in the last 10 minutes
 const MAX_AVATAR_BYTES = 1024 * 1024;
 const PUSH_ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -35,7 +40,10 @@ export default {
   },
 
   async scheduled(_event, env, ctx) {
-    ctx.waitUntil(purgeExpiredRides(env).then((r) => console.log("purgeExpiredRides", JSON.stringify(r))));
+    ctx.waitUntil((async () => {
+      console.log("extendSeries", JSON.stringify(await extendSeries(env)));
+      console.log("purgeExpiredRides", JSON.stringify(await purgeExpiredRides(env)));
+    })());
   },
 };
 
@@ -49,6 +57,10 @@ async function route(request, env, ctx) {
   if (path === "/avatar" && request.method === "PUT") return uploadAvatar(request, env, url, await caller(request, env));
   if (path === "/avatar" && request.method === "DELETE") return deleteAvatar(env, await caller(request, env));
   if (path === "/notify" && request.method === "POST") return notify(request, env, await caller(request, env));
+  if (path === "/route" && request.method === "GET") {
+    await caller(request, env);
+    return route_(request, url, ctx);
+  }
   if (path === "/" && request.method === "GET") return json({ ok: true, service: "safar-api" });
 
   throw new HttpError(404, "Not found");
@@ -189,10 +201,103 @@ async function sendPush(env, token, { title, body, data }) {
   return "failed";
 }
 
+// ─── Driving routes ─────────────────────────────────────────────────────────
+
+const POINT = /^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/;
+
+/**
+ * Road route between two points, from the public OSRM server (OpenStreetMap data). Points are
+ * rounded to ~10 m so nearby requests share a cache entry; answers are cached at the edge for a
+ * month, which keeps traffic to OSRM tiny. Returns {polyline, meters, seconds}; polyline is
+ * Google's encoded format (precision 5).
+ */
+async function route_(request, url, ctx) {
+  const round = (p) => p.split(",").map((n) => Number(n).toFixed(4)).join(",");
+  const from = url.searchParams.get("from") || "";
+  const to = url.searchParams.get("to") || "";
+  if (!POINT.test(from) || !POINT.test(to)) throw new HttpError(400, "Bad points");
+  const [a, b] = [round(from), round(to)];
+
+  const cacheKey = new Request(`https://route.cache/${a}/${b}`);
+  const cached = await caches.default.match(cacheKey);
+  if (cached) return cached;
+
+  const lngLat = (p) => p.split(",").reverse().join(",");
+  const res = await fetch(
+    `https://router.project-osrm.org/route/v1/driving/${lngLat(a)};${lngLat(b)}?overview=full&geometries=polyline&alternatives=false&steps=false`,
+    { headers: { "user-agent": "safar-api (Cloudflare Worker)" } },
+  );
+  if (!res.ok) throw new HttpError(502, "Route service unavailable");
+  const data = await res.json();
+  const r = data.routes?.[0];
+  if (data.code !== "Ok" || !r) throw new HttpError(404, "No driving route");
+
+  const response = json({ polyline: r.geometry, meters: Math.round(r.distance), seconds: Math.round(r.duration) });
+  response.headers.set("cache-control", `public, max-age=${ROUTE_CACHE_SECONDS}`);
+  ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
+  return response;
+}
+
+// ─── Weekly repeats ─────────────────────────────────────────────────────────
+
+/** "20261117" for a departure in the series' time zone, as RideSeries.dayKey does in the app. */
+export function dayKey(departure, utcOffsetMinutes) {
+  const d = new Date(departure + utcOffsetMinutes * 60000);
+  return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+/** Departures in the next week on the series' weekdays (ISO, Monday = 1), as RideSeries.upcoming. */
+export function upcoming(days, hour, minute, utcOffsetMinutes, now) {
+  const out = [];
+  const local = new Date(now + utcOffsetMinutes * 60000);
+  for (let i = 0; i <= SERIES_HORIZON_DAYS; i++) {
+    const day = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + i, hour, minute);
+    const iso = ((new Date(day).getUTCDay() + 6) % 7) + 1;
+    const departure = day - utcOffsetMinutes * 60000;
+    if (days.includes(iso) && departure >= now + SERIES_MIN_LEAD && departure <= now + SERIES_HORIZON_DAYS * DAY) out.push(departure);
+  }
+  return out;
+}
+
+/**
+ * Keeps every active weekly repeat posted a week ahead. A day is created once (recorded under
+ * `made`), so a ride the driver deletes or cancels for one day doesn't come back.
+ */
+export async function extendSeries(env, now = Date.now()) {
+  const all = (await db(env, "GET", "rideSeries")) || {};
+  const updates = {};
+  let created = 0;
+  const stale = now - 30 * DAY;
+
+  for (const [id, s] of Object.entries(all)) {
+    if (!s || s.active === false || !s.template) continue;
+    const days = String(s.days || "").split(",").map(Number).filter((d) => d >= 1 && d <= 7);
+    const offset = Number(s.utcOffsetMinutes) || 0;
+    for (const departure of upcoming(days, Number(s.hour) || 0, Number(s.minute) || 0, offset, now)) {
+      const key = dayKey(departure, offset);
+      if (s.made?.[key]) continue;
+      updates[`ads/${id}-${key}`] = {
+        ...s.template, adId: `${id}-${key}`, departureTime: departure, status: "OPEN",
+        createdAt: now, expiresAt: departure + RIDE_LIFETIME,
+      };
+      updates[`rideSeries/${id}/made/${key}`] = true;
+      created++;
+    }
+    // Forget days older than a month so `made` stays small.
+    for (const key of Object.keys(s.made || {})) {
+      const t = Date.UTC(+key.slice(0, 4), +key.slice(4, 6) - 1, +key.slice(6, 8));
+      if (t < stale) updates[`rideSeries/${id}/made/${key}`] = null;
+    }
+  }
+
+  if (Object.keys(updates).length) await db(env, "PATCH", "", updates);
+  return { series: Object.keys(all).length, created };
+}
+
 // ─── Expired rides ──────────────────────────────────────────────────────────
 
 /**
- * Keeps /ads to live rides only.
+ * Keeps /ads to live rides only. Runs hourly; a ride expires an hour after it leaves.
  * - Expired rides nobody was accepted on are deleted.
  * - Expired rides with accepted passengers are marked COMPLETED and kept for two weeks,
  *   so both sides can still mark the ride done and review each other, then deleted.

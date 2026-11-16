@@ -7,6 +7,13 @@
       }
     },
 
+    "rideSeries": {
+      "$seriesId": {
+        ".read": "auth != null && data.child('creatorUid').val() == auth.uid",
+        ".write": "auth != null && (data.exists() ? data.child('creatorUid').val() == auth.uid : newData.child('creatorUid').val() == auth.uid)"
+      }
+    },
+
     "pushTokens": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",

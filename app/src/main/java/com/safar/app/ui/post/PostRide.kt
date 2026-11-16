@@ -1,6 +1,29 @@
 package com.safar.app.ui.post
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import com.safar.app.ui.components.pressable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +74,9 @@ import androidx.navigation.NavHostController
 import com.safar.app.AppContainer
 import com.safar.app.data.model.Place
 import com.safar.app.data.model.Ride
+import com.safar.app.data.model.RideSeries
+import com.safar.app.data.model.RideStatus
+import com.safar.app.data.model.repeatLabel
 import com.safar.app.ui.Messages
 import com.safar.app.ui.PICK_RESULT
 import com.safar.app.ui.Routes
@@ -85,6 +111,9 @@ data class PostForm(
     val notes: String = "",
     val saving: Boolean = false,
     val loaded: Boolean = false,
+    /** Weekly repeat: ISO weekdays (Mon = 1). Only offered when posting a new ride. */
+    val repeat: Boolean = false,
+    val days: Set<Int> = setOf(1, 2, 3, 4, 5),
 )
 
 /** The first :00 or :30 that is at least 30 minutes from now (7:12 → 8:00, 7:45 → 8:30). */
@@ -132,7 +161,8 @@ class PostRideViewModel(private val app: AppContainer, private val editId: Strin
         f.from == null -> "Choose where you're leaving from"
         f.to == null -> "Choose where you're heading"
         f.from.lat == f.to.lat && f.from.lng == f.to.lng -> "Pickup and drop-off can't be the same place"
-        f.departure < System.currentTimeMillis() + 5 * 60_000 -> "Pick a departure time in the future"
+        f.repeat && f.days.isEmpty() -> "Choose at least one day to repeat on"
+        !f.repeat && f.departure < System.currentTimeMillis() + 5 * 60_000 -> "Pick a departure time in the future"
         else -> null
     }
 
@@ -149,10 +179,18 @@ class PostRideViewModel(private val app: AppContainer, private val editId: Strin
                 origin = f.from!!, destination = f.to!!, departureTime = f.departure, availableSeats = f.seats,
                 pricePerSeat = f.price.toIntOrNull() ?: 0, vehicleDetails = f.vehicle.trim(), notes = f.notes.trim(),
             )
-            savedId = if (original != null) {
-                app.rides.update(ride.copy(expiresAt = maxOf(base.expiresAt, f.departure + 24 * 60 * 60 * 1000L)))
-                ride.id
-            } else app.rides.post(ride)
+            savedId = when {
+                original != null -> {
+                    if (ride.status != RideStatus.STARTED) app.rides.update(ride.copy(expiresAt = f.departure + Ride.RIDE_LIFETIME_MS))
+                    else app.rides.update(ride)
+                    ride.id
+                }
+                f.repeat -> {
+                    val cal = Calendar.getInstance().apply { timeInMillis = f.departure }
+                    app.rides.postRepeating(ride, f.days.sorted(), cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+                }
+                else -> app.rides.post(ride)
+            }
         }
     }
 }
@@ -221,14 +259,26 @@ fun PostRideScreen(editId: String?, nav: NavHostController, entry: NavBackStackE
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("When", style = Safar.type.headline, color = c.content)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChoiceChip("Today", today, { vm.update { it.copy(departure = withDay(it.departure, 0)) } })
-                    ChoiceChip("Tomorrow", tomorrow, { vm.update { it.copy(departure = withDay(it.departure, 1)) } })
-                    ChoiceChip(if (!today && !tomorrow) dayLabel(f.departure) else "Pick date", !today && !tomorrow, { pickDate = true })
+                // A repeat sets its own dates, so the one-off date choice steps aside.
+                AnimatedVisibility(
+                    visible = !f.repeat,
+                    enter = fadeIn(tween(200)) + expandVertically(tween(260, easing = FastOutSlowInEasing)),
+                    exit = fadeOut(tween(150)) + shrinkVertically(tween(220, easing = FastOutSlowInEasing)),
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ChoiceChip("Today", today, { vm.update { it.copy(departure = withDay(it.departure, 0)) } })
+                        ChoiceChip("Tomorrow", tomorrow, { vm.update { it.copy(departure = withDay(it.departure, 1)) } })
+                        ChoiceChip(if (!today && !tomorrow) dayLabel(f.departure) else "Pick date", !today && !tomorrow, { pickDate = true })
+                    }
                 }
                 FieldButton(
                     "Departure", timeLabel(f.departure), onClick = { pickTime = true },
                     leading = { Icon(Icons.Rounded.Schedule, null, tint = c.contentSecondary) },
+                )
+                if (editId == null) RepeatPicker(
+                    repeat = f.repeat, days = f.days, departure = f.departure,
+                    onRepeat = { on -> vm.update { it.copy(repeat = on) } },
+                    onToggleDay = { d -> vm.update { it.copy(days = if (d in it.days) it.days - d else it.days + d) } },
                 )
             }
 
@@ -337,4 +387,92 @@ private fun utcMidnight(local: Long): Long {
     return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
         clear(); set(l.get(Calendar.YEAR), l.get(Calendar.MONTH), l.get(Calendar.DAY_OF_MONTH))
     }.timeInMillis
+}
+
+private val DAY_LETTERS = listOf("M", "T", "W", "T", "F", "S", "S")
+private val DAY_NAMES = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+/** "Repeat weekly" switch, then the days it repeats on and when the next ride goes out. */
+@Composable
+private fun RepeatPicker(
+    repeat: Boolean, days: Set<Int>, departure: Long,
+    onRepeat: (Boolean) -> Unit, onToggleDay: (Int) -> Unit,
+) {
+    val c = Safar.colors
+    val haptic = LocalHapticFeedback.current
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(Radii.lg)).background(c.surfaceMuted).padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(
+            Modifier.toggleable(repeat, remember { MutableInteractionSource() }, indication = null, role = Role.Switch) {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onRepeat(it)
+            },
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(Icons.Rounded.Repeat, null, tint = c.content, modifier = Modifier.size(20.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Repeat weekly", style = Safar.type.bodyStrong, color = c.content)
+                Text(
+                    if (repeat && days.isNotEmpty()) "${repeatLabel(days.sorted())} at ${timeLabel(departure)}" else "Drive this route on a schedule",
+                    style = Safar.type.caption, color = c.contentSecondary,
+                )
+            }
+            Switch(
+                checked = repeat,
+                onCheckedChange = null, // the whole row toggles
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = c.onPrimary, checkedTrackColor = c.primary, checkedBorderColor = c.primary,
+                    uncheckedThumbColor = c.contentTertiary, uncheckedTrackColor = c.surface, uncheckedBorderColor = c.border,
+                ),
+            )
+        }
+        AnimatedVisibility(
+            visible = repeat,
+            enter = fadeIn(tween(220, delayMillis = 60)) + expandVertically(tween(280, easing = FastOutSlowInEasing)),
+            exit = fadeOut(tween(120)) + shrinkVertically(tween(220, easing = FastOutSlowInEasing)),
+        ) {
+            Column {
+                Spacer(Modifier.height(16.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    (1..7).forEach { day ->
+                        DayToggle(DAY_LETTERS[day - 1], DAY_NAMES[day - 1], day in days) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onToggleDay(day)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                val next = remember(days, departure) {
+                    val cal = Calendar.getInstance().apply { timeInMillis = departure }
+                    val now = System.currentTimeMillis()
+                    val offset = TimeZone.getDefault().getOffset(now) / 60_000
+                    RideSeries.upcoming(days.toList(), cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), offset, now)
+                }
+                Text(
+                    when {
+                        days.isEmpty() -> "Choose the days you drive."
+                        next.isEmpty() -> "No rides in the next week at this time."
+                        else -> "First ride ${dayLabel(next.first()).let { if (it == "Today" || it == "Tomorrow") it.lowercase() else "on $it" }}. Rides are posted a week ahead until you stop repeating."
+                    },
+                    style = Safar.type.caption, color = c.contentSecondary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DayToggle(letter: String, name: String, selected: Boolean, onClick: () -> Unit) {
+    val c = Safar.colors
+    val bg by animateColorAsState(if (selected) c.primary else c.surface, tween(180), label = "day-bg")
+    val fg by animateColorAsState(if (selected) c.onPrimary else c.content, tween(180), label = "day-fg")
+    val scale by animateFloatAsState(if (selected) 1f else 0.94f, spring(dampingRatio = 0.6f, stiffness = 700f), label = "day-scale")
+    Box(
+        Modifier.size(40.dp).graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(CircleShape).background(bg)
+            .border(1.dp, if (selected) c.primary else c.border, CircleShape)
+            .pressable(remember { MutableInteractionSource() }, onClick = onClick, role = Role.Checkbox, pressedScale = 0.9f)
+            .semantics { contentDescription = name; stateDescription = if (selected) "Repeats" else "Off" },
+        contentAlignment = Alignment.Center,
+    ) { Text(letter, style = Safar.type.label, color = fg) }
 }

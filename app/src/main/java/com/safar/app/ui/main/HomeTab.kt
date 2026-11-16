@@ -1,5 +1,25 @@
 package com.safar.app.ui.main
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.safar.app.ui.components.rememberRoadRoute
+import com.safar.app.ui.components.routePoints
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -178,6 +198,15 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
     val scope = rememberCoroutineScope()
     val camera = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(DefaultCenter, 11f) }
     var sheetHeight by remember { mutableIntStateOf(0) }
+    // The sheet collapses to just the search bar, giving the map the screen. Drag or tap the handle.
+    var expanded by rememberSaveable { mutableStateOf(true) }
+    val haptic = LocalHapticFeedback.current
+    val dragY = remember { Animatable(0f) }
+    fun settle(open: Boolean) {
+        if (open != expanded) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        expanded = open
+        scope.launch { dragY.animateTo(0f, spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow)) }
+    }
     var selected by remember { mutableStateOf<String?>(null) }
     var hasPermission by remember { mutableStateOf(hasLocationPermission(context)) }
     val listState = rememberLazyListState()
@@ -266,10 +295,11 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
                 }
             }
             val active = rides.firstOrNull { it.id == selected }
+            val road = rememberRoadRoute(active)
             if (active != null) {
                 Polyline(
-                    points = listOf(LatLng(active.origin.lat, active.origin.lng), LatLng(active.destination.lat, active.destination.lng)),
-                    color = c.content, width = with(density) { 4.dp.toPx() }, geodesic = true,
+                    points = active.routePoints(road),
+                    color = c.content, width = with(density) { 4.dp.toPx() }, geodesic = road == null,
                 )
                 MarkerComposable(
                     "dest-${active.id}", c.isDark,
@@ -316,13 +346,39 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
             Column(
                 Modifier
                     .fillMaxWidth()
+                    // Follows the finger (with resistance past the open position), then springs to a state.
+                    .graphicsLayer { translationY = dragY.value }
+                    .draggable(
+                        orientation = Orientation.Vertical,
+                        state = rememberDraggableState { delta ->
+                            scope.launch {
+                                val next = dragY.value + delta
+                                dragY.snapTo(if (next < 0f) next * 0.3f else next)
+                            }
+                        },
+                        onDragStopped = { velocity ->
+                            val threshold = with(density) { 56.dp.toPx() }
+                            when {
+                                velocity > 800f || dragY.value > threshold -> settle(false)
+                                velocity < -800f || dragY.value < -threshold / 3 -> settle(true)
+                                else -> settle(expanded)
+                            }
+                        },
+                    )
                     .shadow(24.dp, RoundedCornerShape(topStart = Radii.xl, topEnd = Radii.xl), ambientColor = Color.Black.copy(0.1f), spotColor = Color.Black.copy(0.12f))
                     .clip(RoundedCornerShape(topStart = Radii.xl, topEnd = Radii.xl))
                     .background(c.surface)
-                    .padding(top = 10.dp, bottom = TabBarSpace + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+                    .padding(bottom = TabBarSpace + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
             ) {
-                Box(Modifier.align(Alignment.CenterHorizontally).width(36.dp).height(4.dp).clip(CircleShape).background(c.border))
-                Spacer(Modifier.height(14.dp))
+                // The handle: a generous tap target around the visible bar.
+                Box(
+                    Modifier.fillMaxWidth().height(28.dp)
+                        .clickable(remember { MutableInteractionSource() }, indication = null, onClickLabel = if (expanded) "Collapse" else "Expand") { settle(!expanded) }
+                        .semantics { contentDescription = if (expanded) "Collapse rides panel" else "Expand rides panel" },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(Modifier.width(36.dp).height(4.dp).clip(CircleShape).background(c.border))
+                }
                 Row(
                     Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(52.dp).clip(RoundedCornerShape(Radii.md))
                         .background(c.surfaceMuted)
@@ -334,6 +390,12 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
                     Icon(Icons.Rounded.Search, null, Modifier.size(20.dp), tint = c.content)
                     Text("Where are you heading?", style = Safar.type.bodyStrong, color = c.contentSecondary)
                 }
+                AnimatedVisibility(
+                    visible = expanded,
+                    enter = expandVertically(spring(dampingRatio = 0.9f, stiffness = Spring.StiffnessMediumLow), expandFrom = Alignment.Top) + fadeIn(tween(220, delayMillis = 40)),
+                    exit = shrinkVertically(spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium), shrinkTowards = Alignment.Top) + fadeOut(tween(120)),
+                ) {
+                Column {
                 Spacer(Modifier.height(18.dp))
                 Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -384,6 +446,9 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
                         }
                     }
                 }
+                }
+                }
+                if (!expanded) Spacer(Modifier.height(12.dp))
             }
         }
     }

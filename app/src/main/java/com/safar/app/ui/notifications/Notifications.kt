@@ -1,5 +1,6 @@
 package com.safar.app.ui.notifications
 
+import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -109,6 +110,7 @@ private fun iconFor(type: NotificationType) = when (type) {
     NotificationType.NEW_REQUEST -> Icons.Rounded.EmojiPeople
     NotificationType.REQUEST_ACCEPTED -> Icons.Rounded.CheckCircle
     NotificationType.REQUEST_DECLINED -> Icons.Rounded.Cancel
+    NotificationType.RIDE_STARTED -> Icons.Rounded.DirectionsCar
     NotificationType.RIDE_COMPLETED -> Icons.Rounded.Flag
     NotificationType.NEW_REVIEW -> Icons.Rounded.Star
     NotificationType.NEW_MESSAGE -> Icons.Rounded.ChatBubble

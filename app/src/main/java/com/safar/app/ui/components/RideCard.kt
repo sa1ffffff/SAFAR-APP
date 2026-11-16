@@ -1,5 +1,10 @@
 package com.safar.app.ui.components
 
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,6 +43,7 @@ fun RideCard(
     Card(modifier.fillMaxWidth(), onClick = onClick) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (ride.isRepeating) Icon(Icons.Rounded.Repeat, "Repeats weekly", Modifier.padding(end = 6.dp).size(14.dp), tint = c.contentSecondary)
                 Text(departureLabel(ride.departureTime).uppercase(), style = Safar.type.overline, color = c.contentSecondary, modifier = Modifier.weight(1f))
                 Text(
                     buildAnnotatedString {
@@ -68,6 +74,7 @@ fun SeatsBadge(ride: Ride) {
     when {
         ride.status == RideStatus.CANCELLED -> Pill("Cancelled", background = c.negativeMuted, color = c.negative)
         ride.status == RideStatus.COMPLETED -> Pill("Completed")
+        ride.status == RideStatus.STARTED -> Pill("On the way", background = c.positiveMuted, color = c.positive, icon = Icons.Rounded.DirectionsCar)
         ride.status == RideStatus.FILLED || ride.availableSeats == 0 -> Pill("Full")
         ride.isExpired() -> Pill("Expired")
         else -> Pill(

@@ -2,7 +2,7 @@
 // node --test test/
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import worker, { purgeExpiredRides } from "../src/index.js";
+import worker, { purgeExpiredRides, extendSeries, upcoming, dayKey } from "../src/index.js";
 
 const PROJECT = "safar-test";
 const DB_URL = "https://db.test";
@@ -36,6 +36,8 @@ async function idToken(uid, overrides = {}) {
 
 let data;
 let pushes;
+let osrmCalls = 0;
+const routeCache = new Map();
 const at = (path) => path.split("/").filter(Boolean).reduce((node, k) => node?.[k], data);
 function write(path, value) {
   const keys = path.split("/").filter(Boolean);
@@ -46,7 +48,7 @@ function write(path, value) {
   else node[keys.at(-1)] = value;
 }
 
-globalThis.caches = { default: { match: async () => undefined, put: async () => {} } };
+globalThis.caches = { default: { match: async (r) => routeCache.get(r.url)?.clone(), put: async (r, res) => { if (r.url.startsWith("https://route.cache")) routeCache.set(r.url, res); } } };
 globalThis.fetch = async (input, init = {}) => {
   const url = new URL(String(input));
   const method = init.method || "GET";
@@ -58,6 +60,10 @@ globalThis.fetch = async (input, init = {}) => {
     const { message } = JSON.parse(init.body);
     pushes.push(message);
     return message.token === "dead-token" ? new Response('{"error":{"status":"NOT_FOUND","details":["UNREGISTERED"]}}', { status: 404 }) : ok({ name: "m1" });
+  }
+  if (url.hostname === "router.project-osrm.org") {
+    osrmCalls++;
+    return ok({ code: "Ok", routes: [{ geometry: "_p~iF~ps|U_ulLnnqC", distance: 12345.6, duration: 1500.4 }] });
   }
   if (url.origin === DB_URL) {
     assert.equal(init.headers.authorization, "Bearer access");
@@ -244,4 +250,52 @@ test("purges expired rides and keeps booked ones for reviews", async () => {
   assert.equal(data.ads.booked.status, "COMPLETED");
   assert.equal(data.ads.live.status, "OPEN");
   assert.deepEqual(result, { deleted: 3, completed: 1 });
+});
+
+// ─── Routes ─────────────────────────────────────────────────────────────────
+
+test("returns a cached driving route for signed-in users only", async () => {
+  reset();
+  osrmCalls = 0;
+  const q = "/route?from=33.6844,73.0479&to=33.5651,73.0169";
+  assert.equal((await call("GET", q)).status, 401);
+  const res = await call("GET", q, { uid: "alice" });
+  assert.deepEqual(await res.json(), { polyline: "_p~iF~ps|U_ulLnnqC", meters: 12346, seconds: 1500 });
+  await call("GET", "/route?from=33.68441,73.04791&to=33.5651,73.0169", { uid: "alice" });
+  assert.equal(osrmCalls, 1, "nearby points share the cached answer");
+  assert.equal((await call("GET", "/route?from=abc&to=1,2", { uid: "alice" })).status, 400);
+});
+
+// ─── Weekly repeats ─────────────────────────────────────────────────────────
+
+test("upcoming departures land on the chosen weekdays in local time", () => {
+  const PKT = 300;
+  const now = Date.UTC(2026, 10, 16, 5, 0); // Mon 16 Nov 2026, 10:00 in Pakistan
+  const out = upcoming([1, 3, 5], 8, 30, PKT, now); // Mon/Wed/Fri 08:30 PKT
+  // Today's 08:30 has already passed, so the next are Wed 18, Fri 20 and Mon 23.
+  assert.deepEqual(out.map((t) => dayKey(t, PKT)), ["20261118", "20261120", "20261123"]);
+  assert.equal(new Date(out[0]).getUTCHours(), 3, "08:30 PKT is 03:30 UTC");
+});
+
+test("extends weekly repeats a week ahead without recreating skipped days", async () => {
+  reset();
+  const now = Date.UTC(2026, 10, 16, 5, 0);
+  data.rideSeries = {
+    s1: {
+      creatorUid: "alice", days: "1,2,3,4,5", hour: 8, minute: 0, utcOffsetMinutes: 300, active: true,
+      template: { creatorUid: "alice", origin: "NUST", destination: "Saddar", availableSeats: 3, seriesId: "s1", repeatDays: "1,2,3,4,5" },
+      made: { "20261117": true },
+    },
+    off: { creatorUid: "bob", days: "1,2,3,4,5,6,7", hour: 9, minute: 0, utcOffsetMinutes: 300, active: false, template: { creatorUid: "bob" } },
+  };
+  const r = await extendSeries(env, now);
+  assert.equal(r.created, 4, "Wed, Thu, Fri, next Mon; Tue was already made");
+  assert.deepEqual(Object.keys(data.ads).sort(), ["s1-20261118", "s1-20261119", "s1-20261120", "s1-20261123"]);
+  const wed = data.ads["s1-20261118"];
+  assert.equal(wed.status, "OPEN");
+  assert.equal(wed.origin, "NUST");
+  assert.equal(wed.expiresAt - wed.departureTime, 60 * 60 * 1000);
+  assert.equal(new Date(wed.departureTime).toISOString(), "2026-11-18T03:00:00.000Z");
+  const again = await extendSeries(env, now);
+  assert.equal(again.created, 0, "idempotent");
 });
