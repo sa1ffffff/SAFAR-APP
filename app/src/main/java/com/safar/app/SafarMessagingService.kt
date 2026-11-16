@@ -11,8 +11,8 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
 /**
- * Shows pushes sent by the `onNotificationCreated` Cloud Function (see /functions).
- * Without that function deployed, the app still shows notifications in-app.
+ * Shows pushes sent by Safar's Cloudflare Worker (see /cloudflare). They arrive as data-only
+ * messages: `title`, `body`, and `open` (where a tap goes: "notifications" or "chat:<uid>").
  */
 class SafarMessagingService : FirebaseMessagingService() {
 
@@ -28,11 +28,13 @@ class SafarMessagingService : FirebaseMessagingService() {
 
         val title = message.notification?.title ?: message.data["title"] ?: "Safar"
         val body = message.notification?.body ?: message.data["body"].orEmpty()
+        val target = message.data["open"]?.takeIf { it.isNotBlank() } ?: MainActivity.OPEN_NOTIFICATIONS
         val open = Intent(this, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            .putExtra(MainActivity.EXTRA_OPEN, MainActivity.OPEN_NOTIFICATIONS)
+            .putExtra(MainActivity.EXTRA_OPEN, target)
+        // One request code per target, so a chat push and a ride push don't overwrite each other's extras.
         val pending = PendingIntent.getActivity(
-            this, 0, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this, target.hashCode(), open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val notification = NotificationCompat.Builder(this, SafarApp.CHANNEL_RIDES)
             .setSmallIcon(R.drawable.ic_stat_safar)
@@ -43,6 +45,8 @@ class SafarMessagingService : FirebaseMessagingService() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pending)
             .build()
-        NotificationManagerCompat.from(this).notify(message.messageId.hashCode(), notification)
+        // Chat pushes from the same person replace each other instead of stacking up.
+        val id = if (target.startsWith(MainActivity.OPEN_CHAT_PREFIX)) target.hashCode() else message.messageId.hashCode()
+        NotificationManagerCompat.from(this).notify(id, notification)
     }
 }

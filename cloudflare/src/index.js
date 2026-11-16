@@ -1,0 +1,261 @@
+/**
+ * Safar's Cloudflare Worker: the parts of the backend Firebase's free plan can't run.
+ *
+ *   PUT    /avatar               upload the caller's profile photo (JPEG body)
+ *   DELETE /avatar               remove it (account deletion)
+ *   GET    /avatars/{uid}.jpg    serve a profile photo
+ *   POST   /notify               push an in-app notification or chat message the caller just wrote
+ *   cron                         daily cleanup of expired rides
+ *
+ * Callers prove who they are with their Firebase ID token. The Worker reaches Firebase with a
+ * service account (secret FIREBASE_SERVICE_ACCOUNT), which bypasses database rules, so every
+ * route checks ownership itself.
+ */
+import { verifyIdToken, googleAccessToken } from "./google.js";
+
+const DAY = 24 * 60 * 60 * 1000;
+const EXPIRY_WINDOW = 3 * DAY; // matches Ride.EXPIRY_WINDOW_MS in the app
+const KEEP_BOOKED_RIDES = 14 * DAY; // time riders get to mark a booked ride complete and review it
+const PUSH_WINDOW = 10 * 60 * 1000; // only push things written in the last 10 minutes
+const MAX_AVATAR_BYTES = 1024 * 1024;
+const PUSH_ID = /^[A-Za-z0-9_-]{1,128}$/;
+
+export default {
+  async fetch(request, env, ctx) {
+    try {
+      return await route(request, env, ctx);
+    } catch (err) {
+      if (err instanceof HttpError) return json({ error: err.message }, err.status);
+      console.error(err.stack || String(err));
+      return json({ error: "Something went wrong" }, 500);
+    }
+  },
+
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(purgeExpiredRides(env).then((r) => console.log("purgeExpiredRides", JSON.stringify(r))));
+  },
+};
+
+async function route(request, env, ctx) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  const avatar = path.match(/^\/avatars\/([A-Za-z0-9]{1,128})\.jpg$/);
+  if (avatar && (request.method === "GET" || request.method === "HEAD")) return serveAvatar(request, env, ctx, avatar[1]);
+
+  if (path === "/avatar" && request.method === "PUT") return uploadAvatar(request, env, url, await caller(request, env));
+  if (path === "/avatar" && request.method === "DELETE") return deleteAvatar(env, await caller(request, env));
+  if (path === "/notify" && request.method === "POST") return notify(request, env, await caller(request, env));
+  if (path === "/" && request.method === "GET") return json({ ok: true, service: "safar-api" });
+
+  throw new HttpError(404, "Not found");
+}
+
+// ─── Photos ─────────────────────────────────────────────────────────────────
+
+/** R2 when a bucket is bound, otherwise KV; both store the same key. */
+function photoStore(env) {
+  if (env.PHOTOS) {
+    return {
+      put: (key, bytes) => env.PHOTOS.put(key, bytes, { httpMetadata: { contentType: "image/jpeg" } }),
+      get: async (key) => (await env.PHOTOS.get(key))?.arrayBuffer() ?? null,
+      delete: (key) => env.PHOTOS.delete(key),
+    };
+  }
+  if (env.PHOTOS_KV) {
+    return {
+      put: (key, bytes) => env.PHOTOS_KV.put(key, bytes),
+      get: (key) => env.PHOTOS_KV.get(key, "arrayBuffer"),
+      delete: (key) => env.PHOTOS_KV.delete(key),
+    };
+  }
+  throw new HttpError(503, "Photo storage isn't configured");
+}
+
+async function uploadAvatar(request, env, url, uid) {
+  const declared = Number(request.headers.get("content-length") || 0);
+  if (declared > MAX_AVATAR_BYTES) throw new HttpError(413, "That photo is too large");
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (bytes.length === 0 || bytes.length > MAX_AVATAR_BYTES) throw new HttpError(413, "That photo is too large");
+  // JPEG files start with FF D8 FF; the app always re-encodes to JPEG before uploading.
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) throw new HttpError(415, "Photos must be JPEG");
+
+  await photoStore(env).put(`avatars/${uid}.jpg`, bytes);
+  // The version makes every upload a new URL, so caches never show the old photo.
+  const photoUrl = `${url.origin}/avatars/${uid}.jpg?v=${Date.now()}`;
+  await db(env, "PATCH", `users/${uid}`, { photoUrl });
+  return json({ photoUrl });
+}
+
+async function deleteAvatar(env, uid) {
+  await photoStore(env).delete(`avatars/${uid}.jpg`);
+  return json({ ok: true });
+}
+
+async function serveAvatar(request, env, ctx, uid) {
+  const cache = caches.default;
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const bytes = await photoStore(env).get(`avatars/${uid}.jpg`);
+  if (!bytes) return new Response("Not found", { status: 404, headers: { "cache-control": "public, max-age=60" } });
+  const response = new Response(bytes, {
+    headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=31536000, immutable" },
+  });
+  ctx.waitUntil(cache.put(request, response.clone()));
+  return response;
+}
+
+// ─── Push notifications ─────────────────────────────────────────────────────
+
+/**
+ * Body: {"kind":"notification","to":uid,"id":nid} or {"kind":"message","cid":cid,"id":mid}.
+ * The caller must be the author of the item, it must be fresh, and each item is pushed once.
+ */
+async function notify(request, env, uid) {
+  const body = await request.json().catch(() => ({}));
+  if (!PUSH_ID.test(body.id || "")) throw new HttpError(400, "Bad id");
+
+  let to, path, push;
+  if (body.kind === "notification") {
+    if (!PUSH_ID.test(body.to || "")) throw new HttpError(400, "Bad recipient");
+    to = body.to;
+    path = `notifications/${to}/${body.id}`;
+    const n = await db(env, "GET", path);
+    if (!n || n.fromUserId !== uid) throw new HttpError(403, "Not your notification");
+    if (n.pushedAt) return json({ ok: true, skipped: "already pushed" });
+    if (Math.abs(Date.now() - (n.timestamp || 0)) > PUSH_WINDOW) throw new HttpError(409, "Too old to push");
+    push = {
+      title: n.title || "Safar",
+      body: n.message || "",
+      data: { type: String(n.type || ""), adId: String(n.relatedAdId || ""), open: "notifications" },
+    };
+  } else if (body.kind === "message") {
+    const cid = String(body.cid || "");
+    const parts = cid.split("_");
+    if (parts.length !== 2 || !parts.every((p) => PUSH_ID.test(p)) || !parts.includes(uid)) {
+      throw new HttpError(403, "Not your conversation");
+    }
+    to = parts[0] === uid ? parts[1] : parts[0];
+    path = `messages/${cid}/${body.id}`;
+    const m = await db(env, "GET", path);
+    if (!m || m.senderId !== uid) throw new HttpError(403, "Not your message");
+    if (m.pushedAt) return json({ ok: true, skipped: "already pushed" });
+    if (Math.abs(Date.now() - (m.timestamp || 0)) > PUSH_WINDOW) throw new HttpError(409, "Too old to push");
+    const text = String(m.text || "");
+    push = {
+      title: m.senderName || "New message",
+      body: text.length > 200 ? `${text.slice(0, 199)}…` : text,
+      data: { type: "MESSAGE", open: `chat:${uid}` },
+    };
+  } else {
+    throw new HttpError(400, "Unknown kind");
+  }
+
+  // Claim the item before sending so a retry can't push it twice.
+  await db(env, "PATCH", path, { pushedAt: Date.now() });
+
+  const token = await db(env, "GET", `pushTokens/${to}`);
+  if (typeof token !== "string" || !token) return json({ ok: true, skipped: "no device" });
+  const sent = await sendPush(env, token, push);
+  if (sent === "unregistered") await db(env, "DELETE", `pushTokens/${to}`);
+  return json({ ok: true, sent: sent === "sent" });
+}
+
+async function sendPush(env, token, { title, body, data }) {
+  const sa = serviceAccount(env);
+  const access = await googleAccessToken(sa, env);
+  const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${access}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      message: {
+        token,
+        // Data-only, so the app's messaging service builds the notification and its tap target.
+        data: { ...data, title, body },
+        android: { priority: "HIGH" },
+      },
+    }),
+  });
+  if (res.ok) return "sent";
+  const text = await res.text();
+  if (res.status === 404 || text.includes("UNREGISTERED")) return "unregistered";
+  console.error("FCM send failed", res.status, text);
+  return "failed";
+}
+
+// ─── Expired rides ──────────────────────────────────────────────────────────
+
+/**
+ * Keeps /ads to live rides only.
+ * - Expired rides nobody was accepted on are deleted.
+ * - Expired rides with accepted passengers are marked COMPLETED and kept for two weeks,
+ *   so both sides can still mark the ride done and review each other, then deleted.
+ */
+export async function purgeExpiredRides(env, now = Date.now()) {
+  const expired = (await db(env, "GET", "ads", { orderBy: '"expiresAt"', endAt: String(now) })) || {};
+  const updates = {};
+  let deleted = 0;
+  let completed = 0;
+
+  for (const [adId, ride] of Object.entries(expired)) {
+    const expiresAt = ride.expiresAt || (ride.createdAt || 0) + EXPIRY_WINDOW;
+    if (!expiresAt || expiresAt > now) continue;
+
+    const requests = (await db(env, "GET", "joinRequests", { orderBy: '"adId"', equalTo: JSON.stringify(adId) })) || {};
+    const booked = Object.values(requests).some((r) => r.status === "ACCEPTED");
+
+    if (!booked || expiresAt + KEEP_BOOKED_RIDES <= now) {
+      updates[`ads/${adId}`] = null;
+      deleted++;
+    } else if (ride.status !== "COMPLETED" && ride.status !== "CANCELLED") {
+      updates[`ads/${adId}/status`] = "COMPLETED";
+      completed++;
+    }
+  }
+
+  if (Object.keys(updates).length) await db(env, "PATCH", "", updates);
+  return { deleted, completed };
+}
+
+// ─── Firebase plumbing ──────────────────────────────────────────────────────
+
+function serviceAccount(env) {
+  if (!env.FIREBASE_SERVICE_ACCOUNT) throw new Error("FIREBASE_SERVICE_ACCOUNT secret is missing");
+  return JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
+}
+
+async function caller(request, env) {
+  const header = request.headers.get("authorization") || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (!token) throw new HttpError(401, "Sign in required");
+  try {
+    return await verifyIdToken(token, env.FIREBASE_PROJECT_ID);
+  } catch (err) {
+    throw new HttpError(401, "Sign in again to continue");
+  }
+}
+
+/** Realtime Database REST call as the service account. */
+async function db(env, method, path, query = {}, body) {
+  if (method !== "GET" && method !== "DELETE" && body === undefined) [body, query] = [query, {}];
+  const access = await googleAccessToken(serviceAccount(env), env);
+  const params = new URLSearchParams(query).toString();
+  const res = await fetch(`${env.FIREBASE_DATABASE_URL}/${path}.json${params ? `?${params}` : ""}`, {
+    method,
+    headers: { authorization: `Bearer ${access}`, "content-type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Database ${method} /${path} failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
+}

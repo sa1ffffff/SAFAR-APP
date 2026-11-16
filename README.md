@@ -4,13 +4,13 @@ Community carpooling for Pakistan. Drivers post rides with empty seats; riders h
 
 ## Features
 
-- Sign in with phone (SMS code) or Google
+- Sign in with Google, plus a phone number so riders and drivers can call or WhatsApp each other
 - Map of open rides with seat markers, nearest first
 - Post a ride: pickup/drop-off on the map, date and time, seats, optional price per seat
 - Seat requests with accept/decline; seats are reserved in a transaction so rides can't be overbooked
 - One-to-one chat
 - Mark rides complete, then rate each other
-- In-app notifications (system push when the Cloud Function is deployed)
+- In-app notifications and system push for ride updates and chat messages
 - Reporting from profiles and rides
 - Light and dark themes following the system, with a manual override
 
@@ -21,7 +21,7 @@ Community carpooling for Pakistan. Drivers post rides with empty seats; riders h
 | Language | Kotlin |
 | UI | Jetpack Compose, Material 3, Haze (backdrop blur) |
 | Architecture | MVVM, single activity, Navigation Compose |
-| Backend | Firebase Auth, Realtime Database, Storage, Cloud Messaging |
+| Backend | Firebase Auth, Realtime Database, Cloud Messaging; a Cloudflare Worker (`cloudflare/`) for photos, push delivery and daily cleanup |
 | Maps | Google Maps SDK + maps-compose, Android Geocoder |
 
 ## Project layout
@@ -34,6 +34,7 @@ app/src/main/java/com/safar/app/
 ├── data/
 │   ├── model/Models.kt      Domain models, mapped to/from Realtime Database by hand
 │   ├── Repositories.kt      All Firebase access (auth, users, rides, requests, chat, reviews, notifications, reports)
+│   ├── SafarApi.kt          Client for the Cloudflare Worker
 │   ├── Session.kt           Signed-in user + start gate shared by every screen
 │   ├── FirebaseFlows.kt     Listener → Flow and transaction helpers
 │   └── Preferences.kt       Device-local settings

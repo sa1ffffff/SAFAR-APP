@@ -10,8 +10,6 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ServerValue
 import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageMetadata
 import com.safar.app.data.model.AppNotification
 import com.safar.app.data.model.Conversation
 import com.safar.app.data.model.JoinRequest
@@ -92,7 +90,7 @@ class AuthRepository(private val auth: FirebaseAuth) {
 
 class UserRepository(
     private val db: FirebaseDatabase,
-    private val storage: FirebaseStorage,
+    private val api: SafarApi,
     private val context: Context,
 ) {
     private fun ref(uid: String) = db.getReference(Nodes.USERS).child(uid)
@@ -121,11 +119,8 @@ class UserRepository(
     /** Uploads a square-cropped, compressed avatar and returns its download URL. */
     suspend fun uploadAvatar(uid: String, uri: Uri): String {
         val bytes = withContext(Dispatchers.IO) { compressAvatar(uri) }
-        val file = storage.reference.child("profile_pictures/$uid.jpg")
-        file.putBytes(bytes, StorageMetadata.Builder().setContentType("image/jpeg").build()).await()
-        val url = file.downloadUrl.await().toString()
-        ref(uid).child("photoUrl").setValue(url).await()
-        return url
+        // The Worker stores the photo and writes photoUrl on the profile itself.
+        return api.uploadAvatar(bytes)
     }
 
     private fun compressAvatar(uri: Uri): ByteArray {
@@ -151,7 +146,7 @@ class UserRepository(
         tokenRef(uid).setValue(token)
     }
 
-    /** Owner-only node; the Cloud Function reads it with admin rights. */
+    /** Owner-only node; the Cloudflare Worker reads it with admin rights to deliver pushes. */
     private fun tokenRef(uid: String) = db.getReference(Nodes.PUSH_TOKENS).child(uid)
 
     /**
@@ -166,7 +161,7 @@ class UserRepository(
         tokenRef(uid).removeValue().await()
         db.getReference(Nodes.NOTIFICATIONS).child(uid).removeValue().await()
         ref(uid).removeValue().await()
-        runCatching { storage.reference.child("profile_pictures/$uid.jpg").delete().await() }
+        runCatching { api.deleteAvatar() }
     }
 }
 
@@ -315,7 +310,7 @@ fun seatsLabel(n: Int) = if (n == 1) "1 seat" else "$n seats"
 
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
-class ChatRepository(private val db: FirebaseDatabase) {
+class ChatRepository(private val db: FirebaseDatabase, private val api: SafarApi) {
     private val conversations get() = db.getReference(Nodes.CONVERSATIONS)
     private val index get() = db.getReference(Nodes.USER_CONVERSATIONS)
     private val messages get() = db.getReference(Nodes.MESSAGES)
@@ -379,6 +374,7 @@ class ChatRepository(private val db: FirebaseDatabase) {
             "${Nodes.CONVERSATIONS}/$conversationId/unreadCount/$otherUid" to ServerValue.increment(1),
         )
         db.reference.updateChildren(updates).await()
+        api.pushMessage(conversationId, msgRef.key.orEmpty())
     }
 
     fun markRead(conversationId: String, uid: String) {
@@ -437,7 +433,7 @@ class ReviewRepository(
 
 // ─── In-app notifications ────────────────────────────────────────────────────
 
-class NotificationRepository(private val db: FirebaseDatabase) {
+class NotificationRepository(private val db: FirebaseDatabase, private val api: SafarApi) {
     private fun inbox(uid: String): DatabaseReference = db.getReference(Nodes.NOTIFICATIONS).child(uid)
 
     fun observe(uid: String): Flow<List<AppNotification>> =
@@ -460,7 +456,10 @@ class NotificationRepository(private val db: FirebaseDatabase) {
             timestamp = System.currentTimeMillis(), read = false,
         )
         // A notification is a side effect; failing to deliver it must not fail the action.
-        runCatching { ref.setValue(notification.toMap()).await() }
+        runCatching {
+            ref.setValue(notification.toMap()).await()
+            api.pushNotification(to, notification.id)
+        }
     }
 
     fun markRead(uid: String, id: String) {

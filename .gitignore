@@ -26,3 +26,8 @@ keytool
 # Local tooling
 .claude/
 skills-lock.json
+
+# Cloudflare Worker
+cloudflare/node_modules/
+cloudflare/.wrangler/
+*service-account*.json

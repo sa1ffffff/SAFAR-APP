@@ -182,10 +182,13 @@ private const val NAV_MS = 280
 private fun AppGraph(pendingOpen: String?, onPendingOpenHandled: () -> Unit) {
     val nav = rememberNavController()
     LaunchedEffect(pendingOpen) {
-        if (pendingOpen == com.safar.app.MainActivity.OPEN_NOTIFICATIONS) {
-            nav.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
-            onPendingOpenHandled()
+        val chatWith = pendingOpen?.removePrefix(com.safar.app.MainActivity.OPEN_CHAT_PREFIX)
+            ?.takeIf { pendingOpen.startsWith(com.safar.app.MainActivity.OPEN_CHAT_PREFIX) && it.isNotBlank() }
+        when {
+            pendingOpen == com.safar.app.MainActivity.OPEN_NOTIFICATIONS -> nav.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
+            chatWith != null -> nav.navigate(Routes.chat(chatWith)) { launchSingleTop = true }
         }
+        if (pendingOpen != null) onPendingOpenHandled()
     }
     NavHost(
         nav, startDestination = Routes.MAIN,
