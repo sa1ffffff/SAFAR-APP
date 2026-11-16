@@ -7,9 +7,9 @@ workers_dev = true
 FIREBASE_PROJECT_ID = "safarbysaif"
 FIREBASE_DATABASE_URL = "https://safarbysaif-default-rtdb.asia-southeast1.firebasedatabase.app"
 
-# Daily ride cleanup at 03:30 Pakistan time (22:30 UTC).
+# Hourly: close rides an hour after they leave, and post weekly repeats a week ahead.
 [triggers]
-crons = ["30 22 * * *"]
+crons = ["17 * * * *"]
 
 # Photo storage: R2 (bound below). KV works instead if R2 isn't enabled; bind only one.
 [[r2_buckets]]

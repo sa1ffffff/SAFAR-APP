@@ -2,6 +2,14 @@ package com.safar.app.ui.ride
 
 import android.content.Intent
 import android.content.Context
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.produceState
+import com.safar.app.data.model.repeatLabel
+import com.safar.app.ui.components.rememberRoadRoute
+import com.safar.app.ui.components.routePoints
+import com.safar.app.ui.components.summary
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material3.Icon
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -173,6 +181,26 @@ class RideDetailViewModel(private val app: AppContainer, private val rideId: Str
     fun decline(r: JoinRequest) = run({ app.requests.decline(r, me) })
     fun markComplete(r: JoinRequest) = run({ app.requests.markComplete(r, me) }, "Marked as complete")
     fun setStatus(status: RideStatus) = run({ app.rides.setStatus(rideId, status) })
+
+    /** Marks the ride started and tells every confirmed rider. */
+    fun start() = state.value.ride?.let { ride ->
+        val riders = state.value.requests.filter { it.status == RequestStatus.ACCEPTED }
+        run({
+            app.rides.start(ride.id)
+            riders.forEach { r ->
+                app.notifications.send(
+                    to = r.requestorUid, from = me, type = com.safar.app.data.model.NotificationType.RIDE_STARTED,
+                    title = "Your ride has started",
+                    message = "${me.firstName} is on the way: ${shortPlace(ride.origin.name)} → ${shortPlace(ride.destination.name)}",
+                    adId = ride.id, requestId = r.id,
+                )
+            }
+        }, "Ride started. Drive safe!")
+    }
+
+    fun stopRepeating() = state.value.ride?.let { ride ->
+        run({ app.rides.stopRepeating(ride.seriesId, ride.creatorUid, keepId = ride.id) }, "Stopped repeating. This ride stays posted.")
+    }
     fun delete(onDeleted: () -> Unit) {
         busy.value = true
         action(onDone = onDeleted, onError = { busy.value = false }) { app.rides.delete(rideId) }
@@ -191,6 +219,7 @@ fun RideDetailScreen(rideId: String, nav: NavHostController) {
     val context = LocalContext.current
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var confirmStop by remember { mutableStateOf(false) }
     var reporting by remember { mutableStateOf(false) }
     var seats by remember { mutableIntStateOf(1) }
     val ride = state.ride
@@ -231,9 +260,10 @@ fun RideDetailScreen(rideId: String, nav: NavHostController) {
                     DropdownMenu(menu, { menu = false }, containerColor = c.surfaceRaised) {
                         if (state.isOwner) {
                             DropdownMenuItem({ Text("Edit ride") }, { menu = false; nav.navigate(Routes.post(ride.id)) })
-                            if (ride.status == RideStatus.OPEN) DropdownMenuItem({ Text("Mark as full") }, { menu = false; vm.setStatus(RideStatus.FILLED) })
+                            if (ride.status == RideStatus.OPEN && !ride.hasDeparted()) DropdownMenuItem({ Text("Mark as full") }, { menu = false; vm.setStatus(RideStatus.FILLED) })
                             if (ride.status == RideStatus.FILLED && ride.availableSeats > 0) DropdownMenuItem({ Text("Reopen for requests") }, { menu = false; vm.setStatus(RideStatus.OPEN) })
-                            if (ride.status != RideStatus.CANCELLED) DropdownMenuItem({ Text("Cancel ride") }, { menu = false; vm.setStatus(RideStatus.CANCELLED) })
+                            if (ride.status != RideStatus.CANCELLED && ride.status != RideStatus.STARTED) DropdownMenuItem({ Text("Cancel ride") }, { menu = false; vm.setStatus(RideStatus.CANCELLED) })
+                            if (ride.isRepeating) DropdownMenuItem({ Text("Stop repeating") }, { menu = false; confirmStop = true })
                             DropdownMenuItem({ Text("Delete ride", color = c.negative) }, { menu = false; confirmDelete = true })
                         } else {
                             DropdownMenuItem({ Text("View driver profile") }, { menu = false; nav.navigate(Routes.user(ride.creatorUid)) })
@@ -251,6 +281,21 @@ fun RideDetailScreen(rideId: String, nav: NavHostController) {
         }
     }
 
+    if (confirmStop) {
+        AlertDialog(
+            onDismissRequest = { confirmStop = false },
+            title = { Text("Stop repeating?", style = Safar.type.headline) },
+            text = {
+                Text(
+                    "No new rides will be posted. Later rides nobody has asked to join are removed; this one and rides with requests stay.",
+                    style = Safar.type.body,
+                )
+            },
+            confirmButton = { TextButton({ confirmStop = false; vm.stopRepeating() }) { Text("Stop repeating", color = c.negative) } },
+            dismissButton = { TextButton({ confirmStop = false }) { Text("Keep it", color = c.content) } },
+            containerColor = c.surfaceRaised,
+        )
+    }
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
@@ -281,6 +326,16 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
             SeatsBadge(ride)
         }
         Text("${shortPlace(ride.origin.name)} → ${shortPlace(ride.destination.name)}", style = Safar.type.display, color = c.content)
+        if (ride.isRepeating) Row(
+            Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(Icons.Rounded.Repeat, null, Modifier.size(16.dp), tint = c.contentSecondary)
+            Text("Repeats ${repeatLabel(ride.repeatDays).lowercaseFirstWord()} at ${timeLabel(ride.departureTime)}", style = Safar.type.label, color = c.contentSecondary)
+        }
+        if (ride.status == RideStatus.STARTED) Text(
+            "Started at ${timeLabel(ride.startedAt)} · closes at ${timeLabel(ride.expiresAt)}",
+            style = Safar.type.label, color = c.positive, modifier = Modifier.padding(top = 4.dp),
+        )
     }
 
     // A rider's own status is the most important thing on this page, so it leads.
@@ -296,7 +351,8 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
                 }
                 Column {
                     Text(ride.destination.name, style = Safar.type.bodyStrong, color = c.content)
-                    Text("Drop-off", style = Safar.type.label, color = c.contentSecondary)
+                    val road = rememberRoadRoute(ride)
+                    Text(if (road != null) "Drop-off · ${road.summary()}" else "Drop-off", style = Safar.type.label, color = c.contentSecondary)
                 }
             }
         }
@@ -352,7 +408,7 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
                     onProfile = { nav.navigate(Routes.user(r.requestorUid)) },
                     onRide = null,
                 )
-                if (r.status == RequestStatus.ACCEPTED) CompletionRow(r, isOwner = true, departed = ride.departureTime < System.currentTimeMillis(), vm = vm, nav = nav)
+                if (r.status == RequestStatus.ACCEPTED) CompletionRow(r, isOwner = true, departed = ride.hasDeparted(), vm = vm, nav = nav)
             }
         }
     }
@@ -398,16 +454,54 @@ private fun ActionBar(
 ) {
     val c = Safar.colors
     val req = state.myRequest
-    val departed = ride.departureTime < System.currentTimeMillis()
+    val departed = ride.hasDeparted()
     if (state.isOwner) {
+        // Re-checked every 30 s, so Start appears on its own as departure gets close.
+        val now by produceState(System.currentTimeMillis()) { while (true) { delay(30_000); value = System.currentTimeMillis() } }
+        val riders = state.requests.count { it.status == RequestStatus.ACCEPTED }
+        // Startable once someone's confirmed and the car is full or it's nearly time to go.
+        val canStart = riders > 0 && (ride.status == RideStatus.OPEN || ride.status == RideStatus.FILLED) && !ride.isExpired(now) &&
+            (ride.availableSeats == 0 || now >= ride.departureTime - START_WINDOW_MS)
+        var confirmStart by remember { mutableStateOf(false) }
         BottomActionBar {
-            SafarButton("Edit ride", { nav.navigate(Routes.post(ride.id)) }, kind = ButtonKind.Secondary, modifier = Modifier.weight(1f))
-            val pending = state.requests.count { it.status == RequestStatus.PENDING }
-            Text(
-                if (pending > 0) "$pending waiting" else "${seatsLabel(ride.availableSeats)} open",
-                style = Safar.type.label, color = c.contentSecondary, modifier = Modifier.padding(horizontal = 8.dp),
-            )
+            when {
+                ride.status == RideStatus.STARTED -> {
+                    Icon(Icons.Rounded.DirectionsCar, null, tint = c.positive)
+                    Column(Modifier.weight(1f).padding(horizontal = 4.dp)) {
+                        Text("On the way", style = Safar.type.bodyStrong, color = c.content)
+                        Text("Closes at ${timeLabel(ride.expiresAt)}", style = Safar.type.label, color = c.contentSecondary)
+                    }
+                }
+                canStart -> {
+                    SafarButton("Edit", { nav.navigate(Routes.post(ride.id)) }, kind = ButtonKind.Secondary)
+                    SafarButton(
+                        if (riders == 1) "Start ride · 1 rider" else "Start ride · $riders riders",
+                        { confirmStart = true }, loading = state.busy, modifier = Modifier.weight(1f),
+                    )
+                }
+                else -> {
+                    SafarButton("Edit ride", { nav.navigate(Routes.post(ride.id)) }, kind = ButtonKind.Secondary, modifier = Modifier.weight(1f))
+                    val pending = state.requests.count { it.status == RequestStatus.PENDING }
+                    Text(
+                        if (pending > 0) "$pending waiting" else "${seatsLabel(ride.availableSeats)} open",
+                        style = Safar.type.label, color = c.contentSecondary, modifier = Modifier.padding(horizontal = 8.dp),
+                    )
+                }
+            }
         }
+        if (confirmStart) AlertDialog(
+            onDismissRequest = { confirmStart = false },
+            title = { Text("Start this ride?", style = Safar.type.headline) },
+            text = {
+                Text(
+                    "We'll let your ${if (riders == 1) "rider" else "$riders riders"} know you're on the way. The ride stops taking requests and closes an hour from now.",
+                    style = Safar.type.body,
+                )
+            },
+            confirmButton = { TextButton({ confirmStart = false; vm.start() }) { Text("Start ride", color = c.content) } },
+            dismissButton = { TextButton({ confirmStart = false }) { Text("Not yet", color = c.contentSecondary) } },
+            containerColor = c.surfaceRaised,
+        )
         return
     }
     BottomActionBar {
@@ -464,18 +558,21 @@ fun RouteMap(ride: Ride) {
     val from = LatLng(ride.origin.lat, ride.origin.lng)
     val to = LatLng(ride.destination.lat, ride.destination.lng)
     val camera = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(from, 11f) }
+    val road = rememberRoadRoute(ride)
+    val points = ride.routePoints(road)
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = camera,
         googleMapOptionsFactory = { GoogleMapOptions().liteMode(true) },
-        contentPadding = PaddingValues(top = 72.dp, bottom = 40.dp, start = 24.dp, end = 24.dp),
+        contentPadding = PaddingValues(top = 72.dp, bottom = 72.dp, start = 32.dp, end = 32.dp),
         properties = MapProperties(mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, if (c.isDark) R.raw.map_style_dark else R.raw.map_style_light)),
         uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false, compassEnabled = false, myLocationButtonEnabled = false),
     ) {
-        MapEffect(from, to) {
-            runCatching { camera.move(CameraUpdateFactory.newLatLngBounds(LatLngBounds.builder().include(from).include(to).build(), 80)) }
+        MapEffect(from, to, points.size) {
+            val bounds = LatLngBounds.builder().apply { points.forEach(::include) }.build()
+            runCatching { camera.move(CameraUpdateFactory.newLatLngBounds(bounds, 80)) }
         }
-        Polyline(listOf(from, to), color = c.content, width = with(density) { 4.dp.toPx() }, geodesic = true)
+        Polyline(points, color = c.content, width = with(density) { 4.dp.toPx() }, geodesic = road == null)
         MarkerComposable("from", c.isDark, state = remember(from) { MarkerState(from) }, anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f)) {
             Box(Modifier.size(16.dp).clip(CircleShape).background(c.background).border(4.dp, c.content, CircleShape))
         }
@@ -515,3 +612,9 @@ private fun openWhatsApp(context: Context, phone: String, text: String) {
     runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
         .onFailure { Toast.makeText(context, "WhatsApp isn't available on this phone", Toast.LENGTH_SHORT).show() }
 }
+
+/** How long before departure a driver can start a ride that isn't full yet. */
+private const val START_WINDOW_MS = 30L * 60 * 1000
+
+/** "Weekdays" → "weekdays", "Mon, Wed" stays as is. */
+private fun String.lowercaseFirstWord() = if (this in setOf("Weekdays", "Weekends", "Every day")) lowercase() else this

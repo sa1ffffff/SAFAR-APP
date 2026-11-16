@@ -98,7 +98,8 @@ Nothing to set up. Open Firebase console → **Crashlytics** once so it starts c
 
 - `PUT /avatar`, `DELETE /avatar`, `GET /avatars/{uid}.jpg` store and serve profile photos (R2, or KV if R2 isn't enabled).
 - `POST /notify`: after the app writes a notification or chat message, it asks the Worker to push it. The Worker checks the caller wrote that item, that it's fresh, and pushes it once through FCM.
-- A cron trigger runs daily at 03:30 Pakistan time. It deletes expired rides nobody booked, and keeps booked ones for 14 days as completed.
+- `GET /route` returns the driving route between two points, from the public OSRM server (OpenStreetMap data), cached at Cloudflare's edge for a month.
+- A cron trigger runs hourly. It posts weekly repeating rides a week ahead (`/rideSeries`), and closes rides an hour after they leave: unbooked ones are deleted, booked ones are kept 14 days as completed.
 
 Every request carries the user's Firebase ID token, which the Worker verifies. The Worker talks to Firebase with a service account.
 

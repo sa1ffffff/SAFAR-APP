@@ -79,7 +79,8 @@ data class RatingSummary(val sum: Long = 0, val count: Long = 0) {
 
 data class Place(val name: String, val lat: Double, val lng: Double)
 
-enum class RideStatus { OPEN, FILLED, COMPLETED, CANCELLED;
+/** STARTED: the driver has set off. The ride closes [Ride.RIDE_LIFETIME_MS] after that. */
+enum class RideStatus { OPEN, FILLED, STARTED, COMPLETED, CANCELLED;
     companion object {
         fun parse(raw: String?): RideStatus = entries.firstOrNull { it.name == raw } ?: OPEN
     }
@@ -101,7 +102,13 @@ data class Ride(
     val status: RideStatus = RideStatus.OPEN,
     val createdAt: Long = 0L,
     val expiresAt: Long = 0L,
+    val startedAt: Long = 0L,
+    /** Set on rides posted from a weekly repeat: the series and its ISO weekdays (Mon = 1). */
+    val seriesId: String = "",
+    val repeatDays: List<Int> = emptyList(),
 ) {
+    val isRepeating: Boolean get() = seriesId.isNotBlank()
+
     fun isExpired(now: Long = System.currentTimeMillis()): Boolean {
         val expiry = if (expiresAt > 0) expiresAt else createdAt + EXPIRY_WINDOW_MS
         return expiry <= now
@@ -111,6 +118,9 @@ data class Ride(
     val isBookable: Boolean
         get() = status == RideStatus.OPEN && availableSeats > 0 && !isExpired() &&
             departureTime > System.currentTimeMillis() - DEPARTURE_GRACE_MS
+
+    /** The driver has left, or should have: past departure, or marked started. */
+    fun hasDeparted(now: Long = System.currentTimeMillis()) = status == RideStatus.STARTED || departureTime < now
 
     fun toMap(): Map<String, Any?> = mapOf(
         "adId" to id,
@@ -132,10 +142,15 @@ data class Ride(
         "status" to status.name,
         "createdAt" to createdAt,
         "expiresAt" to expiresAt,
+        "startedAt" to startedAt.takeIf { it > 0 },
+        "seriesId" to seriesId.ifBlank { null },
+        "repeatDays" to repeatDays.takeIf { it.isNotEmpty() }?.joinToString(","),
     )
 
     companion object {
         const val EXPIRY_WINDOW_MS = 3L * 24 * 60 * 60 * 1000
+        /** A ride closes an hour after it leaves (departure, or when the driver taps Start). */
+        const val RIDE_LIFETIME_MS = 60L * 60 * 1000
         const val DEPARTURE_GRACE_MS = 10L * 60 * 1000
 
         fun from(s: DataSnapshot): Ride? {
@@ -156,6 +171,9 @@ data class Ride(
                 status = RideStatus.parse(s.strOrNull("status")),
                 createdAt = s.long("createdAt"),
                 expiresAt = s.long("expiresAt"),
+                startedAt = s.long("startedAt"),
+                seriesId = s.str("seriesId"),
+                repeatDays = parseDays(s.str("repeatDays")),
             )
         }
     }
@@ -354,7 +372,7 @@ data class Review(
     }
 }
 
-enum class NotificationType { NEW_REQUEST, REQUEST_ACCEPTED, REQUEST_DECLINED, RIDE_COMPLETED, NEW_REVIEW, NEW_MESSAGE;
+enum class NotificationType { NEW_REQUEST, REQUEST_ACCEPTED, REQUEST_DECLINED, RIDE_STARTED, RIDE_COMPLETED, NEW_REVIEW, NEW_MESSAGE;
     companion object {
         fun parse(raw: String?): NotificationType = entries.firstOrNull { it.name == raw } ?: NEW_MESSAGE
     }
@@ -403,6 +421,83 @@ data class AppNotification(
                 timestamp = s.long("timestamp"),
                 read = s.bool("read"),
             )
+        }
+    }
+}
+
+// ─── Weekly repeats ──────────────────────────────────────────────────────────
+
+/** ISO weekdays, Monday = 1 … Sunday = 7. */
+fun parseDays(raw: String): List<Int> =
+    raw.split(',').mapNotNull { it.trim().toIntOrNull() }.filter { it in 1..7 }.distinct().sorted()
+
+private val DAY_SHORT = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+/** "Weekdays", "Weekends", "Every day", "Mon–Wed", or "Mon, Wed, Fri". */
+fun repeatLabel(days: List<Int>): String {
+    val d = days.distinct().sorted()
+    return when {
+        d.isEmpty() -> ""
+        d.size == 7 -> "Every day"
+        d == listOf(1, 2, 3, 4, 5) -> "Weekdays"
+        d == listOf(6, 7) -> "Weekends"
+        d.size >= 3 && d.last() - d.first() == d.size - 1 -> "${DAY_SHORT[d.first() - 1]}–${DAY_SHORT[d.last() - 1]}"
+        else -> d.joinToString(", ") { DAY_SHORT[it - 1] }
+    }
+}
+
+/**
+ * A weekly repeat: the template the Worker (and the app, on posting) copies into a ride for each
+ * matching day, a week ahead. `made` records the days already created, so a ride the driver
+ * deletes or cancels for one day is never recreated.
+ */
+data class RideSeries(
+    val id: String,
+    val template: Ride,
+    val days: List<Int>,
+    val hour: Int,
+    val minute: Int,
+    val utcOffsetMinutes: Int,
+    val createdAt: Long,
+) {
+    fun toMap(): Map<String, Any?> = mapOf(
+        "creatorUid" to template.creatorUid,
+        "template" to template.copy(id = "", seriesId = id, repeatDays = days).toMap() - listOf("adId", "createdAt", "expiresAt", "startedAt", "departureTime", "status"),
+        "days" to days.joinToString(","),
+        "hour" to hour,
+        "minute" to minute,
+        "utcOffsetMinutes" to utcOffsetMinutes,
+        "active" to true,
+        "createdAt" to createdAt,
+    )
+
+    companion object {
+        /** How far ahead rides are created. */
+        const val HORIZON_DAYS = 7
+        /** Rides leaving sooner than this aren't created (nobody could book them). */
+        const val MIN_LEAD_MS = 30L * 60 * 1000
+
+        /** "20261117" for a departure, in the series' own time zone; part of each ride's id. */
+        fun dayKey(departure: Long, utcOffsetMinutes: Int): String {
+            val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+            cal.timeInMillis = departure + utcOffsetMinutes * 60_000L
+            return "%04d%02d%02d".format(cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH) + 1, cal.get(java.util.Calendar.DAY_OF_MONTH))
+        }
+
+        /** Departures in the next [HORIZON_DAYS] days on the chosen weekdays, at least [MIN_LEAD_MS] away. */
+        fun upcoming(days: List<Int>, hour: Int, minute: Int, utcOffsetMinutes: Int, now: Long): List<Long> {
+            val out = mutableListOf<Long>()
+            val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+            cal.timeInMillis = now + utcOffsetMinutes * 60_000L
+            cal.set(java.util.Calendar.HOUR_OF_DAY, hour); cal.set(java.util.Calendar.MINUTE, minute)
+            cal.set(java.util.Calendar.SECOND, 0); cal.set(java.util.Calendar.MILLISECOND, 0)
+            repeat(HORIZON_DAYS + 1) {
+                val iso = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7 + 1 // Sunday=1 → 7, Monday=2 → 1
+                val departure = cal.timeInMillis - utcOffsetMinutes * 60_000L
+                if (iso in days && departure >= now + MIN_LEAD_MS && departure <= now + HORIZON_DAYS * 24 * 60 * 60 * 1000L) out += departure
+                cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
+            }
+            return out
         }
     }
 }

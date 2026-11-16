@@ -30,7 +30,7 @@ class AppContainer(context: Context) {
 
     val preferences = Preferences(context)
     val auth = AuthRepository(FirebaseAuth.getInstance())
-    private val api = SafarApi(FirebaseAuth.getInstance())
+    val api = SafarApi(FirebaseAuth.getInstance())
     val users = UserRepository(database, api, context)
     val rides = RideRepository(database)
     val notifications = NotificationRepository(database, api)

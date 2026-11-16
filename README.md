@@ -6,7 +6,9 @@ Community carpooling for Pakistan. Drivers post rides with empty seats; riders h
 
 - Sign in with Google, plus a phone number so riders and drivers can call or WhatsApp each other
 - Map of open rides with seat markers, nearest first
-- Post a ride: pickup/drop-off on the map, date and time, seats, optional price per seat
+- Post a ride: pickup/drop-off on the map, date and time, seats, optional price per seat, or repeat it weekly on chosen days
+- Driving routes on the map, with distance and time
+- Drivers start the ride when they set off; rides close an hour after leaving
 - Seat requests with accept/decline; seats are reserved in a transaction so rides can't be overbooked
 - One-to-one chat
 - Mark rides complete, then rate each other

@@ -19,6 +19,7 @@ import com.safar.app.data.model.RatingSummary
 import com.safar.app.data.model.RequestStatus
 import com.safar.app.data.model.Review
 import com.safar.app.data.model.Ride
+import com.safar.app.data.model.RideSeries
 import com.safar.app.data.model.RideStatus
 import com.safar.app.data.model.User
 import com.safar.app.data.model.shortPlaceName
@@ -49,6 +50,7 @@ private object Nodes {
     const val NOTIFICATIONS = "notifications"
     const val PUSH_TOKENS = "pushTokens"
     const val REPORTS = "reports"
+    const val SERIES = "rideSeries"
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -192,19 +194,74 @@ class RideRepository(private val db: FirebaseDatabase) {
     suspend fun post(ride: Ride): String {
         val id = ads.push().key ?: error("Couldn't reach the server.")
         val now = System.currentTimeMillis()
-        val toSave = ride.copy(
-            id = id,
-            status = RideStatus.OPEN,
-            createdAt = now,
-            // Expire a day after departure so riders can still find it, capped at the window.
-            expiresAt = maxOf(ride.departureTime + 24 * 60 * 60 * 1000L, now + Ride.EXPIRY_WINDOW_MS),
-        )
-        ads.child(id).setValue(toSave.toMap()).await()
+        ads.child(id).setValue(fresh(ride, id, ride.departureTime, now).toMap()).await()
         return id
+    }
+
+    /** A ride ready to save: open, and closing [Ride.RIDE_LIFETIME_MS] after it leaves. */
+    private fun fresh(ride: Ride, id: String, departure: Long, now: Long) = ride.copy(
+        id = id, departureTime = departure, status = RideStatus.OPEN, createdAt = now,
+        expiresAt = departure + Ride.RIDE_LIFETIME_MS, startedAt = 0L,
+    )
+
+    /**
+     * Posts a weekly repeat: saves the series and creates its rides for the coming week in one
+     * write. The Worker keeps creating them a week ahead. Returns the first ride's id.
+     */
+    suspend fun postRepeating(template: Ride, days: List<Int>, hour: Int, minute: Int): String {
+        val seriesId = db.getReference(Nodes.SERIES).push().key ?: error("Couldn't reach the server.")
+        val now = System.currentTimeMillis()
+        val offset = java.util.TimeZone.getDefault().getOffset(now) / 60_000
+        val series = RideSeries(seriesId, template, days, hour, minute, offset, now)
+        val departures = RideSeries.upcoming(days, hour, minute, offset, now)
+        if (departures.isEmpty()) error("None of those days fall in the next week. Pick another day or time.")
+        val updates = mutableMapOf<String, Any?>()
+        val made = mutableMapOf<String, Any>()
+        var firstId = ""
+        departures.forEach { departure ->
+            val key = RideSeries.dayKey(departure, offset)
+            val id = "$seriesId-$key"
+            if (firstId.isEmpty()) firstId = id
+            updates["${Nodes.ADS}/$id"] = fresh(template.copy(seriesId = seriesId, repeatDays = days), id, departure, now).toMap()
+            made[key] = true
+        }
+        updates["${Nodes.SERIES}/$seriesId"] = series.toMap() + ("made" to made)
+        db.reference.updateChildren(updates).await()
+        return firstId
+    }
+
+    /**
+     * Stops a weekly repeat: no new rides are created, and its later rides that nobody has asked
+     * to join are removed. [keepId] (the ride being viewed) and rides with requests stay.
+     */
+    suspend fun stopRepeating(seriesId: String, creatorUid: String, keepId: String) {
+        val now = System.currentTimeMillis()
+        val mine = ads.orderByChild("creatorUid").equalTo(creatorUid).get().await()
+        val requested = db.getReference(Nodes.REQUESTS).orderByChild("adCreatorUid").equalTo(creatorUid).get().await()
+            .children.filter { it.child("status").getValue(String::class.java) != RequestStatus.CANCELLED.name }
+            .mapNotNull { it.child("adId").getValue(String::class.java) }.toSet()
+        val updates = mutableMapOf<String, Any?>("${Nodes.SERIES}/$seriesId" to null)
+        mine.children.mapNotNull { Ride.from(it) }.filter { it.seriesId == seriesId }.forEach { ride ->
+            if (ride.id != keepId && ride.departureTime > now && ride.id !in requested) updates["${Nodes.ADS}/${ride.id}"] = null
+            else {
+                // Rides that stay are one-offs now.
+                updates["${Nodes.ADS}/${ride.id}/seriesId"] = null
+                updates["${Nodes.ADS}/${ride.id}/repeatDays"] = null
+            }
+        }
+        db.reference.updateChildren(updates).await()
     }
 
     suspend fun update(ride: Ride) {
         ads.child(ride.id).updateChildren(ride.toMap()).await()
+    }
+
+    /** The driver has set off: closes the ride to requests and starts its one-hour clock. */
+    suspend fun start(id: String) {
+        val now = System.currentTimeMillis()
+        ads.child(id).updateChildren(
+            mapOf("status" to RideStatus.STARTED.name, "startedAt" to now, "expiresAt" to now + Ride.RIDE_LIFETIME_MS)
+        ).await()
     }
 
     suspend fun setStatus(id: String, status: RideStatus) {
