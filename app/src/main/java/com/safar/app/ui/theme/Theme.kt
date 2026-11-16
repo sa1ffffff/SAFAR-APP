@@ -102,11 +102,17 @@ val DarkColors = SafarColors(
     isDark = true,
 )
 
-val Inter = FontFamily(
-    Font(R.font.inter_regular, FontWeight.Normal),
-    Font(R.font.inter_medium, FontWeight.Medium),
-    Font(R.font.inter_semibold, FontWeight.SemiBold),
-    Font(R.font.inter_bold, FontWeight.Bold),
+/**
+ * Instrument Sans (SIL OFL 1.1; licence in /third_party/fonts). Refined and slightly
+ * narrow, with an editorial calm that suits Slate & Bone. Safar tops out at SemiBold:
+ * a Bold request also gets SemiBold, so nothing on screen shouts.
+ */
+val InstrumentSans = FontFamily(
+    Font(R.font.instrument_sans_regular, FontWeight.Light),
+    Font(R.font.instrument_sans_regular, FontWeight.Normal),
+    Font(R.font.instrument_sans_medium, FontWeight.Medium),
+    Font(R.font.instrument_sans_semibold, FontWeight.SemiBold),
+    Font(R.font.instrument_sans_semibold, FontWeight.Bold),
 )
 
 /** Type ramp. Screens use at most four of these. */
@@ -123,7 +129,7 @@ data class SafarType(
 )
 
 private fun style(size: Int, line: Int, weight: FontWeight, tracking: Float = 0f) = TextStyle(
-    fontFamily = Inter, fontSize = size.sp, lineHeight = line.sp, fontWeight = weight, letterSpacing = tracking.sp,
+    fontFamily = InstrumentSans, fontSize = size.sp, lineHeight = line.sp, fontWeight = weight, letterSpacing = tracking.sp,
 )
 
 val SafarTypography = SafarType(
