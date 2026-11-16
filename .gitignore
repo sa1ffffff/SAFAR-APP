@@ -1,0 +1,28 @@
+# Build output
+build/
+app/build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+*.dm
+Release_apk/
+
+# IDE
+.idea/
+*.iml
+local.properties
+.DS_Store
+
+# Signing
+*.jks
+*.keystore
+keystore.properties
+keytool
+
+# Agent tooling
+.agents/
+
+# Local tooling
+.claude/
+skills-lock.json
