@@ -443,7 +443,7 @@ class NotificationRepository(private val db: FirebaseDatabase, private val api: 
 
     fun observeUnread(uid: String): Flow<Int> = observe(uid).map { list -> list.count { !it.read } }
 
-    suspend fun send(
+    fun send(
         to: String, from: User, type: NotificationType,
         title: String, message: String, adId: String = "", requestId: String = "",
     ) {
@@ -455,8 +455,9 @@ class NotificationRepository(private val db: FirebaseDatabase, private val api: 
             fromUserId = from.uid, fromUserName = from.name, fromUserPhoto = from.photoUrl,
             timestamp = System.currentTimeMillis(), read = false,
         )
-        // A notification is a side effect; failing to deliver it must not fail the action.
-        runCatching {
+        // A notification is a side effect: the action that caused it doesn't wait for it, and it
+        // finishes even if the screen closes. The push goes out once the write reaches the server.
+        api.inBackground {
             ref.setValue(notification.toMap()).await()
             api.pushNotification(to, notification.id)
         }

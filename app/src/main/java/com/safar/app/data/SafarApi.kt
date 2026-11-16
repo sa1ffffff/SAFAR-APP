@@ -1,8 +1,13 @@
 package com.safar.app.data
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.safar.app.BuildConfig
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -26,16 +31,44 @@ class SafarApi(private val auth: FirebaseAuth, private val baseUrl: String = Bui
         call("DELETE", "/avatar")
     }
 
-    /** Asks the Worker to push a notification the user just wrote. Best effort: never throws. */
-    suspend fun pushNotification(toUid: String, notificationId: String) =
+    /**
+     * Pushes outlive the screen that triggered them: they run here, not in a ViewModel, so
+     * leaving the screen (or a slow network) never cancels or delays the user's action.
+     */
+    private val background = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Asks the Worker to push a notification the user just wrote. Returns at once; never throws. */
+    fun pushNotification(toUid: String, notificationId: String) =
         push(JSONObject().put("kind", "notification").put("to", toUid).put("id", notificationId))
 
-    /** Asks the Worker to push a chat message the user just sent. Best effort: never throws. */
-    suspend fun pushMessage(conversationId: String, messageId: String) =
+    /** Asks the Worker to push a chat message the user just sent. Returns at once; never throws. */
+    fun pushMessage(conversationId: String, messageId: String) =
         push(JSONObject().put("kind", "message").put("cid", conversationId).put("id", messageId))
 
-    private suspend fun push(body: JSONObject) {
-        runCatching { call("POST", "/notify", body.toString().toByteArray(), "application/json") }
+    /** Runs [block] in the background scope, for work that must finish even if the screen closes. */
+    fun inBackground(block: suspend () -> Unit) {
+        background.launch { runCatching { block() }.onFailure { Log.w(TAG, "Background task failed", it) } }
+    }
+
+    private fun push(body: JSONObject) = inBackground {
+        // Retry network failures and server errors; a 4xx means the Worker refused it, so stop.
+        for (attempt in 0 until PUSH_ATTEMPTS) {
+            try {
+                call("POST", "/notify", body.toString().toByteArray(), "application/json")
+                return@inBackground
+            } catch (e: ApiException) {
+                if (e.status in 400..499) { Log.w(TAG, "Push refused: ${e.status} ${e.message}"); return@inBackground }
+                Log.w(TAG, "Push attempt ${attempt + 1} failed: ${e.message}")
+            } catch (e: IOException) {
+                Log.w(TAG, "Push attempt ${attempt + 1} failed: ${e.message}")
+            }
+            delay(1_500L shl attempt)
+        }
+    }
+
+    private companion object {
+        const val TAG = "SafarApi"
+        const val PUSH_ATTEMPTS = 3
     }
 
     private suspend fun call(method: String, path: String, body: ByteArray? = null, type: String? = null): String {

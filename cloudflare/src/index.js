@@ -25,7 +25,10 @@ export default {
     try {
       return await route(request, env, ctx);
     } catch (err) {
-      if (err instanceof HttpError) return json({ error: err.message }, err.status);
+      if (err instanceof HttpError) {
+        if (err.status !== 404) console.warn(`${request.method} ${new URL(request.url).pathname} -> ${err.status} ${err.message}`);
+        return json({ error: err.message }, err.status);
+      }
       console.error(err.stack || String(err));
       return json({ error: "Something went wrong" }, 500);
     }
@@ -115,12 +118,13 @@ async function notify(request, env, uid) {
   const body = await request.json().catch(() => ({}));
   if (!PUSH_ID.test(body.id || "")) throw new HttpError(400, "Bad id");
 
-  let to, path, push;
+  let to, path, push, device;
   if (body.kind === "notification") {
     if (!PUSH_ID.test(body.to || "")) throw new HttpError(400, "Bad recipient");
     to = body.to;
     path = `notifications/${to}/${body.id}`;
-    const n = await db(env, "GET", path);
+    const [n, token] = await Promise.all([db(env, "GET", path), db(env, "GET", `pushTokens/${to}`)]);
+    device = token;
     if (!n || n.fromUserId !== uid) throw new HttpError(403, "Not your notification");
     if (n.pushedAt) return json({ ok: true, skipped: "already pushed" });
     if (Math.abs(Date.now() - (n.timestamp || 0)) > PUSH_WINDOW) throw new HttpError(409, "Too old to push");
@@ -137,7 +141,8 @@ async function notify(request, env, uid) {
     }
     to = parts[0] === uid ? parts[1] : parts[0];
     path = `messages/${cid}/${body.id}`;
-    const m = await db(env, "GET", path);
+    const [m, token] = await Promise.all([db(env, "GET", path), db(env, "GET", `pushTokens/${to}`)]);
+    device = token;
     if (!m || m.senderId !== uid) throw new HttpError(403, "Not your message");
     if (m.pushedAt) return json({ ok: true, skipped: "already pushed" });
     if (Math.abs(Date.now() - (m.timestamp || 0)) > PUSH_WINDOW) throw new HttpError(409, "Too old to push");
@@ -151,12 +156,13 @@ async function notify(request, env, uid) {
     throw new HttpError(400, "Unknown kind");
   }
 
-  // Claim the item before sending so a retry can't push it twice.
-  await db(env, "PATCH", path, { pushedAt: Date.now() });
-
-  const token = await db(env, "GET", `pushTokens/${to}`);
-  if (typeof token !== "string" || !token) return json({ ok: true, skipped: "no device" });
-  const sent = await sendPush(env, token, push);
+  // Mark the item pushed (so a retry can't push it twice) while the push goes out.
+  const claim = db(env, "PATCH", path, { pushedAt: Date.now() });
+  if (typeof device !== "string" || !device) {
+    await claim;
+    return json({ ok: true, skipped: "no device" });
+  }
+  const [, sent] = await Promise.all([claim, sendPush(env, device, push)]);
   if (sent === "unregistered") await db(env, "DELETE", `pushTokens/${to}`);
   return json({ ok: true, sent: sent === "sent" });
 }
