@@ -105,11 +105,26 @@ data class Ride(
     val createdAt: Long = 0L,
     val expiresAt: Long = 0L,
     val startedAt: Long = 0L,
+    /** Cities of pickup and drop-off, resolved when the ride is posted; blank on older rides. */
+    val originCity: String = "",
+    val destinationCity: String = "",
+    /** "LOCAL" or "CITY", decided when posted; older rides are classified by distance. */
+    val kind: String = "",
     /** Set on rides posted from a weekly repeat: the series and its ISO weekdays (Mon = 1). */
     val seriesId: String = "",
     val repeatDays: List<Int> = emptyList(),
 ) {
     val isRepeating: Boolean get() = seriesId.isNotBlank()
+
+    /** Straight-line distance between pickup and drop-off, in kilometres. */
+    val distanceKm: Double get() = haversineKm(origin.lat, origin.lng, destination.lat, destination.lng)
+
+    val routeKind: RouteKind
+        get() = when (kind) {
+            RouteKind.CITY_TO_CITY.key -> RouteKind.CITY_TO_CITY
+            RouteKind.LOCAL.key -> RouteKind.LOCAL
+            else -> RouteKind.classify(originCity, destinationCity, distanceKm)
+        }
 
     fun isExpired(now: Long = System.currentTimeMillis()): Boolean {
         val expiry = if (expiresAt > 0) expiresAt else createdAt + EXPIRY_WINDOW_MS
@@ -147,6 +162,9 @@ data class Ride(
         "expiresAt" to expiresAt,
         "startedAt" to startedAt.takeIf { it > 0 },
         "seriesId" to seriesId.ifBlank { null },
+        "originCity" to originCity.ifBlank { null },
+        "destinationCity" to destinationCity.ifBlank { null },
+        "kind" to kind.ifBlank { null },
         "repeatDays" to repeatDays.takeIf { it.isNotEmpty() }?.joinToString(","),
     )
 
@@ -177,6 +195,9 @@ data class Ride(
                 expiresAt = s.long("expiresAt"),
                 startedAt = s.long("startedAt"),
                 seriesId = s.str("seriesId"),
+                originCity = s.str("originCity"),
+                destinationCity = s.str("destinationCity"),
+                kind = s.str("kind"),
                 repeatDays = parseDays(s.str("repeatDays")),
             )
         }
@@ -505,3 +526,49 @@ data class RideSeries(
         }
     }
 }
+
+// ─── Local vs city to city ───────────────────────────────────────────────────
+
+/**
+ * Local rides stay within one city (G-8 to F-10); city-to-city rides join two (Islamabad to
+ * Lahore). Decided from data, never asked: a label the driver picks can be wrong or forgotten.
+ */
+enum class RouteKind(val key: String, val label: String) {
+    LOCAL("LOCAL", "Local"),
+    CITY_TO_CITY("CITY", "City to city");
+
+    companion object {
+        /** Islamabad and Rawalpindi work as one city for commuting, so trips between them are local. */
+        private val TWIN_CITIES = setOf(setOf("islamabad", "rawalpindi"))
+
+        /**
+         * - 60 km or more is always city to city, even when a city name is unknown.
+         * - Two different known cities at least 25 km apart are city to city, except twin cities.
+         * - Everything else is local.
+         */
+        fun classify(fromCity: String, toCity: String, km: Double): RouteKind {
+            if (km >= 60) return CITY_TO_CITY
+            val a = fromCity.trim().lowercase()
+            val b = toCity.trim().lowercase()
+            if (a.isEmpty() || b.isEmpty() || a == b) return LOCAL
+            if (setOf(a, b) in TWIN_CITIES) return LOCAL
+            return if (km >= 25) CITY_TO_CITY else LOCAL
+        }
+    }
+}
+
+fun haversineKm(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+    val r = 6371.0
+    val dLat = Math.toRadians(lat2 - lat1)
+    val dLng = Math.toRadians(lng2 - lng1)
+    val h = Math.sin(dLat / 2).let { it * it } +
+        Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLng / 2).let { it * it }
+    return 2 * r * Math.asin(Math.sqrt(h))
+}
+
+/** The city a place name ends with ("H-12, Islamabad" → "Islamabad"), or "" for sectors and pins. */
+fun cityFromName(name: String): String =
+    name.split(",").map { it.trim() }.lastOrNull { part ->
+        part.isNotEmpty() && part.none(Char::isDigit) && '+' !in part && part != "Dropped pin" && part.length > 2 &&
+            !part.equals("Pakistan", true) && !part.equals("Punjab", true) && !part.contains("Capital Territory", true)
+    }.orEmpty()

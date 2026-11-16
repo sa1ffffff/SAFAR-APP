@@ -317,6 +317,8 @@ export async function purgeExpiredRides(env, now = Date.now()) {
 
     if (!booked || expiresAt + KEEP_BOOKED_RIDES <= now) {
       updates[`ads/${adId}`] = null;
+      // Its seat requests go too, so no rider is left with a booking for a ride that's gone.
+      for (const requestId of Object.keys(requests)) updates[`joinRequests/${requestId}`] = null;
       deleted++;
     } else if (ride.status !== "COMPLETED" && ride.status !== "CANCELLED") {
       updates[`ads/${adId}/status`] = "COMPLETED";

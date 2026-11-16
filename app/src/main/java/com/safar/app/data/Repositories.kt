@@ -268,8 +268,12 @@ class RideRepository(private val db: FirebaseDatabase) {
         ads.child(id).child("status").setValue(status.name).await()
     }
 
+    /** Deletes the ride and every seat request on it, so riders' bookings don't linger. */
     suspend fun delete(id: String) {
-        ads.child(id).removeValue().await()
+        val requests = db.getReference(Nodes.REQUESTS).orderByChild("adId").equalTo(id).get().await()
+        val updates = mutableMapOf<String, Any?>("${Nodes.ADS}/$id" to null)
+        requests.children.forEach { r -> r.key?.let { updates["${Nodes.REQUESTS}/$it"] = null } }
+        db.reference.updateChildren(updates).await()
     }
 }
 

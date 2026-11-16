@@ -1,5 +1,11 @@
 package com.safar.app.ui.post
 
+import com.safar.app.ui.components.RouteKindMark
+import kotlinx.coroutines.launch
+import androidx.lifecycle.viewModelScope
+import com.safar.app.data.model.cityFromName
+import com.safar.app.data.model.haversineKm
+import com.safar.app.data.model.RouteKind
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -114,7 +120,14 @@ data class PostForm(
     /** Weekly repeat: ISO weekdays (Mon = 1). Only offered when posting a new ride. */
     val repeat: Boolean = false,
     val days: Set<Int> = setOf(1, 2, 3, 4, 5),
-)
+    /** Cities of the chosen places, looked up as they're picked. */
+    val fromCity: String = "",
+    val toCity: String = "",
+) {
+    val kind: RouteKind?
+        get() = if (from == null || to == null) null
+        else RouteKind.classify(fromCity, toCity, haversineKm(from.lat, from.lng, to.lat, to.lng))
+}
 
 /** The first :00 or :30 that is at least 30 minutes from now (7:12 → 8:00, 7:45 → 8:30). */
 fun defaultDeparture(): Long = Calendar.getInstance().apply {
@@ -150,6 +163,16 @@ class PostRideViewModel(private val app: AppContainer, private val editId: Strin
 
     fun update(f: (PostForm) -> PostForm) = form.update(f)
 
+    /** Looks up the city of each chosen place, falling back to the place name. */
+    fun resolveCities(context: android.content.Context) {
+        val f = form.value
+        viewModelScope.launch {
+            val from = f.from?.let { p -> Geo.city(context, p.lat, p.lng) ?: cityFromName(p.name) }.orEmpty()
+            val to = f.to?.let { p -> Geo.city(context, p.lat, p.lng) ?: cityFromName(p.name) }.orEmpty()
+            form.update { if (it.from == f.from && it.to == f.to) it.copy(fromCity = from, toCity = to) else it }
+        }
+    }
+
     fun applyPick(encoded: String) {
         val parts = encoded.split('|', limit = 4)
         if (parts.size < 4) return
@@ -180,6 +203,9 @@ class PostRideViewModel(private val app: AppContainer, private val editId: Strin
                 // Seats already booked stay booked when the driver edits the number offered.
                 totalSeats = f.seats + (base.totalSeats - base.availableSeats).coerceAtLeast(0),
                 pricePerSeat = f.price.toIntOrNull() ?: 0, vehicleDetails = f.vehicle.trim(), notes = f.notes.trim(),
+                originCity = f.fromCity.ifBlank { cityFromName(f.from.name) },
+                destinationCity = f.toCity.ifBlank { cityFromName(f.to.name) },
+                kind = f.kind?.key.orEmpty(),
             )
             savedId = when {
                 original != null -> {
@@ -211,6 +237,9 @@ fun PostRideScreen(editId: String?, nav: NavHostController, entry: NavBackStackE
     LaunchedEffect(pick) {
         pick?.let { vm.applyPick(it); entry.savedStateHandle[PICK_RESULT] = null }
     }
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(f.from, f.to) { if (f.from != null || f.to != null) vm.resolveCities(context) }
 
     val today = dayLabel(f.departure) == "Today"
     val tomorrow = dayLabel(f.departure) == "Tomorrow"
@@ -258,6 +287,8 @@ fun PostRideScreen(editId: String?, nav: NavHostController, entry: NavBackStackE
                     modifier = Modifier.align(Alignment.CenterEnd).padding(end = 14.dp).border(1.dp, c.border, CircleShape),
                 )
             }
+
+            f.kind?.let { kind -> RouteKindNote(kind, f.fromCity, f.toCity) }
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("When", style = Safar.type.headline, color = c.content)
@@ -477,4 +508,22 @@ private fun DayToggle(letter: String, name: String, selected: Boolean, onClick: 
             .semantics { contentDescription = name; stateDescription = if (selected) "Repeats" else "Off" },
         contentAlignment = Alignment.Center,
     ) { Text(letter, style = Safar.type.label, color = fg) }
+}
+
+/** What kind of ride this is, worked out from the places: no choice for the driver to get wrong. */
+@Composable
+private fun RouteKindNote(kind: RouteKind, fromCity: String, toCity: String) {
+    val c = Safar.colors
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        RouteKindMark(kind, Modifier.size(18.dp))
+        Text(
+            when {
+                kind == RouteKind.CITY_TO_CITY && fromCity.isNotBlank() && toCity.isNotBlank() -> "City to city · $fromCity to $toCity"
+                kind == RouteKind.CITY_TO_CITY -> "City to city"
+                fromCity.isNotBlank() -> "Local · within $fromCity"
+                else -> "Local ride"
+            },
+            style = Safar.type.label, color = c.contentSecondary,
+        )
+    }
 }

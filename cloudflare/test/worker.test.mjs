@@ -250,6 +250,7 @@ test("purges expired rides and keeps booked ones for reviews", async () => {
   assert.equal(data.ads.booked.status, "COMPLETED");
   assert.equal(data.ads.live.status, "OPEN");
   assert.deepEqual(result, { deleted: 3, completed: 1 });
+  assert.deepEqual(Object.keys(data.joinRequests).sort(), ["r1"], "requests on deleted rides are removed");
 });
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
