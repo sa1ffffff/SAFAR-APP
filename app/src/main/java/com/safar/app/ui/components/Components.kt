@@ -106,13 +106,14 @@ fun SafarButton(
     }
     val interaction = remember { MutableInteractionSource() }
     val active = enabled && !loading
+    val haptics = com.safar.app.ui.haptics()
     Box(
         modifier = modifier
             .height(height)
             .clip(RoundedCornerShape(Radii.md))
             .background(if (enabled) bg else c.surfaceMuted)
             .then(if (border != null) Modifier.border(border, RoundedCornerShape(Radii.md)) else Modifier)
-            .pressable(interaction, enabled = active, onClick = onClick)
+            .pressable(interaction, enabled = active, onClick = { if (kind == ButtonKind.Primary) haptics.tap() else haptics.tick(); onClick() })
             .padding(horizontal = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -273,12 +274,13 @@ fun Pill(
 fun ChoiceChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val c = Safar.colors
     val interaction = remember { MutableInteractionSource() }
+    val haptics = com.safar.app.ui.haptics()
     Box(
         modifier
             .clip(CircleShape)
             .background(if (selected) c.primary else c.surface)
             .border(1.dp, if (selected) c.primary else c.border, CircleShape)
-            .pressable(interaction, onClick = onClick, role = Role.RadioButton)
+            .pressable(interaction, onClick = { if (!selected) haptics.tick(); onClick() }, role = Role.RadioButton)
             .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         Text(text, style = Safar.type.label, color = if (selected) c.onPrimary else c.content)
@@ -306,14 +308,15 @@ fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit, mod
 @Composable
 fun Stepper(value: Int, onChange: (Int) -> Unit, range: IntRange, modifier: Modifier = Modifier) {
     val c = Safar.colors
+    val haptics = com.safar.app.ui.haptics()
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        IconCircle(Icons.Rounded.Remove, "Fewer", { onChange(value - 1) }, size = 36.dp, enabled = value > range.first)
+        IconCircle(Icons.Rounded.Remove, "Fewer", { haptics.tick(); onChange(value - 1) }, size = 36.dp, enabled = value > range.first)
         AnimatedContent(
             targetState = value,
             transitionSpec = { fadeIn(tween(120)) togetherWith fadeOut(tween(80)) },
             label = "stepper",
         ) { Text("$it", style = Safar.type.title, color = c.content, modifier = Modifier.width(24.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
-        IconCircle(Icons.Rounded.Add, "More", { onChange(value + 1) }, size = 36.dp, enabled = value < range.last)
+        IconCircle(Icons.Rounded.Add, "More", { haptics.tick(); onChange(value + 1) }, size = 36.dp, enabled = value < range.last)
     }
 }
 

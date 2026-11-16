@@ -73,7 +73,7 @@ fun LiquidSelector(
     val reduceMotion = remember {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     }
-    val haptics = LocalHapticFeedback.current
+    val haptics = com.safar.app.ui.haptics()
     val scope = rememberCoroutineScope()
     val position = remember { Animatable(selected.toFloat()) }
     var dragging by remember { mutableStateOf(false) }
@@ -117,7 +117,7 @@ fun LiquidSelector(
                             val nearest = next.roundToInt()
                             if (nearest != lastIndex) {
                                 lastIndex = nearest
-                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                haptics.tick()
                             }
                         },
                         onDragEnd = {
@@ -159,7 +159,7 @@ fun LiquidSelector(
                     Modifier
                         .offset { IntOffset((i * stridePx).roundToInt(), 0) }
                         .size(width = slotDp, height = slotHeight)
-                        .clickable(interaction, indication = null, role = roles) { currentOnSelect(i) },
+                        .clickable(interaction, indication = null, role = roles) { if (i != currentSelected) haptics.tick(); currentOnSelect(i) },
                 ) { content(i, focus, pressed) }
             }
         }
@@ -179,12 +179,22 @@ class LensStyle private constructor(private val build: @Composable () -> Modifie
             Modifier.clip(shape).background(c.content.copy(alpha = if (c.isDark) 0.12f else 0.07f), shape).border(1.dp, rim, shape)
         }
 
-        /** Raised surface with a soft shadow, for segmented controls on a muted track. */
+        /**
+         * Raised surface for segmented controls on a muted track. In light mode a lighter
+         * surface with a soft shadow; in dark mode, where shadows vanish, the lens is lifted
+         * toward the content colour and gets a light top rim, so it reads as glass on the track.
+         */
         fun raised(radius: Dp) = LensStyle {
             val c = Safar.colors
             val shape = RoundedCornerShape(radius)
-            Modifier.shadow(if (c.isDark) 0.dp else 2.dp, shape, ambientColor = Color.Black.copy(0.08f), spotColor = Color.Black.copy(0.10f))
-                .clip(shape).background(c.surfaceRaised, shape)
+            if (c.isDark) {
+                val lens = lerpColor(c.surfaceMuted, c.content, 0.11f)
+                val rim = Brush.verticalGradient(listOf(c.content.copy(alpha = 0.18f), c.content.copy(alpha = 0.03f)))
+                Modifier.clip(shape).background(lens, shape).border(1.dp, rim, shape)
+            } else {
+                Modifier.shadow(2.dp, shape, ambientColor = Color.Black.copy(0.08f), spotColor = Color.Black.copy(0.10f))
+                    .clip(shape).background(c.surfaceRaised, shape)
+            }
         }
     }
 }

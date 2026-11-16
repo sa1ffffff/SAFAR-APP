@@ -85,7 +85,7 @@ import java.util.Locale
 import kotlin.coroutines.resume
 
 /** On-device geocoding (no Places API key or billing needed). */
-private object Geo {
+internal object Geo {
     @Suppress("DEPRECATION")
     suspend fun search(context: Context, query: String): List<Address> = withContext(Dispatchers.IO) {
         val geocoder = Geocoder(context, Locale.getDefault())
@@ -105,6 +105,18 @@ private object Geo {
             } else runCatching { geocoder.getFromLocation(at.latitude, at.longitude, 1) }.getOrNull()
         }
         list?.firstOrNull()?.let(::label)
+    }
+
+    /** The city at a point ("Islamabad", "Lahore"), or null if the geocoder can't tell. */
+    @Suppress("DEPRECATION")
+    suspend fun city(context: Context, lat: Double, lng: Double): String? = withContext(Dispatchers.IO) {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        val list: List<Address>? = withTimeoutOrNull(GEO_TIMEOUT_MS) {
+            if (Build.VERSION.SDK_INT >= 33) suspendCancellableCoroutine { cont ->
+                geocoder.getFromLocation(lat, lng, 1, listener(cont))
+            } else runCatching { geocoder.getFromLocation(lat, lng, 1) }.getOrNull()
+        }
+        list?.firstOrNull()?.let { it.locality ?: it.subAdminArea }?.takeIf { it.isNotBlank() }
     }
 
     private const val GEO_TIMEOUT_MS = 6_000L

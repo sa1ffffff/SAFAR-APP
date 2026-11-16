@@ -1,5 +1,8 @@
 package com.safar.app.ui.main
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.clickable
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -103,18 +106,25 @@ data class RidesState(
 @OptIn(ExperimentalCoroutinesApi::class)
 class RidesViewModel(private val app: AppContainer) : SafarViewModel() {
     val query = MutableStateFlow("")
+    /** null shows every ride; otherwise only local or only city-to-city rides. */
+    val kindFilter = MutableStateFlow<com.safar.app.data.model.RouteKind?>(null)
     private val uid = app.session.uid.orEmpty()
 
     private val open = app.rides.observeOpenRides().catch { emit(emptyList()) }
 
-    private val found = combine(open, query) { list, q ->
+    private val found = combine(open, query, kindFilter) { list, q, k ->
         val term = q.trim()
-        list.filter { it.creatorUid != uid }.filter {
-            term.isEmpty() || it.destination.name.contains(term, true) || it.origin.name.contains(term, true)
+        list.filter { it.creatorUid != uid }.filter { k == null || it.routeKind == k }.filter {
+            term.isEmpty() || it.destination.name.contains(term, true) || it.origin.name.contains(term, true) ||
+                it.originCity.contains(term, true) || it.destinationCity.contains(term, true)
         }
     }
 
-    private val mine = app.rides.observeRidesBy(uid).catch { emit(emptyList()) }
+    /** Upcoming rides soonest first, then past ones, most recent first. */
+    private val mine = app.rides.observeRidesBy(uid).catch { emit(emptyList()) }.map { list ->
+        val (upcoming, past) = list.partition { !it.isExpired() && it.status != com.safar.app.data.model.RideStatus.CANCELLED }
+        upcoming.sortedBy { it.departureTime } + past.sortedByDescending { it.departureTime }
+    }
 
     private val pending = app.requests.observeIncoming(uid)
         .map { list -> list.filter { it.status == RequestStatus.PENDING }.groupingBy { it.adId }.eachCount() }
@@ -126,8 +136,8 @@ class RidesViewModel(private val app: AppContainer) : SafarViewModel() {
             val live = requests.filter { it.status != RequestStatus.CANCELLED }
             if (live.isEmpty()) flowOf(emptyList())
             else combine(live.map { r -> app.rides.observe(r.adId).catch { emit(null) }.map { Booking(r, it) } }) { all ->
-                // Live bookings first (soonest departure), removed rides last.
-                all.sortedWith(compareBy<Booking> { it.ride == null }.thenBy { it.ride?.departureTime ?: Long.MAX_VALUE })
+                // A booking whose ride the driver deleted is gone entirely, not shown as "removed".
+                all.filter { it.ride != null }.sortedBy { it.ride?.departureTime ?: Long.MAX_VALUE }
             }
         }
 
@@ -163,7 +173,7 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                 Column(Modifier.statusBarsPadding().padding(top = 20.dp)) {
                     Text("Rides", style = Safar.type.display, color = c.content)
                     Spacer(Modifier.height(16.dp))
-                    Segmented(listOf("Find", "Yours", "Booked"), segment, { segment = it })
+                    Segmented(listOf("Find", "My Rides", "Booked"), segment, { segment = it })
                     if (segment == 0) {
                         Spacer(Modifier.height(12.dp))
                         Field(
@@ -176,6 +186,9 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                             }) else null,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         )
+                        Spacer(Modifier.height(14.dp))
+                        val kind by vm.kindFilter.collectAsStateWithLifecycle()
+                        KindFilter(kind) { vm.kindFilter.value = it }
                     }
                     Spacer(Modifier.height(4.dp))
                 }
@@ -184,8 +197,17 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                 0 -> rideList(
                     rides = state.found,
                     empty = {
-                        if (query.isBlank()) EmptyState(Icons.Rounded.DirectionsCar, "No open rides", "Check back soon, or offer a ride of your own.")
-                        else EmptyState(Icons.Rounded.SearchOff, "Nothing to \"$query\" yet", "Try a nearby area, or offer the ride yourself and let riders find you.")
+                        val kind = vm.kindFilter.collectAsStateWithLifecycle().value
+                        if (query.isBlank() && kind != null) EmptyState(
+                            Icons.Rounded.DirectionsCar,
+                            if (kind == com.safar.app.data.model.RouteKind.LOCAL) "No local rides right now" else "No city-to-city rides right now",
+                            "Check back soon, or offer one yourself.",
+                        )
+                        else if (query.isBlank()) EmptyState(Icons.Rounded.DirectionsCar, "No open rides", "Check back soon, or offer a ride of your own.")
+                        else EmptyState(
+                            Icons.Rounded.SearchOff, "No rides match “${query.trim()}”",
+                            "No one has posted a ride from or to there yet. Try a nearby area, or offer the ride yourself.",
+                        )
                     },
                 ) { ride ->
                     RideCard(ride, { nav.navigate(Routes.ride(ride.id)) }, rating = state.ratings[ride.creatorUid])
@@ -276,3 +298,35 @@ private fun BookingCard(b: Booking, onClick: () -> Unit) {
         }
     }
 }
+
+/** All · Local · City to city, as quiet text tabs with the route marks and an underline. */
+@Composable
+private fun KindFilter(selected: com.safar.app.data.model.RouteKind?, onSelect: (com.safar.app.data.model.RouteKind?) -> Unit) {
+    val c = Safar.colors
+    val haptics = com.safar.app.ui.haptics()
+    val options = listOf<com.safar.app.data.model.RouteKind?>(null, com.safar.app.data.model.RouteKind.LOCAL, com.safar.app.data.model.RouteKind.CITY_TO_CITY)
+    Row(horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+        options.forEach { option ->
+            val on = option == selected
+            val ink by androidx.compose.animation.animateColorAsState(if (on) c.content else c.contentTertiary, androidx.compose.animation.core.tween(160), label = "kind")
+            Column(
+                Modifier.width(androidx.compose.foundation.layout.IntrinsicSize.Max)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+                    .clickable(remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {
+                        if (!on) { haptics.tick(); onSelect(option) }
+                    }
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    if (option != null) com.safar.app.ui.components.RouteKindMark(option, Modifier.size(13.dp).graphicsLayerAlpha(if (on) 1f else 0.55f))
+                    Text(option?.label ?: "All", style = Safar.type.label, color = ink)
+                }
+                Spacer(Modifier.height(6.dp))
+                Box(Modifier.height(2.dp).fillMaxWidth().clip(CircleShape).background(if (on) c.content else androidx.compose.ui.graphics.Color.Transparent))
+            }
+        }
+    }
+}
+
+private fun Modifier.graphicsLayerAlpha(a: Float) = this.then(Modifier.graphicsLayer { alpha = a })

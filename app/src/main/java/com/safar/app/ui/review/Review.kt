@@ -75,7 +75,7 @@ class ReviewViewModel(private val app: AppContainer, requestId: String) : SafarV
     fun submit(rating: Int, comment: String, onDone: () -> Unit) {
         val r = request.value ?: return
         sending.value = true
-        action(onDone = { sending.value = false; onDone() }, onError = { sending.value = false }) {
+        action(onDone = { sending.value = false; cheer(big = true); onDone() }, onError = { sending.value = false }) {
             app.reviews.submit(r, app.session.requireUser(), rating, comment)
         }
     }
@@ -91,6 +91,7 @@ fun ReviewScreen(requestId: String, nav: NavHostController) {
     val request by vm.request.collectAsStateWithLifecycle()
     val sending by vm.sending.collectAsStateWithLifecycle()
     var rating by remember { mutableIntStateOf(0) }
+    val haptics = com.safar.app.ui.haptics()
     var comment by remember { mutableStateOf("") }
     val r = request
     val other by vm.other.collectAsStateWithLifecycle()
@@ -131,7 +132,7 @@ fun ReviewScreen(requestId: String, nav: NavHostController) {
                         if (on) Icons.Rounded.Star else Icons.Rounded.StarOutline, "$i stars",
                         tint = if (on) c.content else c.contentTertiary,
                         modifier = Modifier.size(44.dp).graphicsLayer { scaleX = scale; scaleY = scale }
-                            .clickable(remember { MutableInteractionSource() }, indication = null) { rating = i },
+                            .clickable(remember { MutableInteractionSource() }, indication = null) { haptics.rating(i); rating = i },
                     )
                 }
             }

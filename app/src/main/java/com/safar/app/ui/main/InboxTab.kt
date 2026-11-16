@@ -83,7 +83,7 @@ class InboxViewModel(private val app: AppContainer) : SafarViewModel() {
     ) { convos, requests, b -> InboxState(convos, requests, b) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InboxState())
 
-    fun accept(r: JoinRequest) = respond(r) { app.requests.accept(r, app.session.requireUser()) }
+    fun accept(r: JoinRequest) = respond(r) { app.requests.accept(r, app.session.requireUser()); cheer() }
     fun decline(r: JoinRequest) = respond(r) { app.requests.decline(r, app.session.requireUser()) }
 
     private fun respond(r: JoinRequest, block: suspend () -> Unit) {

@@ -200,10 +200,10 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
     var sheetHeight by remember { mutableIntStateOf(0) }
     // The sheet collapses to just the search bar, giving the map the screen. Drag or tap the handle.
     var expanded by rememberSaveable { mutableStateOf(true) }
-    val haptic = LocalHapticFeedback.current
+    val haptics = com.safar.app.ui.haptics()
     val dragY = remember { Animatable(0f) }
     fun settle(open: Boolean) {
-        if (open != expanded) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        if (open != expanded) haptics.tap()
         expanded = open
         scope.launch { dragY.animateTo(0f, spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow)) }
     }
@@ -256,7 +256,7 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
             }
     }
 
-    val bottomPad = with(density) { sheetHeight.toDp() }
+    val bottomPad = with(density) { sheetHeight.toDp() } + 4.dp
     val darkMap = c.isDark
 
     Box(Modifier.fillMaxSize()) {
@@ -333,7 +333,7 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
 
         // Bottom sheet
         Column(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().onSizeChanged { sheetHeight = it.height }
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth()
         ) {
             GlassIconButton(
                 Icons.Rounded.MyLocation, "My location",
@@ -346,6 +346,9 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
             Column(
                 Modifier
                     .fillMaxWidth()
+                    // The map is padded by the panel alone (not the location button above it), so
+                    // Google's logo sits just above the panel's edge instead of floating mid-map.
+                    .onSizeChanged { sheetHeight = it.height }
                     // Follows the finger (with resistance past the open position), then springs to a state.
                     .graphicsLayer { translationY = dragY.value }
                     .draggable(

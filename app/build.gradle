@@ -23,8 +23,8 @@ android {
         applicationId "com.safar.app"
         minSdk 24
         targetSdk 35
-        versionCode 6
-        versionName "2.2.0"
+        versionCode 7
+        versionName "2.3.0"
         manifestPlaceholders = [MAPS_API_KEY: localProps.getProperty('MAPS_API_KEY', '')]
         // Safar's Cloudflare Worker (photos, push, cleanup). Not a secret; set in gradle.properties.
         buildConfigField 'String', 'SAFAR_API_URL', "\"${project.findProperty('safarApiUrl') ?: ''}\""
@@ -42,6 +42,12 @@ android {
     }
 
     buildTypes {
+        // Day-to-day builds: no R8 or resource shrinking, so they take seconds instead of minutes.
+        // Signed with the release key when this machine has it, so a debug build installs straight
+        // over the released app on a phone and keeps its data. Firebase recognises the key too.
+        debug {
+            if (keystoreFile.exists()) signingConfig signingConfigs.release
+        }
         release {
             minifyEnabled true
             shrinkResources true

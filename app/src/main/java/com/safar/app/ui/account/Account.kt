@@ -319,7 +319,7 @@ fun AboutScreen(nav: NavHostController) {
             )
             Spacer(Modifier.height(32.dp))
             Text(
-                "Inter typeface © The Inter Project Authors, SIL Open Font License 1.1. Map data © Google.",
+                "Instrument Sans typeface © The Instrument Sans Project Authors, SIL Open Font License 1.1. Routes © OpenStreetMap contributors (OSRM). Map data © Google.",
                 style = Safar.type.caption, color = c.contentTertiary, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }

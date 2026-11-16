@@ -1,5 +1,6 @@
 package com.safar.app.ui.ride
 
+import com.safar.app.ui.components.RouteKindMark
 import android.content.Intent
 import android.content.Context
 import kotlinx.coroutines.delay
@@ -170,14 +171,14 @@ class RideDetailViewModel(private val app: AppContainer, private val rideId: Str
 
     private fun run(block: suspend () -> Unit, done: String? = null) {
         busy.value = true
-        action(onDone = { busy.value = false; done?.let(::say) }, onError = { busy.value = false }) { block() }
+        action(onDone = { busy.value = false; done?.let { cheer(big = it.startsWith("Ride started")); say(it) } }, onError = { busy.value = false }) { block() }
     }
 
     private val me get() = app.session.requireUser()
 
     fun request(seats: Int) = state.value.ride?.let { r -> run({ app.requests.send(r, me, seats) }, "Request sent. We'll let you know when they reply.") }
     fun cancelRequest() = state.value.myRequest?.let { r -> run({ app.requests.cancel(r) }, "Request cancelled") }
-    fun accept(r: JoinRequest) = run({ app.requests.accept(r, me) })
+    fun accept(r: JoinRequest) = run({ app.requests.accept(r, me) }, "${r.requestorName.substringBefore(' ').ifBlank { "Rider" }} is confirmed")
     fun decline(r: JoinRequest) = run({ app.requests.decline(r, me) })
     fun markComplete(r: JoinRequest) = run({ app.requests.markComplete(r, me) }, "Marked as complete")
     fun setStatus(status: RideStatus) = run({ app.rides.setStatus(rideId, status) })
@@ -319,13 +320,26 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
     val c = Safar.colors
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            RouteKindMark(ride.routeKind, Modifier.padding(end = 8.dp).size(14.dp))
             Text(
-                "${dayLabel(ride.departureTime)} · ${countdownLabel(ride.departureTime)}".uppercase(),
+                // The countdown only matters when it's close; a day away it just crowds the line.
+                listOfNotNull(
+                    ride.routeKind.label, dayLabel(ride.departureTime),
+                    countdownLabel(ride.departureTime).takeIf { ride.departureTime - System.currentTimeMillis() < 12 * 60 * 60 * 1000L },
+                ).joinToString(" · ").uppercase(),
                 style = Safar.type.overline, color = c.contentSecondary, modifier = Modifier.weight(1f),
+                maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
-            SeatsBadge(ride)
+            SeatsBadge(ride, long = true)
         }
-        Text("${shortPlace(ride.origin.name)} → ${shortPlace(ride.destination.name)}", style = Safar.type.display, color = c.content)
+        if (ride.routeKind == com.safar.app.data.model.RouteKind.CITY_TO_CITY) {
+            val from = ride.originCity.ifBlank { com.safar.app.data.model.cityFromName(ride.origin.name) }.ifBlank { shortPlace(ride.origin.name) }
+            val to = ride.destinationCity.ifBlank { com.safar.app.data.model.cityFromName(ride.destination.name) }.ifBlank { shortPlace(ride.destination.name) }
+            Text("$from → $to", style = Safar.type.display, color = c.content)
+            Text("${shortPlace(ride.origin.name)} to ${shortPlace(ride.destination.name)}", style = Safar.type.label, color = c.contentSecondary)
+        } else {
+            Text("${shortPlace(ride.origin.name)} → ${shortPlace(ride.destination.name)}", style = Safar.type.display, color = c.content)
+        }
         if (ride.isRepeating) Row(
             Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -341,7 +355,7 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
     // A rider's own status is the most important thing on this page, so it leads.
     if (!state.isOwner) state.myRequest?.let { RequestStatusCard(it) }
 
-    Card {
+    Card(Modifier.fillMaxWidth()) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             RouteMarks(gap = 40.dp)
             Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
