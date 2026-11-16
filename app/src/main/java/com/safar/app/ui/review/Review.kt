@@ -53,12 +53,24 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 class ReviewViewModel(private val app: AppContainer, requestId: String) : SafarViewModel() {
     val uid = app.session.uid.orEmpty()
     val request: StateFlow<JoinRequest?> = app.requests.observe(requestId).catch { emit(null) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     val sending = MutableStateFlow(false)
+
+    /** The person being reviewed, loaded from their live profile so both sides see a real name and photo. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val other: StateFlow<com.safar.app.data.model.User?> = request
+        .map { it?.otherParty(uid) }
+        .distinctUntilChanged()
+        .flatMapLatest { id -> if (id.isNullOrBlank()) flowOf(null) else app.users.observe(id).catch { emit(null) } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun submit(rating: Int, comment: String, onDone: () -> Unit) {
         val r = request.value ?: return
@@ -81,8 +93,10 @@ fun ReviewScreen(requestId: String, nav: NavHostController) {
     var rating by remember { mutableIntStateOf(0) }
     var comment by remember { mutableStateOf("") }
     val r = request
+    val other by vm.other.collectAsStateWithLifecycle()
     val isDriver = r?.adCreatorUid == vm.uid
-    val otherName = if (isDriver) r?.requestorName.orEmpty() else "your driver"
+    val otherName = other?.firstName?.takeIf { other?.name?.isNotBlank() == true }
+        ?: if (isDriver) r?.requestorName?.substringBefore(' ').orEmpty() else "your driver"
 
     ScreenScaffold(
         "Rate your ride", onBack = { nav.back() },
@@ -100,10 +114,13 @@ fun ReviewScreen(requestId: String, nav: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(24.dp))
-            Avatar(if (isDriver) r?.requestorName.orEmpty() else "", if (isDriver) r?.requestorPhotoUrl else null, size = 88.dp)
+            Avatar(other?.name ?: r?.requestorName.orEmpty(), other?.photoUrl, size = 88.dp)
             Spacer(Modifier.height(16.dp))
             Text("How was riding with $otherName?", style = Safar.type.title, color = c.content, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            if (r != null && r.routeLabel.isNotBlank()) Text(r.routeLabel, style = Safar.type.label, color = c.contentSecondary)
+            if (r != null && r.routeLabel.isNotBlank()) Text(
+                com.safar.app.ui.shortRoute(r.routeLabel),
+                style = Safar.type.label, color = c.contentSecondary,
+            )
             Spacer(Modifier.height(28.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 (1..5).forEach { i ->

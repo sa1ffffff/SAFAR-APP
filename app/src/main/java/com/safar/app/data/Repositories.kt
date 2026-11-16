@@ -23,6 +23,8 @@ import com.safar.app.data.model.Review
 import com.safar.app.data.model.Ride
 import com.safar.app.data.model.RideStatus
 import com.safar.app.data.model.User
+import com.safar.app.data.model.shortPlaceName
+import com.safar.app.data.model.shortRouteLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
@@ -249,7 +251,7 @@ class RequestRepository(
             requestorPhotoUrl = me.photoUrl,
             adCreatorUid = ride.creatorUid,
             seats = seats,
-            routeLabel = "${ride.origin.name} → ${ride.destination.name}",
+            routeLabel = "${shortPlaceName(ride.origin.name)} → ${shortPlaceName(ride.destination.name)}",
             status = RequestStatus.PENDING,
             timestamp = System.currentTimeMillis(),
         )
@@ -282,7 +284,7 @@ class RequestRepository(
         notifications.send(
             to = request.requestorUid, from = me, type = NotificationType.REQUEST_ACCEPTED,
             title = "You're in!",
-            message = "${me.firstName} accepted your request for ${request.routeLabel.ifBlank { "the ride" }}",
+            message = "${me.firstName} accepted your request for ${shortRouteLabel(request.routeLabel).ifBlank { "the ride" }}",
             adId = request.adId, requestId = request.id,
         )
     }
@@ -292,7 +294,7 @@ class RequestRepository(
         notifications.send(
             to = request.requestorUid, from = me, type = NotificationType.REQUEST_DECLINED,
             title = "Request declined",
-            message = "${me.firstName} couldn't take you on ${request.routeLabel.ifBlank { "this ride" }}",
+            message = "${me.firstName} couldn't take you on ${shortRouteLabel(request.routeLabel).ifBlank { "this ride" }}",
             adId = request.adId, requestId = request.id,
         )
     }
@@ -303,7 +305,7 @@ class RequestRepository(
         notifications.send(
             to = request.otherParty(me.uid), from = me, type = NotificationType.RIDE_COMPLETED,
             title = "Ride marked complete",
-            message = "${me.firstName} marked ${request.routeLabel.ifBlank { "your ride" }} as complete. Confirm and leave a review.",
+            message = "${me.firstName} marked ${shortRouteLabel(request.routeLabel).ifBlank { "your ride" }} as complete. Confirm and leave a review.",
             adId = request.adId, requestId = request.id,
         )
     }

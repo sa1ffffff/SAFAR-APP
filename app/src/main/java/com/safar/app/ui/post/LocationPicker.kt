@@ -80,6 +80,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import kotlin.coroutines.resume
 
@@ -88,24 +89,42 @@ private object Geo {
     @Suppress("DEPRECATION")
     suspend fun search(context: Context, query: String): List<Address> = withContext(Dispatchers.IO) {
         val geocoder = Geocoder(context, Locale.getDefault())
-        if (Build.VERSION.SDK_INT >= 33) suspendCancellableCoroutine { cont ->
-            geocoder.getFromLocationName(query, 6, 23.5, 60.8, 37.1, 77.9) { cont.resume(it) }
-        } else runCatching { geocoder.getFromLocationName(query, 6, 23.5, 60.8, 37.1, 77.9) }.getOrNull().orEmpty()
+        withTimeoutOrNull(GEO_TIMEOUT_MS) {
+            if (Build.VERSION.SDK_INT >= 33) suspendCancellableCoroutine { cont ->
+                geocoder.getFromLocationName(query, 6, 23.5, 60.8, 37.1, 77.9, listener(cont))
+            } else runCatching { geocoder.getFromLocationName(query, 6, 23.5, 60.8, 37.1, 77.9) }.getOrNull().orEmpty()
+        }.orEmpty()
     }
 
     @Suppress("DEPRECATION")
     suspend fun name(context: Context, at: LatLng): String? = withContext(Dispatchers.IO) {
         val geocoder = Geocoder(context, Locale.getDefault())
-        val list: List<Address>? = if (Build.VERSION.SDK_INT >= 33) suspendCancellableCoroutine { cont ->
-            geocoder.getFromLocation(at.latitude, at.longitude, 1) { cont.resume(it) }
-        } else runCatching { geocoder.getFromLocation(at.latitude, at.longitude, 1) }.getOrNull()
+        val list: List<Address>? = withTimeoutOrNull(GEO_TIMEOUT_MS) {
+            if (Build.VERSION.SDK_INT >= 33) suspendCancellableCoroutine { cont ->
+                geocoder.getFromLocation(at.latitude, at.longitude, 1, listener(cont))
+            } else runCatching { geocoder.getFromLocation(at.latitude, at.longitude, 1) }.getOrNull()
+        }
         list?.firstOrNull()?.let(::label)
     }
+
+    private const val GEO_TIMEOUT_MS = 6_000L
+
+    /**
+     * The API 33 geocoder reports failures through onError; without it the coroutine
+     * would never resume and the picker would sit on "Finding address…" forever.
+     */
+    @androidx.annotation.RequiresApi(33)
+    private fun listener(cont: kotlinx.coroutines.CancellableContinuation<List<Address>>) =
+        object : Geocoder.GeocodeListener {
+            override fun onGeocode(addresses: MutableList<Address>) { if (cont.isActive) cont.resume(addresses) }
+            override fun onError(errorMessage: String?) { if (cont.isActive) cont.resume(emptyList()) }
+        }
 
     /** "Street/landmark, Area, City" without the country or postcode noise. */
     fun label(a: Address): String {
         val parts = listOfNotNull(
-            a.featureName?.takeIf { f -> f.any(Char::isLetter) && f != a.subLocality && f != a.locality },
+            // Skip Plus Codes like "P27F+JVM": machine-readable, meaningless to riders.
+            a.featureName?.takeIf { f -> f.any(Char::isLetter) && '+' !in f && f != a.subLocality && f != a.locality },
             a.subLocality, a.locality ?: a.subAdminArea,
         ).distinct()
         return parts.joinToString(", ").ifBlank { a.getAddressLine(0) ?: "Dropped pin" }

@@ -15,6 +15,17 @@ private fun DataSnapshot.int(key: String): Int = (child(key).value as? Number)?.
 private fun DataSnapshot.double(key: String): Double = (child(key).value as? Number)?.toDouble() ?: 0.0
 private fun DataSnapshot.bool(key: String): Boolean = child(key).getValue(Boolean::class.java) ?: false
 
+/** "SAVe lab, NUST, H-12, Islamabad" → "SAVe lab"; skips Plus Codes like "P27F+JVM". */
+fun shortPlaceName(name: String): String =
+    name.split(",").map { it.trim() }.firstOrNull { it.isNotEmpty() && '+' !in it } ?: name.trim()
+
+/** Shortens both ends of a stored "A → B" route label. */
+fun shortRouteLabel(label: String): String = label.split(" → ").joinToString(" → ") { shortPlaceName(it) }
+
+/** True for something a dialer can call: digits, spaces, dashes, a leading plus. Rejects emails. */
+fun isCallablePhone(value: String): Boolean =
+    value.isNotBlank() && value.all { it.isDigit() || it in "+ -" } && value.count(Char::isDigit) in 10..15
+
 data class User(
     val uid: String = "",
     val name: String = "",
@@ -29,8 +40,7 @@ data class User(
     val firstName: String get() = name.trim().substringBefore(' ').ifBlank { "there" }
 
     /** v1 accounts sometimes stored an email in `phone`; only a real number counts. */
-    val hasCallablePhone: Boolean
-        get() = phone.all { it.isDigit() || it in "+ -" } && phone.count(Char::isDigit) in 10..15
+    val hasCallablePhone: Boolean get() = isCallablePhone(phone)
 
     fun toMap(): Map<String, Any?> = mapOf(
         "uid" to uid,
@@ -97,7 +107,10 @@ data class Ride(
         return expiry <= now
     }
 
-    val isBookable: Boolean get() = status == RideStatus.OPEN && availableSeats > 0 && !isExpired()
+    /** Open, has seats, and hasn't left yet (10 minutes' grace for a late start). */
+    val isBookable: Boolean
+        get() = status == RideStatus.OPEN && availableSeats > 0 && !isExpired() &&
+            departureTime > System.currentTimeMillis() - DEPARTURE_GRACE_MS
 
     fun toMap(): Map<String, Any?> = mapOf(
         "adId" to id,
@@ -123,6 +136,7 @@ data class Ride(
 
     companion object {
         const val EXPIRY_WINDOW_MS = 3L * 24 * 60 * 60 * 1000
+        const val DEPARTURE_GRACE_MS = 10L * 60 * 1000
 
         fun from(s: DataSnapshot): Ride? {
             if (!s.exists()) return null

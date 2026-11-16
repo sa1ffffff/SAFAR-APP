@@ -74,6 +74,7 @@ import com.safar.app.data.model.RequestStatus
 import com.safar.app.data.model.Ride
 import com.safar.app.data.model.RideStatus
 import com.safar.app.data.model.User
+import com.safar.app.data.model.isCallablePhone
 import com.safar.app.data.seatsLabel
 import com.safar.app.ui.Messages
 import com.safar.app.ui.Routes
@@ -242,7 +243,7 @@ fun RideDetailScreen(rideId: String, nav: NavHostController) {
         if (ride != null && !state.loading) {
             Box(Modifier.align(Alignment.BottomCenter)) {
                 ActionBar(ride, state, seats, { seats = it }, vm, nav, onCall = {
-                    context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${ride.creatorPhone}")))
+                    driverPhone(ride, state)?.let { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it"))) }
                 })
             }
         }
@@ -279,6 +280,9 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
         }
         Text("${shortPlace(ride.origin.name)} → ${shortPlace(ride.destination.name)}", style = Safar.type.display, color = c.content)
     }
+
+    // A rider's own status is the most important thing on this page, so it leads.
+    if (!state.isOwner) state.myRequest?.let { RequestStatusCard(it) }
 
     Card {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -322,7 +326,6 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
             }
             IconCircle(Icons.Rounded.ChatBubbleOutline, "Message driver", { nav.navigate(Routes.chat(ride.creatorUid)) })
         }
-        state.myRequest?.let { RequestStatusCard(it) }
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("Requests", style = Safar.type.headline, color = c.content)
@@ -410,7 +413,7 @@ private fun ActionBar(
             req.status == RequestStatus.ACCEPTED && departed && !req.requesterMarkedComplete ->
                 SafarButton("Mark ride complete", { vm.markComplete(req) }, loading = state.busy, modifier = Modifier.weight(1f))
             req.status == RequestStatus.ACCEPTED -> {
-                if (ride.creatorPhone.isNotBlank()) IconCircle(Icons.Rounded.Phone, "Call driver", onCall, size = 54.dp)
+                if (driverPhone(ride, state) != null) IconCircle(Icons.Rounded.Phone, "Call driver", onCall, size = 54.dp)
                 SafarButton("Message driver", { nav.navigate(Routes.chat(ride.creatorUid)) }, modifier = Modifier.weight(1f))
             }
             else -> SafarButton("Find another ride", { nav.back() }, kind = ButtonKind.Secondary, modifier = Modifier.weight(1f))
@@ -469,3 +472,7 @@ fun RouteMap(ride: Ride) {
         }
     }
 }
+
+/** The driver's live profile number, else the one saved on the ride; never an email from v1 data. */
+private fun driverPhone(ride: Ride, state: RideDetailState): String? =
+    state.driver?.phone?.takeIf(::isCallablePhone) ?: ride.creatorPhone.takeIf(::isCallablePhone)

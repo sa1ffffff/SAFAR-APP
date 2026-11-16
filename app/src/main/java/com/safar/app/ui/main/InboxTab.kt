@@ -221,7 +221,7 @@ fun RequestCard(
             }
             if (r.routeLabel.isNotBlank()) {
                 Text(
-                    r.routeLabel, style = Safar.type.label, color = c.content,
+                    com.safar.app.ui.shortRoute(r.routeLabel), style = Safar.type.label, color = c.content,
                     modifier = if (onRide != null) Modifier.clip(CircleShape).clickable(onClick = onRide) else Modifier,
                 )
             }

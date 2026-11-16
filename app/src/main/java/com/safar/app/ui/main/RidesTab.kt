@@ -125,7 +125,10 @@ class RidesViewModel(private val app: AppContainer) : SafarViewModel() {
         .flatMapLatest { requests ->
             val live = requests.filter { it.status != RequestStatus.CANCELLED }
             if (live.isEmpty()) flowOf(emptyList())
-            else combine(live.map { r -> app.rides.observe(r.adId).catch { emit(null) }.map { Booking(r, it) } }) { it.toList() }
+            else combine(live.map { r -> app.rides.observe(r.adId).catch { emit(null) }.map { Booking(r, it) } }) { all ->
+                // Live bookings first (soonest departure), removed rides last.
+                all.sortedWith(compareBy<Booking> { it.ride == null }.thenBy { it.ride?.departureTime ?: Long.MAX_VALUE })
+            }
         }
 
     private val ratings = open.map { list -> list.map { it.creatorUid }.toSet() }.distinctUntilChanged()
@@ -249,7 +252,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.rideList(
 @Composable
 private fun BookingCard(b: Booking, onClick: () -> Unit) {
     val c = Safar.colors
-    val (label, bg, fg) = when (b.request.status) {
+    val (label, bg, fg) = if (b.ride == null) Triple("Unavailable", c.surfaceMuted, c.contentSecondary) else when (b.request.status) {
         RequestStatus.PENDING -> Triple("Waiting for driver", c.warningMuted, c.warning)
         RequestStatus.ACCEPTED -> if (b.request.isCompleted) Triple("Completed", c.surfaceMuted, c.contentSecondary) else Triple("Confirmed", c.positiveMuted, c.positive)
         RequestStatus.REJECTED -> Triple("Declined", c.negativeMuted, c.negative)
@@ -265,7 +268,7 @@ private fun BookingCard(b: Booking, onClick: () -> Unit) {
                 Pill(label, background = bg, color = fg)
             }
             if (b.ride != null) RouteStops(shortPlace(b.ride.origin.name), shortPlace(b.ride.destination.name))
-            else Text(b.request.routeLabel.ifBlank { "This ride is no longer available" }, style = Safar.type.bodyStrong, color = c.content)
+            else Text(com.safar.app.ui.shortRoute(b.request.routeLabel).ifBlank { "This ride is no longer available" }, style = Safar.type.bodyStrong, color = c.content)
             Text(
                 "${seatsLabel(b.request.seats)} with ${b.ride?.creatorName?.substringBefore(' ') ?: "driver"}",
                 style = Safar.type.label, color = c.contentSecondary,

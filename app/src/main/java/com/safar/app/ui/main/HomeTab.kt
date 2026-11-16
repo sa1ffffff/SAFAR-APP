@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -50,6 +51,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -191,12 +193,21 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
         else permission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
-    // First load without a location: frame every ride that's on the map.
-    LaunchedEffect(state.rides != null) {
-        if (state.location == null && rides.isNotEmpty()) {
-            val bounds = LatLngBounds.builder().apply { rides.forEach { include(LatLng(it.origin.lat, it.origin.lng)) } }.build()
-            runCatching { camera.move(CameraUpdateFactory.newLatLngBounds(bounds, 160)) }
-        }
+    // First load: frame you together with the nearest rides, so rides elsewhere in the city
+    // are on screen instead of hiding past the edge. Runs once; after that the camera is the user's.
+    var framed by rememberSaveable { mutableStateOf(false) }
+    // Bounds only fit correctly once the map has laid out with its padding.
+    var mapLoaded by remember { mutableStateOf(false) }
+    LaunchedEffect(rides.isNotEmpty(), state.location, mapLoaded, sheetHeight > 0) {
+        if (framed || state.rides == null || !mapLoaded || sheetHeight == 0) return@LaunchedEffect
+        val nearest = rides.take(6)
+        if (nearest.isEmpty()) return@LaunchedEffect
+        val bounds = LatLngBounds.builder().apply {
+            nearest.forEach { include(LatLng(it.origin.lat, it.origin.lng)) }
+            state.location?.let { include(it) }
+        }.build()
+        runCatching { camera.animate(CameraUpdateFactory.newLatLngBounds(bounds, 180), 700) }
+        framed = true
     }
 
     // The card that settles in the carousel drives the map: its route is drawn and framed.
@@ -223,7 +234,7 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = camera,
-            contentPadding = PaddingValues(bottom = bottomPad, top = 96.dp),
+            contentPadding = PaddingValues(bottom = bottomPad, top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 88.dp),
             properties = MapProperties(
                 isMyLocationEnabled = hasPermission,
                 mapStyleOptions = MapStyleOptions.loadRawResourceStyle(
@@ -235,6 +246,7 @@ fun HomeTab(nav: NavHostController, onSearch: () -> Unit, onOpenAccount: () -> U
                 mapToolbarEnabled = false, indoorLevelPickerEnabled = false,
             ),
             onMapClick = { selected = null },
+            onMapLoaded = { mapLoaded = true },
         ) {
             rides.forEach { ride ->
                 val pos = LatLng(ride.origin.lat, ride.origin.lng)

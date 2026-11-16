@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -337,6 +338,8 @@ fun Field(
     val c = Safar.colors
     val shape = RoundedCornerShape(Radii.md)
     Column(modifier) {
+        // The whole field is the tap target, not just the line of text inside it.
+        val focus = remember { androidx.compose.ui.focus.FocusRequester() }
         Row(
             Modifier
                 .fillMaxWidth()
@@ -344,6 +347,7 @@ fun Field(
                 .clip(shape)
                 .background(c.surfaceMuted)
                 .border(1.dp, if (error != null) c.negative else Color.Transparent, shape)
+                .clickable(remember { MutableInteractionSource() }, indication = null) { runCatching { focus.requestFocus() } }
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -362,7 +366,7 @@ fun Field(
                     keyboardOptions = keyboardOptions,
                     keyboardActions = keyboardActions,
                     visualTransformation = visualTransformation,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focus),
                     decorationBox = { inner ->
                         Box {
                             if (value.isEmpty() && placeholder.isNotEmpty()) {

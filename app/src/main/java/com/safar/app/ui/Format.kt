@@ -71,4 +71,6 @@ fun memberSince(ms: Long): String =
 fun priceLabel(pkr: Int): String = if (pkr <= 0) "Split fuel" else "Rs %,d".format(pkr)
 
 /** Short place name: the first part of a geocoded address ("NUST H-12, Islamabad, Pakistan" → "NUST H-12"). */
-fun shortPlace(name: String): String = name.substringBefore(",").trim().ifEmpty { name }
+fun shortPlace(name: String): String = com.safar.app.data.model.shortPlaceName(name)
+
+fun shortRoute(label: String): String = com.safar.app.data.model.shortRouteLabel(label)

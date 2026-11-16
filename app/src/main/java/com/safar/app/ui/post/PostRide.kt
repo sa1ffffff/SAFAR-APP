@@ -87,11 +87,15 @@ data class PostForm(
     val loaded: Boolean = false,
 )
 
-/** Next round half hour, at least 30 minutes from now. */
+/** The first :00 or :30 that is at least 30 minutes from now (7:12 → 8:00, 7:45 → 8:30). */
 fun defaultDeparture(): Long = Calendar.getInstance().apply {
-    add(Calendar.MINUTE, 45)
-    set(Calendar.MINUTE, if (get(Calendar.MINUTE) < 30) 0 else 30)
-    set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    add(Calendar.MINUTE, 30)
+    val m = get(Calendar.MINUTE)
+    if (m == 0 || m == 30) { set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
+    else {
+        add(Calendar.MINUTE, if (m < 30) 30 - m else 60 - m)
+        set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    }
 }.timeInMillis
 
 class PostRideViewModel(private val app: AppContainer, private val editId: String?) : SafarViewModel() {
@@ -141,7 +145,7 @@ class PostRideViewModel(private val app: AppContainer, private val editId: Strin
         action(onDone = { onDone(savedId) }, onError = { form.update { it.copy(saving = false) } }) {
             val base = original ?: Ride()
             val ride = base.copy(
-                creatorUid = me.uid, creatorName = me.name, creatorPhone = me.phone, creatorPhotoUrl = me.photoUrl,
+                creatorUid = me.uid, creatorName = me.name, creatorPhone = me.phone.takeIf { me.hasCallablePhone }.orEmpty(), creatorPhotoUrl = me.photoUrl,
                 origin = f.from!!, destination = f.to!!, departureTime = f.departure, availableSeats = f.seats,
                 pricePerSeat = f.price.toIntOrNull() ?: 0, vehicleDetails = f.vehicle.trim(), notes = f.notes.trim(),
             )
