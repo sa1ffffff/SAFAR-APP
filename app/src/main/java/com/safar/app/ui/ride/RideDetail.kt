@@ -1,7 +1,11 @@
 package com.safar.app.ui.ride
 
 import android.content.Intent
+import android.content.Context
 import android.net.Uri
+import android.widget.Toast
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -242,9 +246,7 @@ fun RideDetailScreen(rideId: String, nav: NavHostController) {
 
         if (ride != null && !state.loading) {
             Box(Modifier.align(Alignment.BottomCenter)) {
-                ActionBar(ride, state, seats, { seats = it }, vm, nav, onCall = {
-                    driverPhone(ride, state)?.let { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it"))) }
-                })
+                ActionBar(ride, state, seats, { seats = it }, vm, nav)
             }
         }
     }
@@ -324,7 +326,18 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
                 Text(ride.creatorName, style = Safar.type.headline, color = c.content)
                 RatingLabel(state.driverRating.average, state.driverRating.count)
             }
-            IconCircle(Icons.Rounded.ChatBubbleOutline, "Message driver", { nav.navigate(Routes.chat(ride.creatorUid)) })
+            val context = LocalContext.current
+            val phone = driverPhone(ride, state)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (phone != null) {
+                    IconCircle(Icons.Rounded.Phone, "Call ${ride.creatorName.substringBefore(' ')}", { dial(context, phone) })
+                    IconCircle(
+                        ImageVector.vectorResource(R.drawable.ic_whatsapp), "WhatsApp ${ride.creatorName.substringBefore(' ')}",
+                        { openWhatsApp(context, phone, whatsAppGreeting(ride)) },
+                    )
+                }
+                IconCircle(Icons.Rounded.ChatBubbleOutline, "Message in Safar", { nav.navigate(Routes.chat(ride.creatorUid)) })
+            }
         }
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -381,7 +394,7 @@ private fun CompletionRow(r: JoinRequest, isOwner: Boolean, departed: Boolean, v
 @Composable
 private fun ActionBar(
     ride: Ride, state: RideDetailState, seats: Int, onSeats: (Int) -> Unit,
-    vm: RideDetailViewModel, nav: NavHostController, onCall: () -> Unit,
+    vm: RideDetailViewModel, nav: NavHostController,
 ) {
     val c = Safar.colors
     val req = state.myRequest
@@ -413,7 +426,6 @@ private fun ActionBar(
             req.status == RequestStatus.ACCEPTED && departed && !req.requesterMarkedComplete ->
                 SafarButton("Mark ride complete", { vm.markComplete(req) }, loading = state.busy, modifier = Modifier.weight(1f))
             req.status == RequestStatus.ACCEPTED -> {
-                if (driverPhone(ride, state) != null) IconCircle(Icons.Rounded.Phone, "Call driver", onCall, size = 54.dp)
                 SafarButton("Message driver", { nav.navigate(Routes.chat(ride.creatorUid)) }, modifier = Modifier.weight(1f))
             }
             else -> SafarButton("Find another ride", { nav.back() }, kind = ButtonKind.Secondary, modifier = Modifier.weight(1f))
@@ -476,3 +488,30 @@ fun RouteMap(ride: Ride) {
 /** The driver's live profile number, else the one saved on the ride; never an email from v1 data. */
 private fun driverPhone(ride: Ride, state: RideDetailState): String? =
     state.driver?.phone?.takeIf(::isCallablePhone) ?: ride.creatorPhone.takeIf(::isCallablePhone)
+
+private fun dial(context: Context, phone: String) {
+    runCatching { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))) }
+        .onFailure { Toast.makeText(context, "No phone app found", Toast.LENGTH_SHORT).show() }
+}
+
+/** wa.me needs the international number as bare digits; old local numbers (03xx…) are assumed Pakistani. */
+internal fun whatsAppDigits(phone: String): String {
+    val digits = phone.filter(Char::isDigit)
+    return when {
+        phone.trim().startsWith("+") -> digits
+        digits.startsWith("00") -> digits.drop(2)
+        digits.startsWith("03") && digits.length == 11 -> "92" + digits.drop(1)
+        else -> digits
+    }
+}
+
+private fun whatsAppGreeting(ride: Ride): String =
+    "Salam ${ride.creatorName.substringBefore(' ')}! I found your ride on Safar: " +
+        "${shortPlace(ride.origin.name)} → ${shortPlace(ride.destination.name)}, ${dayLabel(ride.departureTime)} at ${timeLabel(ride.departureTime)}."
+
+/** Opens the chat in WhatsApp (or WhatsApp Business); wa.me falls back to the browser if neither is installed. */
+private fun openWhatsApp(context: Context, phone: String, text: String) {
+    val uri = Uri.parse("https://wa.me/${whatsAppDigits(phone)}?text=${Uri.encode(text)}")
+    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+        .onFailure { Toast.makeText(context, "WhatsApp isn't available on this phone", Toast.LENGTH_SHORT).show() }
+}
