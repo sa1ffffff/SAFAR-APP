@@ -55,7 +55,8 @@ fun RideCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RouteKindMark(kind, Modifier.padding(end = 8.dp).size(14.dp))
                 Text(
-                    "${kind.label} · ${departureLabel(ride.departureTime)}".uppercase(),
+                    // The mark already says Local or City to city; the line keeps to the time.
+                    departureLabel(ride.departureTime).uppercase(),
                     style = Safar.type.overline, color = c.contentSecondary, modifier = Modifier.weight(1f),
                     maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
@@ -132,47 +133,44 @@ fun RideCardSkeleton(modifier: Modifier = Modifier) {
 }
 
 /**
- * Route-type mark, drawn rather than taken from an icon set.
- * Local: a 3×3 sector grid with the centre block filled, like Islamabad's sectors.
+ * Route-type mark, drawn rather than taken from an icon set, so it matches the type and scales
+ * cleanly from a 14 dp label to a 26 dp tile.
+ * Local: a 2×2 block of sectors with one lit, Islamabad's grid in miniature.
  * City to city: two cities joined by a dashed arc, like a route on a road atlas.
  */
 @Composable
-fun RouteKindMark(kind: RouteKind, modifier: Modifier = Modifier) {
-    val ink = Safar.colors.content
-    val faint = Safar.colors.contentTertiary
+fun RouteKindMark(kind: RouteKind, modifier: Modifier = Modifier, color: androidx.compose.ui.graphics.Color = Safar.colors.content) {
     androidx.compose.foundation.Canvas(modifier.semantics { contentDescription = kind.label }) {
         val s = size.minDimension
         if (kind == RouteKind.LOCAL) {
-            val gap = s * 0.14f
-            val cell = (s - gap * 2) / 3
-            for (row in 0..2) for (col in 0..2) {
-                val center = row == 1 && col == 1
+            val gap = s * 0.12f
+            val cell = (s - gap) / 2
+            for (row in 0..1) for (col in 0..1) {
+                val lit = row == 0 && col == 1
                 drawRoundRect(
-                    color = if (center) ink else faint,
+                    color = if (lit) color else color.copy(alpha = 0.28f),
                     topLeft = androidx.compose.ui.geometry.Offset(col * (cell + gap), row * (cell + gap)),
                     size = androidx.compose.ui.geometry.Size(cell, cell),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.28f),
-                    style = if (center) androidx.compose.ui.graphics.drawscope.Fill
-                    else androidx.compose.ui.graphics.drawscope.Stroke(width = s * 0.07f),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.3f),
                 )
             }
         } else {
-            val r = s * 0.15f
-            val a = androidx.compose.ui.geometry.Offset(r, s - r)
-            val b = androidx.compose.ui.geometry.Offset(s - r, r)
+            val r = s * 0.14f
+            val a = androidx.compose.ui.geometry.Offset(r * 1.1f, s - r * 1.1f)
+            val b = androidx.compose.ui.geometry.Offset(s - r * 1.1f, r * 1.1f)
             val arc = androidx.compose.ui.graphics.Path().apply {
                 moveTo(a.x, a.y)
-                quadraticTo(r * 0.6f, r * 0.6f, b.x, b.y)
+                quadraticTo(s * 0.12f, s * 0.12f, b.x, b.y)
             }
             drawPath(
-                arc, color = ink,
+                arc, color = color,
                 style = androidx.compose.ui.graphics.drawscope.Stroke(
-                    width = s * 0.08f, cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(s * 0.13f, s * 0.11f)),
+                    width = s * 0.085f, cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(s * 0.12f, s * 0.1f)),
                 ),
             )
-            drawCircle(color = ink, radius = r, center = a)
-            drawCircle(color = ink, radius = r, center = b, style = androidx.compose.ui.graphics.drawscope.Stroke(width = s * 0.09f))
+            drawCircle(color = color, radius = r, center = a)
+            drawCircle(color = color, radius = r * 0.92f, center = b, style = androidx.compose.ui.graphics.drawscope.Stroke(width = s * 0.09f))
         }
     }
 }

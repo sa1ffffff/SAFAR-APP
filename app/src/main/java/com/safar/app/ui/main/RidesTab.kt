@@ -1,5 +1,8 @@
 package com.safar.app.ui.main
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.clickable
@@ -97,6 +100,8 @@ data class Booking(val request: JoinRequest, val ride: Ride?)
 
 data class RidesState(
     val found: List<Ride>? = null,
+    /** Open rides of each kind matching the search, for the Local / City to city tiles. */
+    val kindCounts: Map<com.safar.app.data.model.RouteKind, Int> = emptyMap(),
     val mine: List<Ride>? = null,
     val pendingByRide: Map<String, Int> = emptyMap(),
     val bookings: List<Booking>? = null,
@@ -112,12 +117,17 @@ class RidesViewModel(private val app: AppContainer) : SafarViewModel() {
 
     private val open = app.rides.observeOpenRides().catch { emit(emptyList()) }
 
-    private val found = combine(open, query, kindFilter) { list, q, k ->
+    private val searched = combine(open, query) { list, q ->
         val term = q.trim()
-        list.filter { it.creatorUid != uid }.filter { k == null || it.routeKind == k }.filter {
+        list.filter { it.creatorUid != uid }.filter {
             term.isEmpty() || it.destination.name.contains(term, true) || it.origin.name.contains(term, true) ||
                 it.originCity.contains(term, true) || it.destinationCity.contains(term, true)
         }
+    }
+
+    /** The visible rides, plus how many of each kind the search matches (the tiles show these). */
+    private val found = combine(searched, kindFilter) { list, k ->
+        list.filter { k == null || it.routeKind == k } to list.groupingBy { it.routeKind }.eachCount()
     }
 
     /** Upcoming rides soonest first, then past ones, most recent first. */
@@ -145,7 +155,7 @@ class RidesViewModel(private val app: AppContainer) : SafarViewModel() {
         .flatMapLatest { app.users.observeRatings(it).catch { emit(emptyMap()) } }
 
     val state: StateFlow<RidesState> = combine(found, mine, pending, bookings, ratings) { f, m, p, b, r ->
-        RidesState(f, m, p, b, r)
+        RidesState(found = f.first, kindCounts = f.second, mine = m, pendingByRide = p, bookings = b, ratings = r)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RidesState())
 }
 
@@ -188,7 +198,7 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                         )
                         Spacer(Modifier.height(14.dp))
                         val kind by vm.kindFilter.collectAsStateWithLifecycle()
-                        KindFilter(kind) { vm.kindFilter.value = it }
+                        KindTiles(kind, state.kindCounts, loading = state.found == null) { vm.kindFilter.value = it }
                     }
                     Spacer(Modifier.height(4.dp))
                 }
@@ -299,34 +309,85 @@ private fun BookingCard(b: Booking, onClick: () -> Unit) {
     }
 }
 
-/** All · Local · City to city, as quiet text tabs with the route marks and an underline. */
+/**
+ * Local and City to city as two choice tiles: the two trips people take with Safar, side by
+ * side. Each says what it means and how many rides are open. Neither selected shows every
+ * ride; tapping the selected tile again clears it, so there is no separate "All".
+ */
 @Composable
-private fun KindFilter(selected: com.safar.app.data.model.RouteKind?, onSelect: (com.safar.app.data.model.RouteKind?) -> Unit) {
-    val c = Safar.colors
+private fun KindTiles(
+    selected: com.safar.app.data.model.RouteKind?,
+    counts: Map<com.safar.app.data.model.RouteKind, Int>,
+    loading: Boolean,
+    onSelect: (com.safar.app.data.model.RouteKind?) -> Unit,
+) {
     val haptics = com.safar.app.ui.haptics()
-    val options = listOf<com.safar.app.data.model.RouteKind?>(null, com.safar.app.data.model.RouteKind.LOCAL, com.safar.app.data.model.RouteKind.CITY_TO_CITY)
-    Row(horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-        options.forEach { option ->
-            val on = option == selected
-            val ink by androidx.compose.animation.animateColorAsState(if (on) c.content else c.contentTertiary, androidx.compose.animation.core.tween(160), label = "kind")
-            Column(
-                Modifier.width(androidx.compose.foundation.layout.IntrinsicSize.Max)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
-                    .clickable(remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {
-                        if (!on) { haptics.tick(); onSelect(option) }
-                    }
-                    .padding(vertical = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        listOf(
+            Triple(com.safar.app.data.model.RouteKind.LOCAL, "Across town", "Local"),
+            Triple(com.safar.app.data.model.RouteKind.CITY_TO_CITY, "Between cities", "City to city"),
+        ).forEach { (kind, meaning, title) ->
+            KindTile(
+                kind = kind, title = title, meaning = meaning,
+                count = if (loading) null else counts[kind] ?: 0,
+                selected = selected == kind,
+                modifier = Modifier.weight(1f),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    if (option != null) com.safar.app.ui.components.RouteKindMark(option, Modifier.size(13.dp).graphicsLayerAlpha(if (on) 1f else 0.55f))
-                    Text(option?.label ?: "All", style = Safar.type.label, color = ink)
-                }
-                Spacer(Modifier.height(6.dp))
-                Box(Modifier.height(2.dp).fillMaxWidth().clip(CircleShape).background(if (on) c.content else androidx.compose.ui.graphics.Color.Transparent))
+                haptics.tick()
+                onSelect(if (selected == kind) null else kind)
             }
         }
     }
 }
 
-private fun Modifier.graphicsLayerAlpha(a: Float) = this.then(Modifier.graphicsLayer { alpha = a })
+@Composable
+private fun KindTile(
+    kind: com.safar.app.data.model.RouteKind,
+    title: String,
+    meaning: String,
+    count: Int?,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val c = Safar.colors
+    val spec = androidx.compose.animation.core.tween<androidx.compose.ui.graphics.Color>(180)
+    val bg by androidx.compose.animation.animateColorAsState(if (selected) c.primary else c.surfaceMuted, spec, label = "tile-bg")
+    val fg by androidx.compose.animation.animateColorAsState(if (selected) c.onPrimary else c.content, spec, label = "tile-fg")
+    val sub by androidx.compose.animation.animateColorAsState(
+        if (selected) c.onPrimary.copy(alpha = 0.72f) else c.contentSecondary, spec, label = "tile-sub",
+    )
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(com.safar.app.ui.theme.Radii.lg)
+    Column(
+        modifier
+            .clip(shape)
+            .background(bg)
+            .pressable(
+                remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                onClick = onClick, role = androidx.compose.ui.semantics.Role.Tab, pressedScale = 0.97f,
+            )
+            .semantics { this.selected = selected; stateDescription = if (selected) "Showing only $title rides" else "" }
+            .padding(start = 14.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            com.safar.app.ui.components.RouteKindMark(kind, Modifier.size(26.dp), color = fg)
+            Spacer(Modifier.weight(1f))
+            androidx.compose.animation.AnimatedContent(
+                targetState = count,
+                transitionSpec = {
+                    androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(160)) togetherWith
+                        androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(100))
+                },
+                label = "tile-count",
+            ) { n ->
+                Text(
+                    when (n) { null -> " "; 0 -> "None"; 1 -> "1 ride"; else -> "$n rides" },
+                    style = Safar.type.caption.copy(fontFeatureSettings = "tnum"), color = sub,
+                )
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        Text(title, style = Safar.type.bodyStrong, color = fg, maxLines = 1)
+        Text(meaning, style = Safar.type.caption, color = sub, maxLines = 1)
+    }
+}
