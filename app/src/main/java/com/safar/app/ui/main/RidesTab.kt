@@ -185,7 +185,10 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                     rides = state.found,
                     empty = {
                         if (query.isBlank()) EmptyState(Icons.Rounded.DirectionsCar, "No open rides", "Check back soon, or offer a ride of your own.")
-                        else EmptyState(Icons.Rounded.SearchOff, "Nothing to \"$query\" yet", "Try a nearby area, or offer the ride yourself and let riders find you.")
+                        else EmptyState(
+                            Icons.Rounded.SearchOff, "No rides match “${query.trim()}”",
+                            "No one has posted a ride from or to there yet. Try a nearby area, or offer the ride yourself.",
+                        )
                     },
                 ) { ride ->
                     RideCard(ride, { nav.navigate(Routes.ride(ride.id)) }, rating = state.ratings[ride.creatorUid])
