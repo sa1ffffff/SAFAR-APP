@@ -55,7 +55,8 @@ fun Throwable.friendlyMessage(): String = when (this) {
     is FirebaseAuthInvalidCredentialsException -> "That code doesn't look right. Check it and try again."
     is FirebaseAuthRecentLoginRequiredException -> "For your security, sign out and back in, then try again."
     is TransactionAbortedException -> message ?: "Please try again."
-    is com.google.firebase.storage.StorageException -> "Couldn't upload your photo right now. Please try again later."
+    is com.safar.app.data.SafarApi.ApiException -> if (status == 413 || status == 415) message.orEmpty() else "Couldn't reach Safar's servers. Please try again."
+    is java.io.IOException -> "You're offline. Check your connection and try again."
     is DatabaseException -> if (message?.contains("Permission denied", true) == true)
         "You don't have permission to do that." else "Something went wrong. Please try again."
     is IllegalArgumentException, is IllegalStateException -> message ?: "Something went wrong."

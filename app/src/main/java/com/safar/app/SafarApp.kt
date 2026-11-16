@@ -7,7 +7,7 @@ import android.content.Context
 import android.os.Build
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
+import com.safar.app.data.SafarApi
 import com.safar.app.data.AuthRepository
 import com.safar.app.data.ChatRepository
 import com.safar.app.data.NotificationRepository
@@ -30,11 +30,12 @@ class AppContainer(context: Context) {
 
     val preferences = Preferences(context)
     val auth = AuthRepository(FirebaseAuth.getInstance())
-    val users = UserRepository(database, FirebaseStorage.getInstance(), context)
+    private val api = SafarApi(FirebaseAuth.getInstance())
+    val users = UserRepository(database, api, context)
     val rides = RideRepository(database)
-    val notifications = NotificationRepository(database)
+    val notifications = NotificationRepository(database, api)
     val requests = RequestRepository(database, notifications)
-    val chat = ChatRepository(database)
+    val chat = ChatRepository(database, api)
     val reviews = ReviewRepository(database, notifications)
     val reports = ReportRepository(database)
 
