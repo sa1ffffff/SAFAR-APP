@@ -172,7 +172,7 @@ class PostRideViewModel(private val app: AppContainer, private val editId: Strin
         val me = app.session.requireUser()
         form.update { it.copy(saving = true) }
         var savedId = editId.orEmpty()
-        action(onDone = { onDone(savedId) }, onError = { form.update { it.copy(saving = false) } }) {
+        action(onDone = { cheer(big = editId == null); onDone(savedId) }, onError = { form.update { it.copy(saving = false) } }) {
             val base = original ?: Ride()
             val ride = base.copy(
                 creatorUid = me.uid, creatorName = me.name, creatorPhone = me.phone.takeIf { me.hasCallablePhone }.orEmpty(), creatorPhotoUrl = me.photoUrl,
@@ -399,13 +399,13 @@ private fun RepeatPicker(
     onRepeat: (Boolean) -> Unit, onToggleDay: (Int) -> Unit,
 ) {
     val c = Safar.colors
-    val haptic = LocalHapticFeedback.current
+    val haptics = com.safar.app.ui.haptics()
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(Radii.lg)).background(c.surfaceMuted).padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(
             Modifier.toggleable(repeat, remember { MutableInteractionSource() }, indication = null, role = Role.Switch) {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onRepeat(it)
+                haptics.tap(); onRepeat(it)
             },
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -436,7 +436,7 @@ private fun RepeatPicker(
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     (1..7).forEach { day ->
                         DayToggle(DAY_LETTERS[day - 1], DAY_NAMES[day - 1], day in days) {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            haptics.tick()
                             onToggleDay(day)
                         }
                     }

@@ -170,14 +170,14 @@ class RideDetailViewModel(private val app: AppContainer, private val rideId: Str
 
     private fun run(block: suspend () -> Unit, done: String? = null) {
         busy.value = true
-        action(onDone = { busy.value = false; done?.let(::say) }, onError = { busy.value = false }) { block() }
+        action(onDone = { busy.value = false; done?.let { cheer(big = it.startsWith("Ride started")); say(it) } }, onError = { busy.value = false }) { block() }
     }
 
     private val me get() = app.session.requireUser()
 
     fun request(seats: Int) = state.value.ride?.let { r -> run({ app.requests.send(r, me, seats) }, "Request sent. We'll let you know when they reply.") }
     fun cancelRequest() = state.value.myRequest?.let { r -> run({ app.requests.cancel(r) }, "Request cancelled") }
-    fun accept(r: JoinRequest) = run({ app.requests.accept(r, me) })
+    fun accept(r: JoinRequest) = run({ app.requests.accept(r, me) }, "${r.requestorName.substringBefore(' ').ifBlank { "Rider" }} is confirmed")
     fun decline(r: JoinRequest) = run({ app.requests.decline(r, me) })
     fun markComplete(r: JoinRequest) = run({ app.requests.markComplete(r, me) }, "Marked as complete")
     fun setStatus(status: RideStatus) = run({ app.rides.setStatus(rideId, status) })

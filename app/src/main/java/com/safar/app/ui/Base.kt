@@ -27,6 +27,16 @@ abstract class SafarViewModel : ViewModel() {
     private val _messages = Channel<String>(Channel.BUFFERED)
     val messages: Flow<String> = _messages.receiveAsFlow()
 
+    /** Haptic moments the screen should play (see [Haptics]). */
+    enum class Feel { Success, Celebrate, Error }
+    private val _feels = Channel<Feel>(Channel.BUFFERED)
+    val feels: Flow<Feel> = _feels.receiveAsFlow()
+
+    /** Marks an action as done: a small "ta-da", or a bigger one for a milestone. */
+    protected fun cheer(big: Boolean = false) {
+        _feels.trySend(if (big) Feel.Celebrate else Feel.Success)
+    }
+
     protected fun say(message: String) {
         _messages.trySend(message)
     }
@@ -44,6 +54,7 @@ abstract class SafarViewModel : ViewModel() {
             throw e
         } catch (e: Throwable) {
             onError(e)
+            _feels.trySend(Feel.Error)
             say(e.friendlyMessage())
         }
     }
@@ -69,8 +80,18 @@ val LocalSnackbar = staticCompositionLocalOf { SnackbarHostState() }
 @Composable
 fun Messages(vm: SafarViewModel) {
     val snackbar = LocalSnackbar.current
+    val haptics = haptics()
     LaunchedEffect(vm) {
         vm.messages.collect { snackbar.showSnackbar(it) }
+    }
+    LaunchedEffect(vm) {
+        vm.feels.collect {
+            when (it) {
+                SafarViewModel.Feel.Success -> haptics.success()
+                SafarViewModel.Feel.Celebrate -> haptics.celebrate()
+                SafarViewModel.Feel.Error -> haptics.error()
+            }
+        }
     }
 }
 

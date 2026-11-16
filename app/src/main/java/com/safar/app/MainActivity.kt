@@ -1,5 +1,9 @@
 package com.safar.app
 
+import com.safar.app.ui.LocalHaptics
+import com.safar.app.ui.Haptics
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.CompositionLocalProvider
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -40,10 +44,13 @@ class MainActivity : ComponentActivity() {
                 onDispose { }
             }
             SafarTheme(mode) {
-                SafarRoot(
-                    pendingOpen = pendingOpen.value,
-                    onPendingOpenHandled = { pendingOpen.value = null },
-                )
+                val haptics = remember { Haptics(applicationContext) }
+                CompositionLocalProvider(LocalHaptics provides haptics) {
+                    SafarRoot(
+                        pendingOpen = pendingOpen.value,
+                        onPendingOpenHandled = { pendingOpen.value = null },
+                    )
+                }
             }
         }
     }

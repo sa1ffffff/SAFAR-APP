@@ -73,7 +73,7 @@ fun LiquidSelector(
     val reduceMotion = remember {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     }
-    val haptics = LocalHapticFeedback.current
+    val haptics = com.safar.app.ui.haptics()
     val scope = rememberCoroutineScope()
     val position = remember { Animatable(selected.toFloat()) }
     var dragging by remember { mutableStateOf(false) }
@@ -117,7 +117,7 @@ fun LiquidSelector(
                             val nearest = next.roundToInt()
                             if (nearest != lastIndex) {
                                 lastIndex = nearest
-                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                haptics.tick()
                             }
                         },
                         onDragEnd = {
@@ -159,7 +159,7 @@ fun LiquidSelector(
                     Modifier
                         .offset { IntOffset((i * stridePx).roundToInt(), 0) }
                         .size(width = slotDp, height = slotHeight)
-                        .clickable(interaction, indication = null, role = roles) { currentOnSelect(i) },
+                        .clickable(interaction, indication = null, role = roles) { if (i != currentSelected) haptics.tick(); currentOnSelect(i) },
                 ) { content(i, focus, pressed) }
             }
         }
