@@ -179,12 +179,22 @@ class LensStyle private constructor(private val build: @Composable () -> Modifie
             Modifier.clip(shape).background(c.content.copy(alpha = if (c.isDark) 0.12f else 0.07f), shape).border(1.dp, rim, shape)
         }
 
-        /** Raised surface with a soft shadow, for segmented controls on a muted track. */
+        /**
+         * Raised surface for segmented controls on a muted track. In light mode a lighter
+         * surface with a soft shadow; in dark mode, where shadows vanish, the lens is lifted
+         * toward the content colour and gets a light top rim, so it reads as glass on the track.
+         */
         fun raised(radius: Dp) = LensStyle {
             val c = Safar.colors
             val shape = RoundedCornerShape(radius)
-            Modifier.shadow(if (c.isDark) 0.dp else 2.dp, shape, ambientColor = Color.Black.copy(0.08f), spotColor = Color.Black.copy(0.10f))
-                .clip(shape).background(c.surfaceRaised, shape)
+            if (c.isDark) {
+                val lens = lerpColor(c.surfaceMuted, c.content, 0.11f)
+                val rim = Brush.verticalGradient(listOf(c.content.copy(alpha = 0.18f), c.content.copy(alpha = 0.03f)))
+                Modifier.clip(shape).background(lens, shape).border(1.dp, rim, shape)
+            } else {
+                Modifier.shadow(2.dp, shape, ambientColor = Color.Black.copy(0.08f), spotColor = Color.Black.copy(0.10f))
+                    .clip(shape).background(c.surfaceRaised, shape)
+            }
         }
     }
 }
