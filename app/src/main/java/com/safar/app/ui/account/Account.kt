@@ -234,7 +234,7 @@ fun EditProfileScreen(nav: NavHostController) {
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words))
             Field(
                 phone, { vm.phone.value = it.filter { ch -> ch.isDigit() || ch == '+' || ch == ' ' }.take(16) },
-                label = "Mobile number · shown only to confirmed ride partners",
+                label = "Mobile number · riders can call or WhatsApp you from your rides",
                 placeholder = "+92 300 1234567",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             )

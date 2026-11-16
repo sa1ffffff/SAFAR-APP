@@ -11,10 +11,10 @@ FIREBASE_DATABASE_URL = "https://safarbysaif-default-rtdb.asia-southeast1.fireba
 [triggers]
 crons = ["30 22 * * *"]
 
-# Photo storage: bind ONE of these. R2 is preferred; KV works without enabling R2.
-# [[r2_buckets]]
-# binding = "PHOTOS"
-# bucket_name = "safar-photos"
+# Photo storage: R2 (bound below). KV works instead if R2 isn't enabled; bind only one.
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "safar-photos"
 
 # [[kv_namespaces]]
 # binding = "PHOTOS_KV"

@@ -457,7 +457,7 @@ fun ProfileSetupScreen() {
             Rise(revealed, 4) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Outlined.Lock, null, Modifier.size(15.dp), tint = c.contentTertiary)
-                    Text("Shown only to people on a ride you've both confirmed.", style = Safar.type.caption, color = c.contentTertiary)
+                    Text("Riders on your rides can call or WhatsApp you on this number.", style = Safar.type.caption, color = c.contentTertiary)
                 }
             }
         }
