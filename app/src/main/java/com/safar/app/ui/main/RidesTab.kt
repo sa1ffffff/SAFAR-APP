@@ -120,7 +120,11 @@ class RidesViewModel(private val app: AppContainer) : SafarViewModel() {
         }
     }
 
-    private val mine = app.rides.observeRidesBy(uid).catch { emit(emptyList()) }
+    /** Upcoming rides soonest first, then past ones, most recent first. */
+    private val mine = app.rides.observeRidesBy(uid).catch { emit(emptyList()) }.map { list ->
+        val (upcoming, past) = list.partition { !it.isExpired() && it.status != com.safar.app.data.model.RideStatus.CANCELLED }
+        upcoming.sortedBy { it.departureTime } + past.sortedByDescending { it.departureTime }
+    }
 
     private val pending = app.requests.observeIncoming(uid)
         .map { list -> list.filter { it.status == RequestStatus.PENDING }.groupingBy { it.adId }.eachCount() }
