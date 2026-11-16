@@ -169,7 +169,7 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                 Column(Modifier.statusBarsPadding().padding(top = 20.dp)) {
                     Text("Rides", style = Safar.type.display, color = c.content)
                     Spacer(Modifier.height(16.dp))
-                    Segmented(listOf("Find", "Yours", "Booked"), segment, { segment = it })
+                    Segmented(listOf("Find", "My Rides", "Booked"), segment, { segment = it })
                     if (segment == 0) {
                         Spacer(Modifier.height(12.dp))
                         Field(
