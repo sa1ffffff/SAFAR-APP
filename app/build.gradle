@@ -23,8 +23,8 @@ android {
         applicationId "com.safar.app"
         minSdk 24
         targetSdk 35
-        versionCode 3
-        versionName "2.1.0"
+        versionCode 4
+        versionName "2.1.1"
         manifestPlaceholders = [MAPS_API_KEY: localProps.getProperty('MAPS_API_KEY', '')]
         // Safar's Cloudflare Worker (photos, push, cleanup). Not a secret; set in gradle.properties.
         buildConfigField 'String', 'SAFAR_API_URL', "\"${project.findProperty('safarApiUrl') ?: ''}\""
