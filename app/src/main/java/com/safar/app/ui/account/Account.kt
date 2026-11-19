@@ -252,7 +252,7 @@ private val faqs = listOf(
     "How much should I pay?" to "Drivers can suggest a price per seat, or leave it to split fuel. Agree on the amount in chat before the ride and pay in person after pickup.",
     "Can I cancel a request?" to "Yes. Open the ride and tap Cancel request while it's pending. If the driver already accepted, message them so they can free your seat.",
     "When can I leave a review?" to "After the departure time, both of you mark the ride complete. Then each of you can rate the other once.",
-    "Why can't I see someone's phone number?" to "Phone numbers are only shown once a driver accepts your request, to protect everyone's privacy.",
+    "How do I contact a driver?" to "Open their ride and tap the phone, WhatsApp or message button next to their name.",
     "Someone made me feel unsafe" to "Leave the situation first. Then report them from their profile or the ride's menu. In an emergency, call 15.",
     "How do I delete my account?" to "Go to Account → Settings → Delete account. Your profile and photo are removed permanently.",
 )
@@ -281,10 +281,8 @@ fun HelpScreen(nav: NavHostController) {
             }
             Spacer(Modifier.height(16.dp))
             ListRow(
-                "Email support", icon = Icons.Rounded.Mail, subtitle = "We usually reply within a day",
-                onClick = {
-                    context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).putExtra(Intent.EXTRA_SUBJECT, "Safar support"))
-                },
+                "Email support", icon = Icons.Rounded.Mail, subtitle = com.safar.app.ui.terms.SUPPORT_EMAIL,
+                onClick = { com.safar.app.ui.main.emailSupport(context) },
             )
         }
     }

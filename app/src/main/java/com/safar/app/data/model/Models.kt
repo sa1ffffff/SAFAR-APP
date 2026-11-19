@@ -36,6 +36,8 @@ data class User(
     val joinedAt: Long = 0L,
     val totalRides: Int = 0,
     val authProvider: String = "",
+    /** Version of the Terms of Use this account agreed to; 0 if never. Kept out of [toMap]. */
+    val termsVersion: Int = 0,
 ) {
     val firstName: String get() = name.trim().substringBefore(' ').ifBlank { "there" }
 
@@ -67,6 +69,7 @@ data class User(
                 joinedAt = s.long("joinedAt"),
                 totalRides = s.int("totalRides"),
                 authProvider = s.str("authProvider"),
+                termsVersion = (s.child("termsAccepted").child("version").value as? Number)?.toInt() ?: 0,
             )
         }
     }

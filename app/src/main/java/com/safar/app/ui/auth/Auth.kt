@@ -362,7 +362,7 @@ class ProfileSetupViewModel(private val app: AppContainer) : SafarViewModel() {
             app.users.save(user)
             (photo.value as? Uri)?.let { uri ->
                 runCatching { app.users.uploadAvatar(uid, uri) }.onFailure {
-                    app.messages.tryEmit("You're in! Your photo couldn't upload, so add it later from Edit profile.")
+                    app.messages.tryEmit("Your photo couldn't upload. Add it later from Edit profile.")
                 }
             }
         }

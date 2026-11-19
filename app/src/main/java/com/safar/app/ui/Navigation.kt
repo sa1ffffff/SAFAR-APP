@@ -80,6 +80,7 @@ object Routes {
     const val HELP = "help"
     const val ABOUT = "about"
     const val SAFETY = "safety"
+    const val TERMS = "terms"
 
     fun ride(id: String) = "ride/$id"
     fun post(editId: String? = null) = if (editId == null) "post" else "post?edit=$editId"
@@ -114,6 +115,7 @@ fun SafarRoot(pendingOpen: String?, onPendingOpenHandled: () -> Unit) {
                             Stage.Loading -> Splash()
                             Stage.Welcome -> WelcomeScreen()
                             Stage.SignIn -> SignInScreen()
+                            Stage.Terms -> com.safar.app.ui.terms.TermsGateScreen()
                             Stage.Profile -> ProfileSetupScreen()
                             Stage.App -> AppGraph(pendingOpen, onPendingOpenHandled)
                         }
@@ -135,12 +137,13 @@ fun SafarRoot(pendingOpen: String?, onPendingOpenHandled: () -> Unit) {
     }
 }
 
-private enum class Stage { Loading, Welcome, SignIn, Profile, App }
+private enum class Stage { Loading, Welcome, SignIn, Terms, Profile, App }
 
 private fun Gate.stage() = when (this) {
     Gate.Loading -> Stage.Loading
     Gate.Welcome -> Stage.Welcome
     Gate.SignedOut -> Stage.SignIn
+    is Gate.NeedsTerms -> Stage.Terms
     is Gate.NeedsProfile -> Stage.Profile
     is Gate.Ready -> Stage.App
 }
@@ -221,6 +224,7 @@ private fun AppGraph(pendingOpen: String?, onPendingOpenHandled: () -> Unit) {
         composable(Routes.EDIT_PROFILE) { EditProfileScreen(nav) }
         composable(Routes.HELP) { HelpScreen(nav) }
         composable(Routes.ABOUT) { AboutScreen(nav) }
+        composable(Routes.TERMS) { com.safar.app.ui.terms.TermsScreen(onBack = { nav.back() }) }
         composable(Routes.SAFETY) { SafetyScreen(onDone = { nav.popBackStack() }) }
     }
 }
