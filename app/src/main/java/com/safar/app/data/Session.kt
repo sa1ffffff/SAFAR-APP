@@ -21,6 +21,7 @@ sealed interface Gate {
     data object Loading : Gate
     data object Welcome : Gate
     data object SignedOut : Gate
+    data class NeedsTerms(val uid: String) : Gate
     data class NeedsProfile(val uid: String) : Gate
     data class Ready(val user: User) : Gate
 }
@@ -53,6 +54,8 @@ class Session(
             !onboarded -> Gate.Welcome
             p is ProfileState.Loading -> Gate.Loading
             p is ProfileState.SignedOut -> Gate.SignedOut
+            // Everyone agrees to the current terms first, including accounts made before they existed.
+            p is ProfileState.Loaded && (p.user?.termsVersion ?: 0) < com.safar.app.ui.terms.TERMS_VERSION -> Gate.NeedsTerms(p.uid)
             // Sign-in is Google-only, so the phone number riders call is collected right after.
             p is ProfileState.Loaded && (p.user == null || p.user.name.isBlank() || !p.user.hasCallablePhone) -> Gate.NeedsProfile(p.uid)
             p is ProfileState.Loaded -> Gate.Ready(p.user!!)

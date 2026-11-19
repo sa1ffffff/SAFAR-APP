@@ -105,6 +105,13 @@ class UserRepository(
         ref(user.uid).updateChildren(user.toMap()).await()
     }
 
+    /** Records that this account agreed to [version] of the Terms of Use, and when. */
+    suspend fun acceptTerms(uid: String, version: Int) {
+        ref(uid).child("termsAccepted").setValue(
+            mapOf("version" to version, "acceptedAt" to com.google.firebase.database.ServerValue.TIMESTAMP),
+        ).await()
+    }
+
     fun observeRating(uid: String): Flow<RatingSummary> =
         db.getReference(Nodes.RATINGS).child(uid).snapshots().map {
             RatingSummary(
@@ -329,7 +336,9 @@ class RequestRepository(
      * so two drivers' taps or two riders can't overbook.
      */
     suspend fun accept(request: JoinRequest, me: User) {
+        var departure = 0L
         db.getReference(Nodes.ADS).child(request.adId).transact { ride ->
+            departure = (ride.child("departureTime").value as? Number)?.toLong() ?: 0L
             if (ride.value == null) throw TransactionAbortedException("This ride no longer exists.")
             val left = (ride.child("availableSeats").value as? Number)?.toInt() ?: 0
             if (left < request.seats) throw TransactionAbortedException("Only ${seatsLabel(left)} left on this ride.")
@@ -339,8 +348,16 @@ class RequestRepository(
         requests.child(request.id).child("status").setValue(RequestStatus.ACCEPTED.name).await()
         notifications.send(
             to = request.requestorUid, from = me, type = NotificationType.REQUEST_ACCEPTED,
-            title = "You're in!",
-            message = "${me.firstName} accepted your request for ${shortRouteLabel(request.routeLabel).ifBlank { "the ride" }}",
+            title = "Seat confirmed",
+            message = buildString {
+                append(shortRouteLabel(request.routeLabel).ifBlank { "Your ride" })
+                if (departure > 0) {
+                    val day = com.safar.app.ui.dayLabel(departure)
+                    append(if (day == "Today" || day == "Tomorrow") ", ${day.lowercase()}" else ", $day")
+                    append(" at ${com.safar.app.ui.timeLabel(departure)}")
+                }
+                append(". ${me.firstName} accepted your request.")
+            },
             adId = request.adId, requestId = request.id,
         )
     }

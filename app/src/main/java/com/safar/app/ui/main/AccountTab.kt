@@ -1,5 +1,10 @@
 package com.safar.app.ui.main
 
+import com.safar.app.ui.terms.SUPPORT_EMAIL
+import com.safar.app.ui.components.DetailSheet
+import androidx.compose.material.icons.rounded.LocalCafe
+import androidx.compose.material.icons.rounded.Gavel
+import androidx.compose.material.icons.rounded.MailOutline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -59,6 +64,7 @@ fun AccountTab(nav: NavHostController, onOpenRides: () -> Unit) {
     val rating by app.session.myRating.collectAsStateWithLifecycle()
     val unread by app.session.unreadNotifications.collectAsStateWithLifecycle()
     var confirmSignOut by remember { mutableStateOf(false) }
+    var sheet by remember { mutableStateOf<AccountSheet?>(null) }
     val user = me ?: return
 
     Column(
@@ -97,9 +103,38 @@ fun AccountTab(nav: NavHostController, onOpenRides: () -> Unit) {
         ListRow("Safety", { nav.navigate(Routes.SAFETY) }, icon = Icons.Rounded.Shield)
         ListRow("Settings", { nav.navigate(Routes.SETTINGS) }, icon = Icons.Rounded.Settings)
         ListRow("Help", { nav.navigate(Routes.HELP) }, icon = Icons.AutoMirrored.Rounded.HelpOutline)
+        ListRow("Contact support", { sheet = AccountSheet.Support }, icon = Icons.Rounded.MailOutline, subtitle = SUPPORT_EMAIL)
+        ListRow("Terms of use", { nav.navigate(Routes.TERMS) }, icon = Icons.Rounded.Gavel)
         ListRow("About Safar", { nav.navigate(Routes.ABOUT) }, icon = Icons.Rounded.Info)
         Divider(Modifier.padding(vertical = 8.dp, horizontal = 20.dp))
+        ListRow(
+            "Buy the developer a coffee", { sheet = AccountSheet.Coffee },
+            icon = Icons.Rounded.LocalCafe, subtitle = "Safar is free. Say thanks on NayaPay.",
+        )
+        Divider(Modifier.padding(vertical = 8.dp, horizontal = 20.dp))
         ListRow("Sign out", { confirmSignOut = true }, icon = Icons.AutoMirrored.Rounded.Logout, tint = c.negative)
+    }
+
+    val context = LocalContext.current
+    when (sheet) {
+        AccountSheet.Coffee -> DetailSheet(
+            title = "Buy the developer a coffee",
+            body = "Safar is built and run by one person, and it's free. If it saved you a trip's worth of fuel, a coffee keeps it going.",
+            label = "NayaPay",
+            value = NAYAPAY,
+            note = "Saifullah Waseem",
+            onDismiss = { sheet = null },
+        )
+        AccountSheet.Support -> DetailSheet(
+            title = "Contact support",
+            body = "Questions, a problem with a ride, or an idea for Safar. Write to us and we'll reply within a day.",
+            label = "Email",
+            value = SUPPORT_EMAIL,
+            action = "Write an email",
+            onAction = { sheet = null; emailSupport(context) },
+            onDismiss = { sheet = null },
+        )
+        null -> Unit
     }
 
     if (confirmSignOut) {
@@ -112,6 +147,18 @@ fun AccountTab(nav: NavHostController, onOpenRides: () -> Unit) {
             containerColor = c.surfaceRaised,
         )
     }
+}
+
+private enum class AccountSheet { Coffee, Support }
+
+private const val NAYAPAY = "0312-3639722"
+
+/** Opens the user's mail app addressed to support, falling back quietly if none is installed. */
+fun emailSupport(context: android.content.Context) {
+    val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO, android.net.Uri.parse("mailto:$SUPPORT_EMAIL"))
+        .putExtra(android.content.Intent.EXTRA_SUBJECT, "Safar support")
+    runCatching { context.startActivity(intent) }
+        .onFailure { android.widget.Toast.makeText(context, "No email app found. Write to $SUPPORT_EMAIL", android.widget.Toast.LENGTH_LONG).show() }
 }
 
 @Composable

@@ -1,5 +1,10 @@
 package com.safar.app.ui.ride
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DoneAll
+import androidx.compose.material.icons.rounded.Schedule
 import com.safar.app.ui.components.RouteKindMark
 import android.content.Intent
 import android.content.Context
@@ -353,7 +358,7 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
     }
 
     // A rider's own status is the most important thing on this page, so it leads.
-    if (!state.isOwner) state.myRequest?.let { RequestStatusCard(it) }
+    if (!state.isOwner) state.myRequest?.let { RequestStatusCard(it, ride) }
 
     Card(Modifier.fillMaxWidth()) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -428,22 +433,35 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
     }
 }
 
+/**
+ * The rider's standing on this ride, as one quiet line: a status mark, what's true, and the
+ * one detail that matters next. Same card as the route below it, so the page reads as a
+ * single stack; colour lives only in the small mark.
+ */
 @Composable
-private fun RequestStatusCard(r: JoinRequest) {
+private fun RequestStatusCard(r: JoinRequest, ride: Ride) {
     val c = Safar.colors
-    val (title, body, bg, fg) = when (r.status) {
-        RequestStatus.PENDING -> Quad("Request sent", "Waiting for the driver to respond.", c.warningMuted, c.warning)
-        RequestStatus.ACCEPTED -> if (r.isCompleted) Quad("Ride completed", "Thanks for riding together.", c.surfaceMuted, c.content)
-        else Quad("You're confirmed", "${seatsLabel(r.seats)} reserved. Message the driver to sort out pickup.", c.positiveMuted, c.positive)
-        RequestStatus.REJECTED -> Quad("Not this time", "The driver couldn't take this request. Try another ride.", c.negativeMuted, c.negative)
-        RequestStatus.CANCELLED -> Quad("Cancelled", "You cancelled this request.", c.surfaceMuted, c.contentSecondary)
+    val driver = ride.creatorName.substringBefore(' ').ifBlank { "The driver" }
+    val seats = seatsLabel(r.seats).replaceFirstChar { it.uppercase() }
+    val pickup = "pickup ${dayLabel(ride.departureTime).let { if (it == "Today" || it == "Tomorrow") it.lowercase() else it }} at ${timeLabel(ride.departureTime)}"
+    data class S(val icon: ImageVector, val tint: Color, val wash: Color, val title: String, val detail: String)
+    val s = when (r.status) {
+        RequestStatus.PENDING -> S(Icons.Rounded.Schedule, c.warning, c.warningMuted, "Request sent", "Waiting for $driver to respond")
+        RequestStatus.ACCEPTED -> if (r.isCompleted) S(Icons.Rounded.DoneAll, c.content, c.surfaceMuted, "Ride completed", "Thanks for riding together")
+        else S(Icons.Rounded.Check, c.positive, c.positiveMuted, "Seat confirmed", "$seats · $pickup")
+        RequestStatus.REJECTED -> S(Icons.Rounded.Close, c.negative, c.negativeMuted, "Request declined", "$driver couldn't take this one. Try another ride.")
+        RequestStatus.CANCELLED -> S(Icons.Rounded.Close, c.contentSecondary, c.surfaceMuted, "Request cancelled", "You cancelled this request")
     }
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(Radii.lg)).background(bg).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(title, style = Safar.type.bodyStrong, color = fg)
-        Text(body, style = Safar.type.label, color = c.content)
+    Card(Modifier.fillMaxWidth(), padding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Box(Modifier.size(36.dp).clip(CircleShape).background(s.wash), contentAlignment = Alignment.Center) {
+                Icon(s.icon, null, Modifier.size(18.dp), tint = s.tint)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(s.title, style = Safar.type.bodyStrong, color = c.content)
+                Text(s.detail, style = Safar.type.label, color = c.contentSecondary)
+            }
+        }
     }
 }
 
