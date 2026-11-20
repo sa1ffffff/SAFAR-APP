@@ -1,5 +1,6 @@
 package com.safar.app.ui.wanted
 
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -219,88 +220,120 @@ fun WantRideScreen(nav: NavHostController, entry: NavBackStackEntry) {
     LaunchedEffect(pick) { pick?.let { vm.applyPick(it); entry.savedStateHandle[PICK_RESULT] = null } }
     LaunchedEffect(f.from, f.to) { if (f.from != null || f.to != null) vm.resolveCities(context) }
 
-    val zone = if (f.kind == RouteKind.CITY_TO_CITY) 8000.0 else 1000.0
+    val city = f.kind == RouteKind.CITY_TO_CITY
     val (start, end) = f.window
+    val ready = f.from != null && f.to != null
 
-    Box(Modifier.fillMaxSize().background(c.background)) {
-        WantedMap(
-            Modifier.fillMaxWidth().height(340.dp),
-            pickup = f.from?.let { LatLng(it.lat, it.lng) }, zoneMeters = zone,
-            padding = PaddingValues(top = 60.dp, bottom = 40.dp),
-        )
-        GlassIconButton(Icons.AutoMirrored.Rounded.ArrowBack, "Back", { nav.back() }, Modifier.statusBarsPadding().padding(start = 16.dp, top = 8.dp))
-
+    Column(Modifier.fillMaxSize().background(c.background).statusBarsPadding()) {
+        Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.material3.IconButton({ nav.back() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = c.content) }
+        }
         Column(
-            Modifier.fillMaxSize().padding(top = 300.dp)
-                .clip(RoundedCornerShape(topStart = Radii.xl, topEnd = Radii.xl)).background(c.background)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp).padding(top = 22.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(22.dp),
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(28.dp),
         ) {
-            // Pickup leads: it weighs most in matching, so it's the biggest thing here.
-            PlaceRow("Pickup", f.from?.name, "Where should they pick you up?", big = true) { nav.navigate(Routes.pick("from")) }
-            PlaceRow("Going to", f.to?.name, "Choose drop-off", big = false) { nav.navigate(Routes.pick("to")) }
-            if (f.from != null) Text(
-                if (zone > 1000) "Matching rides that pass within 8 km" else "Matching rides that pass within 1 km",
-                style = Safar.type.caption, color = c.contentTertiary,
-            )
-            Divider()
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Request a ride", style = Safar.type.display, color = c.content)
+                Text("Tell us where you're going. We'll alert you the moment a ride fits.", style = Safar.type.body, color = c.contentSecondary)
+            }
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                val today = dayLabel(f.time) == "Today"
-                val tomorrow = dayLabel(f.time) == "Tomorrow"
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ChoiceChip("Today", today, { vm.update { it.copy(time = withDay(it.time, 0)) } })
-                    ChoiceChip("Tomorrow", tomorrow, { vm.update { it.copy(time = withDay(it.time, 1)) } })
-                    ChoiceChip(if (!today && !tomorrow) dayLabel(f.time) else "Date", !today && !tomorrow, { pickDate = true })
-                    Spacer(Modifier.weight(1f))
-                    if (f.flex != 0) Text(
-                        timeLabel(f.time), style = Safar.type.title.copy(fontFeatureSettings = "tnum"), color = c.content,
-                        modifier = Modifier.clip(RoundedCornerShape(Radii.sm)).clickable { pickTime = true }.padding(4.dp),
+            // From and To as one stacked card, like every trip planner: short, scannable, never cut mid-word.
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                RouteCard(
+                    from = f.from?.name, to = f.to?.name,
+                    onFrom = { nav.navigate(Routes.pick("from")) }, onTo = { nav.navigate(Routes.pick("to")) },
+                    onSwap = { vm.update { it.copy(from = it.to, to = it.from) } },
+                )
+                if (f.from != null) {
+                    WantedMap(
+                        Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(Radii.lg)),
+                        pickup = LatLng(f.from!!.lat, f.from!!.lng), zoneMeters = if (city) 8000.0 else 1000.0,
+                        padding = PaddingValues(8.dp),
+                    )
+                    Text(
+                        "Rides that pass within ${if (city) "8 km" else "1 km"} of your pickup",
+                        style = Safar.type.caption, color = c.contentSecondary,
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    WantedRide.FLEX_OPTIONS.forEach { m ->
-                        ChoiceChip(
-                            when (m) { 0 -> "Any time"; 60 -> "±1 hr"; else -> "±$m min" },
-                            f.flex == m, { vm.update { it.copy(flex = m) } },
-                        )
-                    }
-                }
-                TimeRibbon(start, end, preferred = if (f.flex == 0) null else f.time)
             }
-            Divider()
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Seats", style = Safar.type.bodyStrong, color = c.content, modifier = Modifier.weight(1f))
-                Stepper(f.seats, { n -> vm.update { it.copy(seats = n.coerceIn(1, 4)) } }, 1..4)
-            }
-            Row(
-                Modifier.toggleable(f.visible, remember { MutableInteractionSource() }, indication = null, role = Role.Switch) { on ->
-                    vm.update { it.copy(visible = on) }
-                },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Drivers can offer me a seat", style = Safar.type.bodyStrong, color = c.content)
-                    Text("They see your name and photo, never your number.", style = Safar.type.caption, color = c.contentSecondary)
+            // When: one clear sentence sums it up, so nobody has to decode the controls.
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionLabel("When")
+                val today = dayLabel(f.time) == "Today"
+                val tomorrow = dayLabel(f.time) == "Tomorrow"
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    com.safar.app.ui.components.Segmented(
+                        listOf("Today", "Tomorrow", if (!today && !tomorrow) dayLabel(f.time) else "Later"),
+                        selected = when { today -> 0; tomorrow -> 1; else -> 2 },
+                        onSelect = { i ->
+                            when (i) {
+                                0 -> vm.update { it.copy(time = withDay(it.time, 0)) }
+                                1 -> vm.update { it.copy(time = withDay(it.time, 1)) }
+                                else -> pickDate = true
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                    TimeChip(timeLabel(f.time), enabled = f.flex != 0) { pickTime = true }
                 }
-                Switch(
-                    checked = f.visible, onCheckedChange = null,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = c.onPrimary, checkedTrackColor = c.primary, checkedBorderColor = c.primary,
-                        uncheckedThumbColor = c.contentTertiary, uncheckedTrackColor = c.surface, uncheckedBorderColor = c.border,
-                    ),
+                Text("How flexible are you?", style = Safar.type.label, color = c.contentSecondary, modifier = Modifier.padding(top = 4.dp))
+                com.safar.app.ui.components.Segmented(
+                    listOf("15 min", "30 min", "1 hour", "Any time"),
+                    selected = WantedRide.FLEX_OPTIONS.indexOf(f.flex).coerceAtLeast(0),
+                    onSelect = { i -> vm.update { it.copy(flex = WantedRide.FLEX_OPTIONS[i]) } },
+                    modifier = Modifier.fillMaxWidth(),
                 )
+                Column(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(Radii.lg)).background(c.surfaceMuted).padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        if (f.flex == 0) "Any ride ${dayPhrase(f.time)}"
+                        else "Rides leaving ${timeLabel(start)} – ${timeLabel(end)}, ${dayPhrase(f.time).removePrefix("on ")}",
+                        style = Safar.type.bodyStrong, color = c.content,
+                    )
+                    TimeRibbon(start, end, preferred = if (f.flex == 0) null else f.time, labels = false)
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                SectionLabel("Seats and privacy")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Seats needed", style = Safar.type.bodyStrong, color = c.content)
+                        Text("Up to 4", style = Safar.type.caption, color = c.contentSecondary)
+                    }
+                    Stepper(f.seats, { n -> vm.update { it.copy(seats = n.coerceIn(1, 4)) } }, 1..4)
+                }
+                Row(
+                    Modifier.toggleable(f.visible, remember { MutableInteractionSource() }, indication = null, role = Role.Switch) { on ->
+                        vm.update { it.copy(visible = on) }
+                    },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                        Text("Let drivers offer me a seat", style = Safar.type.bodyStrong, color = c.content)
+                        Text("Drivers on your route see your name and photo. Never your number.", style = Safar.type.caption, color = c.contentSecondary)
+                    }
+                    Switch(
+                        checked = f.visible, onCheckedChange = null,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = c.onPrimary, checkedTrackColor = c.primary, checkedBorderColor = c.primary,
+                            uncheckedThumbColor = c.contentTertiary, uncheckedTrackColor = c.surface, uncheckedBorderColor = c.border,
+                        ),
+                    )
+                }
             }
         }
 
-        SafarButton(
-            "Find my ride",
-            onClick = { vm.submit { id -> nav.navigate(Routes.want(id)) { popUpTo(Routes.WANT_NEW) { inclusive = true } } } },
-            loading = f.saving,
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp),
-        )
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp)) {
+            SafarButton(
+                if (ready) "Notify me" else "Choose pickup and drop-off",
+                onClick = { vm.submit { id -> nav.navigate(Routes.want(id)) { popUpTo(Routes.WANT_NEW) { inclusive = true } } } },
+                enabled = ready, loading = f.saving, modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 
     if (pickDate) {
@@ -345,22 +378,72 @@ fun WantRideScreen(nav: NavHostController, entry: NavBackStackEntry) {
 }
 
 @Composable
-private fun PlaceRow(label: String, value: String?, placeholder: String, big: Boolean, onClick: () -> Unit) {
+private fun SectionLabel(text: String) {
+    Text(text.uppercase(), style = Safar.type.overline, color = Safar.colors.contentSecondary)
+}
+
+@Composable
+private fun TimeChip(text: String, enabled: Boolean, onClick: () -> Unit) {
+    val c = Safar.colors
+    Box(
+        Modifier.height(46.dp).clip(RoundedCornerShape(Radii.md))
+            .border(1.dp, if (enabled) c.border else c.border.copy(alpha = 0.4f), RoundedCornerShape(Radii.md))
+            .clickable(enabled = enabled, onClick = onClick).padding(horizontal = 16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = Safar.type.bodyStrong.copy(fontFeatureSettings = "tnum"), color = if (enabled) c.content else c.contentTertiary, maxLines = 1)
+    }
+}
+
+/**
+ * From and To stacked in one card: a pickup ring and a destination square joined by a line,
+ * each row a single tap target, with a swap button where the two meet.
+ */
+@Composable
+private fun RouteCard(from: String?, to: String?, onFrom: () -> Unit, onTo: () -> Unit, onSwap: () -> Unit) {
+    val c = Safar.colors
+    val shape = RoundedCornerShape(Radii.lg)
+    Box(Modifier.fillMaxWidth().clip(shape).background(c.surface).border(1.dp, c.border, shape)) {
+        Column {
+            RouteRow("From", from, "Pickup point", first = true, onClick = onFrom)
+            Box(Modifier.padding(start = 52.dp, end = 64.dp).fillMaxWidth().height(1.dp).background(c.border))
+            RouteRow("To", to, "Where to?", first = false, onClick = onTo)
+        }
+        if (from != null && to != null) com.safar.app.ui.components.IconCircle(
+            Icons.Rounded.SwapVert, "Swap pickup and drop-off", onSwap,
+            size = 38.dp, background = c.surfaceMuted,
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 14.dp),
+        )
+    }
+}
+
+@Composable
+private fun RouteRow(label: String, value: String?, placeholder: String, first: Boolean, onClick: () -> Unit) {
     val c = Safar.colors
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(Radii.sm)).clickable(onClick = onClick).padding(vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min).clickable(onClick = onClick)
+            .padding(start = 18.dp, end = 64.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(label.uppercase(), style = Safar.type.overline, color = c.contentSecondary)
+        // Rail: the line runs from the ring down to the square, through both rows.
+        Column(Modifier.width(16.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+            if (first) Spacer(Modifier.weight(1f)) else Box(Modifier.width(1.5.dp).weight(1f).background(c.border))
+            if (first) Box(Modifier.size(14.dp).clip(CircleShape).background(c.surface).border(4.dp, c.content, CircleShape))
+            else Box(Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).background(c.content))
+            if (first) Box(Modifier.width(1.5.dp).weight(1f).background(c.border)) else Spacer(Modifier.weight(1f))
+        }
+        Column(Modifier.weight(1f).padding(vertical = 14.dp)) {
+            Text(label, style = Safar.type.caption, color = c.contentSecondary)
             Text(
                 value?.let { shortPlace(it) } ?: placeholder,
-                style = if (big) Safar.type.display else Safar.type.title,
-                color = if (value == null) c.contentTertiary else c.content,
+                style = Safar.type.bodyStrong, color = if (value == null) c.contentTertiary else c.content,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+            if (value != null && value.contains(',')) Text(
+                value.substringAfter(',').trim(), style = Safar.type.caption, color = c.contentTertiary,
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
-        Text("Change".takeIf { value != null } ?: "Choose", style = Safar.type.label, color = c.content)
     }
 }
 

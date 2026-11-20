@@ -1,5 +1,6 @@
 package com.safar.app.ui.main
 
+import androidx.compose.material.icons.rounded.EmojiPeople
 import com.safar.app.ui.components.SafarButton
 import com.safar.app.ui.theme.Radii
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -236,14 +237,6 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                 ) { ride ->
                     RideCard(ride, { nav.navigate(Routes.ride(ride.id)) }, rating = state.ratings[ride.creatorUid])
                 }
-                if (!state.found.isNullOrEmpty()) item {
-                    Text(
-                        "Not what you need? Get notified ›", style = Safar.type.label, color = c.content,
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(Radii.sm))
-                            .clickable { nav.navigate(Routes.WANT_NEW) }.padding(vertical = 14.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    )
-                }
                 }
                 1 -> {
                     item(key = "looking") {
@@ -283,18 +276,31 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
             }
         }
 
-        Glass(
-            Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(end = 20.dp, bottom = TabBarSpace + 4.dp),
-            shape = CircleShape,
+        // The two things people come here to do, side by side: ask for a seat, or offer one.
+        Row(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, bottom = TabBarSpace + 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
-                Modifier.pressable(remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = { nav.navigate(Routes.post()) })
-                    .padding(start = 16.dp, end = 20.dp, top = 14.dp, bottom = 14.dp),
+                Modifier.weight(1f).height(52.dp).clip(CircleShape).background(c.primary)
+                    .pressable(remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = { nav.navigate(Routes.WANT_NEW) }),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             ) {
-                Icon(Icons.Rounded.Add, null, Modifier.size(20.dp), tint = c.content)
-                Text("Offer a ride", style = Safar.type.bodyStrong, color = c.content)
+                Icon(Icons.Rounded.EmojiPeople, null, Modifier.size(20.dp), tint = c.onPrimary)
+                Text("Request a ride", style = Safar.type.bodyStrong, color = c.onPrimary)
+            }
+            Glass(Modifier.weight(1f), shape = CircleShape) {
+                Row(
+                    Modifier.fillMaxWidth().height(52.dp)
+                        .pressable(remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = { nav.navigate(Routes.post()) }),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                ) {
+                    Icon(Icons.Rounded.Add, null, Modifier.size(20.dp), tint = c.content)
+                    Text("Offer a ride", style = Safar.type.bodyStrong, color = c.content)
+                }
             }
         }
     }
