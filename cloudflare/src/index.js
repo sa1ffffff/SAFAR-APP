@@ -385,6 +385,8 @@ function rideEntry(rideId, ride, m) {
     departureTime: ride.departureTime, price: ride.pricePerSeat || 0,
     driverUid: ride.creatorUid, driverName: ride.creatorName || "", driverPhoto: ride.creatorPhotoUrl || null,
     origin: ride.origin || "", destination: ride.destination || "",
+    originLat: ride.originLat ?? null, originLng: ride.originLng ?? null,
+    destinationLat: ride.destinationLat ?? null, destinationLng: ride.destinationLng ?? null,
   };
 }
 

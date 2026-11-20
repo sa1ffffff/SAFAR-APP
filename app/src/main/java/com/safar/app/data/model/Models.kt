@@ -400,7 +400,8 @@ data class Review(
     }
 }
 
-enum class NotificationType { NEW_REQUEST, REQUEST_ACCEPTED, REQUEST_DECLINED, RIDE_STARTED, RIDE_COMPLETED, NEW_REVIEW, NEW_MESSAGE;
+enum class NotificationType { NEW_REQUEST, REQUEST_ACCEPTED, REQUEST_DECLINED, RIDE_STARTED, RIDE_COMPLETED, NEW_REVIEW, NEW_MESSAGE,
+    RIDE_FOUND, SEAT_OFFERED, OFFER_TAKEN;
     companion object {
         fun parse(raw: String?): NotificationType = entries.firstOrNull { it.name == raw } ?: NEW_MESSAGE
     }

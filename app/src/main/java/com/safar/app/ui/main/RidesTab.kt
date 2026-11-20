@@ -1,5 +1,8 @@
 package com.safar.app.ui.main
 
+import com.safar.app.ui.components.SafarButton
+import com.safar.app.ui.theme.Radii
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.selected
@@ -106,6 +109,10 @@ data class RidesState(
     val pendingByRide: Map<String, Int> = emptyMap(),
     val bookings: List<Booking>? = null,
     val ratings: Map<String, RatingSummary> = emptyMap(),
+    /** The rider's active wanted rides, with their matches and pending offers. */
+    val wanted: List<com.safar.app.data.model.WantedRide> = emptyList(),
+    val wantedMatches: Map<String, List<com.safar.app.data.model.WantedMatch>> = emptyMap(),
+    val offers: List<com.safar.app.data.model.SeatOffer> = emptyList(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -154,9 +161,18 @@ class RidesViewModel(private val app: AppContainer) : SafarViewModel() {
     private val ratings = open.map { list -> list.map { it.creatorUid }.toSet() }.distinctUntilChanged()
         .flatMapLatest { app.users.observeRatings(it).catch { emit(emptyMap()) } }
 
-    val state: StateFlow<RidesState> = combine(found, mine, pending, bookings, ratings) { f, m, p, b, r ->
+    private val wanted = combine(
+        app.wanted.observeMine(uid).catch { emit(emptyList()) },
+        app.wanted.observeAllMatches(uid).catch { emit(emptyMap()) },
+        app.wanted.observeOffers(uid).catch { emit(emptyList()) },
+    ) { w, m, o -> Triple(w.filter { it.isActive }, m, o.filter { it.status == com.safar.app.data.model.OfferStatus.PENDING }) }
+
+    private val core = combine(found, mine, pending, bookings, ratings) { f, m, p, b, r ->
         RidesState(found = f.first, kindCounts = f.second, mine = m, pendingByRide = p, bookings = b, ratings = r)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RidesState())
+    }
+
+    val state: StateFlow<RidesState> = combine(core, wanted) { s, (w, m, o) -> s.copy(wanted = w, wantedMatches = m, offers = o) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RidesState())
 }
 
 @Composable
@@ -204,25 +220,39 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                 }
             }
             when (segment) {
-                0 -> rideList(
+                0 -> { rideList(
                     rides = state.found,
                     empty = {
                         val kind = vm.kindFilter.collectAsStateWithLifecycle().value
-                        if (query.isBlank() && kind != null) EmptyState(
-                            Icons.Rounded.DirectionsCar,
-                            if (kind == com.safar.app.data.model.RouteKind.LOCAL) "No local rides right now" else "No city-to-city rides right now",
-                            "Check back soon, or offer one yourself.",
-                        )
-                        else if (query.isBlank()) EmptyState(Icons.Rounded.DirectionsCar, "No open rides", "Check back soon, or offer a ride of your own.")
-                        else EmptyState(
-                            Icons.Rounded.SearchOff, "No rides match “${query.trim()}”",
-                            "No one has posted a ride from or to there yet. Try a nearby area, or offer the ride yourself.",
-                        )
+                        NoRideYet(
+                            when {
+                                query.isNotBlank() -> "No ride to ${query.trim()} yet."
+                                kind == com.safar.app.data.model.RouteKind.LOCAL -> "No local ride yet."
+                                kind != null -> "No city-to-city ride yet."
+                                else -> "No ride yet."
+                            },
+                        ) { nav.navigate(Routes.WANT_NEW) }
                     },
                 ) { ride ->
                     RideCard(ride, { nav.navigate(Routes.ride(ride.id)) }, rating = state.ratings[ride.creatorUid])
                 }
-                1 -> rideList(
+                if (!state.found.isNullOrEmpty()) item {
+                    Text(
+                        "Not what you need? Get notified ›", style = Safar.type.label, color = c.content,
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(Radii.sm))
+                            .clickable { nav.navigate(Routes.WANT_NEW) }.padding(vertical = 14.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+                }
+                }
+                1 -> {
+                    item(key = "looking") {
+                        LookingFor(state, onOpen = { nav.navigate(Routes.want(it)) }, onNew = { nav.navigate(Routes.WANT_NEW) })
+                    }
+                    if (state.wanted.isNotEmpty() && !state.mine.isNullOrEmpty()) item(key = "offering") {
+                        Text("OFFERING", style = Safar.type.overline, color = c.contentSecondary, modifier = Modifier.padding(top = 14.dp))
+                    }
+                    rideList(
                     rides = state.mine,
                     empty = {
                         EmptyState(
@@ -241,6 +271,7 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                             SeatsBadge(ride)
                         }
                     })
+                }
                 }
                 else -> {
                     val bookings = state.bookings
@@ -265,6 +296,65 @@ fun RidesTab(nav: NavHostController, focusSearch: Boolean, onSearchFocused: () -
                 Icon(Icons.Rounded.Add, null, Modifier.size(20.dp), tint = c.content)
                 Text("Offer a ride", style = Safar.type.bodyStrong, color = c.content)
             }
+        }
+    }
+}
+
+/** Find's empty state: nothing posted, so offer to look out for it instead. */
+@Composable
+private fun NoRideYet(title: String, onNotify: () -> Unit) {
+    val c = Safar.colors
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp)) {
+        // A drawn route: a big pickup ring, a dotted way, a small destination.
+        androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(170.dp)) {
+            val w = size.width
+            val h = size.height
+            val a = androidx.compose.ui.geometry.Offset(w * 0.18f, h * 0.78f)
+            val b = androidx.compose.ui.geometry.Offset(w * 0.80f, h * 0.18f)
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(a.x, a.y)
+                cubicTo(w * 0.42f, h * 0.80f, w * 0.40f, h * 0.30f, b.x, b.y)
+            }
+            drawPath(
+                path, c.content,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 3.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(1f, 9.dp.toPx())),
+                ),
+            )
+            drawCircle(c.content.copy(alpha = 0.08f), 34.dp.toPx(), a)
+            drawCircle(c.background, 10.dp.toPx(), a)
+            drawCircle(c.content, 10.dp.toPx(), a, style = androidx.compose.ui.graphics.drawscope.Stroke(6.dp.toPx()))
+            val s = 13.dp.toPx()
+            drawRoundRect(c.content, androidx.compose.ui.geometry.Offset(b.x - s / 2, b.y - s / 2), androidx.compose.ui.geometry.Size(s, s), androidx.compose.ui.geometry.CornerRadius(3.dp.toPx()))
+        }
+        Text(title, style = Safar.type.title, color = c.content)
+        Text("We'll find one for you.", style = Safar.type.body, color = c.contentSecondary)
+        Spacer(Modifier.height(20.dp))
+        SafarButton("Notify me", onNotify, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+/** My Rides' top: the rider's wanted rides, or one quiet line inviting them to make one. */
+@Composable
+private fun LookingFor(state: RidesState, onOpen: (String) -> Unit, onNew: () -> Unit) {
+    val c = Safar.colors
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("LOOKING FOR", style = Safar.type.overline, color = c.contentSecondary, modifier = Modifier.weight(1f))
+            Text(
+                if (state.wanted.isEmpty()) "Get matched ›" else "New ›", style = Safar.type.label, color = c.content,
+                modifier = Modifier.clip(RoundedCornerShape(Radii.sm)).clickable(onClick = onNew).padding(vertical = 6.dp, horizontal = 4.dp),
+            )
+        }
+        if (state.wanted.isEmpty()) {
+            Text("Need a ride? Ask once and Safar matches you as rides are posted.", style = Safar.type.label, color = c.contentTertiary)
+        }
+        state.wanted.forEachIndexed { i, w ->
+            if (i > 0) com.safar.app.ui.components.Divider()
+            com.safar.app.ui.wanted.WantedRow(
+                w, state.wantedMatches[w.id].orEmpty(), state.offers.firstOrNull { it.wantId == w.id },
+            ) { onOpen(w.id) }
         }
     }
 }

@@ -16,6 +16,7 @@ import com.safar.app.data.ReportRepository
 import com.safar.app.data.RequestRepository
 import com.safar.app.data.ReviewRepository
 import com.safar.app.data.RideRepository
+import com.safar.app.data.WantedRepository
 import com.safar.app.data.Session
 import com.safar.app.data.UserRepository
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +33,8 @@ class AppContainer(context: Context) {
     val auth = AuthRepository(FirebaseAuth.getInstance())
     val api = SafarApi(FirebaseAuth.getInstance())
     val users = UserRepository(database, api, context)
-    val rides = RideRepository(database)
+    val rides = RideRepository(database, api)
+    val wanted = WantedRepository(database, api)
     val notifications = NotificationRepository(database, api)
     val requests = RequestRepository(database, notifications)
     val chat = ChatRepository(database, api)
