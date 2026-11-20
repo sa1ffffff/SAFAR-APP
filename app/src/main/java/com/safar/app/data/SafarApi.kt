@@ -50,6 +50,28 @@ class SafarApi(private val auth: FirebaseAuth, private val baseUrl: String = Bui
         background.launch { runCatching { block() }.onFailure { Log.w(TAG, "Background task failed", it) } }
     }
 
+    /** Matches the user's new wanted ride against open rides, so matches show at once. */
+    suspend fun matchWanted(id: String) {
+        call("POST", "/wanted/match", JSONObject().put("id", id).toString().toByteArray(), "application/json")
+    }
+
+    /** Matches a ride the user just posted or edited against riders' wanted rides. Never throws. */
+    fun matchRide(id: String) = inBackground {
+        call("POST", "/rides/match", JSONObject().put("id", id).toString().toByteArray(), "application/json")
+    }
+
+    /** Offers [riderUid] a seat on the user's ride [rideId]; returns the offer's id. */
+    suspend fun offerSeat(rideId: String, riderUid: String, wantId: String): String {
+        val body = JSONObject().put("rideId", rideId).put("riderUid", riderUid).put("wantId", wantId)
+        return JSONObject(call("POST", "/offers", body.toString().toByteArray(), "application/json")).getString("id")
+    }
+
+    /** Takes or declines a seat offered to the user. */
+    suspend fun respondToOffer(id: String, accept: Boolean) {
+        val body = JSONObject().put("id", id).put("accept", accept)
+        call("POST", "/offers/respond", body.toString().toByteArray(), "application/json")
+    }
+
     /** Road route between two points (see the Worker's /route), or null if there isn't one. */
     suspend fun route(fromLat: Double, fromLng: Double, toLat: Double, toLng: Double): RoadRoute? {
         val q = "/route?from=%.5f,%.5f&to=%.5f,%.5f".format(java.util.Locale.US, fromLat, fromLng, toLat, toLng)

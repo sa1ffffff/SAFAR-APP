@@ -84,6 +84,7 @@ fun NotificationsScreen(nav: NavHostController) {
                         vm.open(n)
                         when {
                             n.type == NotificationType.RIDE_COMPLETED && n.relatedRequestId.isNotBlank() -> nav.navigate(Routes.ride(n.relatedAdId))
+                            n.type == NotificationType.SEAT_OFFERED && n.relatedRequestId.isNotBlank() -> nav.navigate(Routes.offer(n.relatedRequestId))
                             n.type == NotificationType.NEW_REVIEW -> nav.navigate(Routes.user(n.fromUserId.ifBlank { return@clickable }))
                             n.relatedAdId.isNotBlank() -> nav.navigate(Routes.ride(n.relatedAdId))
                             n.fromUserId.isNotBlank() -> nav.navigate(Routes.chat(n.fromUserId))
@@ -114,4 +115,7 @@ private fun iconFor(type: NotificationType) = when (type) {
     NotificationType.RIDE_COMPLETED -> Icons.Rounded.Flag
     NotificationType.NEW_REVIEW -> Icons.Rounded.Star
     NotificationType.NEW_MESSAGE -> Icons.Rounded.ChatBubble
+    NotificationType.RIDE_FOUND -> Icons.Rounded.DirectionsCar
+    NotificationType.SEAT_OFFERED -> Icons.Rounded.EmojiPeople
+    NotificationType.OFFER_TAKEN -> Icons.Rounded.CheckCircle
 }

@@ -390,7 +390,7 @@ fun PostRideScreen(editId: String?, nav: NavHostController, entry: NavBackStackE
     }
 }
 
-private fun withDay(current: Long, daysFromToday: Int): Long {
+internal fun withDay(current: Long, daysFromToday: Int): Long {
     val src = Calendar.getInstance().apply { timeInMillis = current }
     return Calendar.getInstance().apply {
         add(Calendar.DAY_OF_YEAR, daysFromToday)
@@ -399,7 +399,7 @@ private fun withDay(current: Long, daysFromToday: Int): Long {
     }.timeInMillis
 }
 
-private fun withDate(current: Long, utcDate: Long): Long {
+internal fun withDate(current: Long, utcDate: Long): Long {
     val src = Calendar.getInstance().apply { timeInMillis = current }
     val picked = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcDate }
     return Calendar.getInstance().apply {
@@ -409,13 +409,13 @@ private fun withDate(current: Long, utcDate: Long): Long {
     }.timeInMillis
 }
 
-private fun withTime(current: Long, hour: Int, minute: Int): Long =
+internal fun withTime(current: Long, hour: Int, minute: Int): Long =
     Calendar.getInstance().apply {
         timeInMillis = current
         set(Calendar.HOUR_OF_DAY, hour); set(Calendar.MINUTE, minute); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
     }.timeInMillis
 
-private fun utcMidnight(local: Long): Long {
+internal fun utcMidnight(local: Long): Long {
     val l = Calendar.getInstance().apply { timeInMillis = local }
     return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
         clear(); set(l.get(Calendar.YEAR), l.get(Calendar.MONTH), l.get(Calendar.DAY_OF_MONTH))

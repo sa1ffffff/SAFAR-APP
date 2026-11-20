@@ -64,5 +64,7 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_OPEN = "open"
         const val OPEN_NOTIFICATIONS = "notifications"
         const val OPEN_CHAT_PREFIX = "chat:"
+        const val OPEN_RIDE_PREFIX = "ride:"
+        const val OPEN_REQUEST_PREFIX = "request:"
     }
 }

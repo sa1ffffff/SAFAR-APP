@@ -1,5 +1,6 @@
 package com.safar.app.ui.ride
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Check
@@ -182,6 +183,17 @@ class RideDetailViewModel(private val app: AppContainer, private val rideId: Str
     private val me get() = app.session.requireUser()
 
     fun request(seats: Int) = state.value.ride?.let { r -> run({ app.requests.send(r, me, seats) }, "Request sent. We'll let you know when they reply.") }
+
+    private var autoRequested = false
+
+    /** "Request seat" from a Ride found notification: asks once, only if there's nothing to cancel. */
+    fun requestFromNotification() {
+        val s = state.value
+        val ride = s.ride ?: return
+        if (autoRequested || s.loading || s.isOwner || s.myRequest != null || !ride.isBookable) return
+        autoRequested = true
+        request(1)
+    }
     fun cancelRequest() = state.value.myRequest?.let { r -> run({ app.requests.cancel(r) }, "Request cancelled") }
     fun accept(r: JoinRequest) = run({ app.requests.accept(r, me) }, "${r.requestorName.substringBefore(' ').ifBlank { "Rider" }} is confirmed")
     fun decline(r: JoinRequest) = run({ app.requests.decline(r, me) })
@@ -217,10 +229,11 @@ class RideDetailViewModel(private val app: AppContainer, private val rideId: Str
 }
 
 @Composable
-fun RideDetailScreen(rideId: String, nav: NavHostController) {
+fun RideDetailScreen(rideId: String, nav: NavHostController, autoRequest: Boolean = false) {
     val vm = appViewModel(key = "ride-$rideId") { RideDetailViewModel(it, rideId) }
     Messages(vm)
     val state by vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(autoRequest, state.loading, state.ride != null) { if (autoRequest) vm.requestFromNotification() }
     val c = Safar.colors
     val context = LocalContext.current
     var menu by remember { mutableStateOf(false) }
@@ -359,6 +372,7 @@ private fun RideBody(ride: Ride, state: RideDetailState, vm: RideDetailViewModel
 
     // A rider's own status is the most important thing on this page, so it leads.
     if (!state.isOwner) state.myRequest?.let { RequestStatusCard(it, ride) }
+    if (state.isOwner && ride.status == RideStatus.OPEN) com.safar.app.ui.wanted.RidersOnYourWayRow(ride.id, nav)
 
     Card(Modifier.fillMaxWidth()) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {

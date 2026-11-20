@@ -68,7 +68,7 @@ import com.safar.app.ui.theme.Safar
 
 object Routes {
     const val MAIN = "main"
-    const val RIDE = "ride/{id}"
+    const val RIDE = "ride/{id}?request={request}"
     const val POST = "post?edit={edit}"
     const val PICK = "pick/{field}"
     const val CHAT = "chat/{uid}"
@@ -81,8 +81,15 @@ object Routes {
     const val ABOUT = "about"
     const val SAFETY = "safety"
     const val TERMS = "terms"
+    const val WANT_NEW = "wanted/new"
+    const val WANT = "want/{id}"
+    const val OFFER = "offer/{id}"
+    const val RIDERS = "riders/{rideId}"
 
-    fun ride(id: String) = "ride/$id"
+    fun ride(id: String, request: Boolean = false) = if (request) "ride/$id?request=true" else "ride/$id"
+    fun want(id: String) = "want/$id"
+    fun offer(id: String) = "offer/$id"
+    fun riders(rideId: String) = "riders/$rideId"
     fun post(editId: String? = null) = if (editId == null) "post" else "post?edit=$editId"
     fun pick(field: String) = "pick/$field"
     fun chat(uid: String) = "chat/$uid"
@@ -187,9 +194,13 @@ private fun AppGraph(pendingOpen: String?, onPendingOpenHandled: () -> Unit) {
     LaunchedEffect(pendingOpen) {
         val chatWith = pendingOpen?.removePrefix(com.safar.app.MainActivity.OPEN_CHAT_PREFIX)
             ?.takeIf { pendingOpen.startsWith(com.safar.app.MainActivity.OPEN_CHAT_PREFIX) && it.isNotBlank() }
+        fun after(prefix: String) = pendingOpen?.takeIf { it.startsWith(prefix) }?.removePrefix(prefix)?.takeIf { it.isNotBlank() }
         when {
             pendingOpen == com.safar.app.MainActivity.OPEN_NOTIFICATIONS -> nav.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
             chatWith != null -> nav.navigate(Routes.chat(chatWith)) { launchSingleTop = true }
+            after("ride:") != null -> nav.navigate(Routes.ride(after("ride:")!!)) { launchSingleTop = true }
+            after("request:") != null -> nav.navigate(Routes.ride(after("request:")!!, request = true)) { launchSingleTop = true }
+            after("offer:") != null -> nav.navigate(Routes.offer(after("offer:")!!)) { launchSingleTop = true }
         }
         if (pendingOpen != null) onPendingOpenHandled()
     }
@@ -201,8 +212,21 @@ private fun AppGraph(pendingOpen: String?, onPendingOpenHandled: () -> Unit) {
         popExitTransition = { slideOutHorizontally(tween(NAV_MS, easing = FastOutSlowInEasing)) { it / 4 } + fadeOut(tween(NAV_MS / 2)) },
     ) {
         composable(Routes.MAIN) { MainScreen(nav) }
-        composable(Routes.RIDE, listOf(navArgument("id") { type = NavType.StringType })) {
-            RideDetailScreen(rideId = it.arguments?.getString("id").orEmpty(), nav = nav)
+        composable(Routes.RIDE, listOf(
+            navArgument("id") { type = NavType.StringType },
+            navArgument("request") { type = NavType.BoolType; defaultValue = false },
+        )) {
+            RideDetailScreen(rideId = it.arguments?.getString("id").orEmpty(), nav = nav, autoRequest = it.arguments?.getBoolean("request") == true)
+        }
+        composable(Routes.WANT_NEW) { entry -> com.safar.app.ui.wanted.WantRideScreen(nav, entry) }
+        composable(Routes.WANT, listOf(navArgument("id") { type = NavType.StringType })) {
+            com.safar.app.ui.wanted.WantDetailScreen(it.arguments?.getString("id").orEmpty(), nav)
+        }
+        composable(Routes.OFFER, listOf(navArgument("id") { type = NavType.StringType })) {
+            com.safar.app.ui.wanted.OfferScreen(it.arguments?.getString("id").orEmpty(), nav)
+        }
+        composable(Routes.RIDERS, listOf(navArgument("rideId") { type = NavType.StringType })) {
+            com.safar.app.ui.wanted.RidersScreen(it.arguments?.getString("rideId").orEmpty(), nav)
         }
         composable(Routes.POST, listOf(navArgument("edit") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
             PostRideScreen(editId = entry.arguments?.getString("edit"), nav = nav, entry = entry)

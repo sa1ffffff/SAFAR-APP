@@ -8,8 +8,9 @@ FIREBASE_PROJECT_ID = "safarbysaif"
 FIREBASE_DATABASE_URL = "https://safarbysaif-default-rtdb.asia-southeast1.firebasedatabase.app"
 
 # Hourly: close rides an hour after they leave, and post weekly repeats a week ahead.
+# Every 10 minutes: re-match wanted rides and push new matches (the Worker tells them apart).
 [triggers]
-crons = ["17 * * * *"]
+crons = ["17 * * * *", "*/10 * * * *"]
 
 # Photo storage: R2 (bound below). KV works instead if R2 isn't enabled; bind only one.
 [[r2_buckets]]

@@ -22,6 +22,12 @@ import com.safar.app.data.model.Ride
 import com.safar.app.data.model.RideSeries
 import com.safar.app.data.model.RideStatus
 import com.safar.app.data.model.User
+import com.safar.app.data.model.WantedRide
+import com.safar.app.data.model.WantedStatus
+import com.safar.app.data.model.WantedMatch
+import com.safar.app.data.model.SeatOffer
+import com.safar.app.data.model.RiderMatch
+import com.safar.app.data.model.DriverOffer
 import com.safar.app.data.model.shortPlaceName
 import com.safar.app.data.model.shortRouteLabel
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +57,11 @@ private object Nodes {
     const val PUSH_TOKENS = "pushTokens"
     const val REPORTS = "reports"
     const val SERIES = "rideSeries"
+    const val WANTED = "wanted"
+    const val WANTED_MATCHES = "wantedMatches"
+    const val RIDE_MATCHES = "rideMatches"
+    const val OFFERS = "offers"
+    const val DRIVER_OFFERS = "driverOffers"
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -176,7 +187,7 @@ class UserRepository(
 
 // ─── Rides ───────────────────────────────────────────────────────────────────
 
-class RideRepository(private val db: FirebaseDatabase) {
+class RideRepository(private val db: FirebaseDatabase, private val api: SafarApi? = null) {
     private val ads get() = db.getReference(Nodes.ADS)
 
     /** Open, unexpired rides with seats left, soonest departure first. */
@@ -202,6 +213,7 @@ class RideRepository(private val db: FirebaseDatabase) {
         val id = ads.push().key ?: error("Couldn't reach the server.")
         val now = System.currentTimeMillis()
         ads.child(id).setValue(fresh(ride, id, ride.departureTime, now).toMap()).await()
+        api?.matchRide(id) // riders waiting for this route hear about it
         return id
     }
 
@@ -234,6 +246,7 @@ class RideRepository(private val db: FirebaseDatabase) {
         }
         updates["${Nodes.SERIES}/$seriesId"] = series.toMap() + ("made" to made)
         db.reference.updateChildren(updates).await()
+        departures.forEach { api?.matchRide("$seriesId-${RideSeries.dayKey(it, offset)}") }
         return firstId
     }
 
@@ -261,6 +274,7 @@ class RideRepository(private val db: FirebaseDatabase) {
 
     suspend fun update(ride: Ride) {
         ads.child(ride.id).updateChildren(ride.toMap()).await()
+        api?.matchRide(ride.id)
     }
 
     /** The driver has set off: closes the ride to requests and starts its one-hour clock. */
@@ -282,6 +296,67 @@ class RideRepository(private val db: FirebaseDatabase) {
         requests.children.forEach { r -> r.key?.let { updates["${Nodes.REQUESTS}/$it"] = null } }
         db.reference.updateChildren(updates).await()
     }
+}
+
+// ─── Wanted rides ────────────────────────────────────────────────────────────
+
+/**
+ * Riders' wanted rides and what the Worker matches to them. The rider writes the wanted ride;
+ * matches and offers are written only by the Worker (see /cloudflare), which also delivers them.
+ */
+class WantedRepository(private val db: FirebaseDatabase, private val api: SafarApi) {
+    private fun wanted(uid: String) = db.getReference(Nodes.WANTED).child(uid)
+
+    fun observeMine(uid: String): Flow<List<WantedRide>> = wanted(uid).snapshots().map { snap ->
+        snap.children.mapNotNull { WantedRide.from(it, uid) }.sortedBy { it.time }
+    }
+
+    fun observe(uid: String, id: String): Flow<WantedRide?> = wanted(uid).child(id).snapshots().map { WantedRide.from(it, uid) }
+
+    fun observeMatches(uid: String, id: String): Flow<List<WantedMatch>> =
+        db.getReference(Nodes.WANTED_MATCHES).child(uid).child(id).snapshots().map { snap ->
+            snap.children.map { WantedMatch.from(it) }.sortedWith(compareBy({ it.pickupM }, { it.departureTime }))
+        }
+
+    /** Every match for every wanted ride of the user, keyed by wanted ride id. */
+    fun observeAllMatches(uid: String): Flow<Map<String, List<WantedMatch>>> =
+        db.getReference(Nodes.WANTED_MATCHES).child(uid).snapshots().map { snap ->
+            snap.children.associate { w -> w.key.orEmpty() to w.children.map { WantedMatch.from(it) } }
+        }
+
+    fun observeOffers(uid: String): Flow<List<SeatOffer>> =
+        db.getReference(Nodes.OFFERS).child(uid).snapshots().map { snap ->
+            snap.children.map { SeatOffer.from(it) }.sortedByDescending { it.createdAt }
+        }
+
+    fun observeOffer(uid: String, id: String): Flow<SeatOffer?> =
+        db.getReference(Nodes.OFFERS).child(uid).child(id).snapshots().map { if (it.exists()) SeatOffer.from(it) else null }
+
+    /** Riders the driver's ride could take, best pickup first. */
+    fun observeRiders(rideId: String): Flow<List<RiderMatch>> =
+        db.getReference(Nodes.RIDE_MATCHES).child(rideId).snapshots().map { snap ->
+            snap.children.map { RiderMatch.from(it) }.sortedWith(compareBy({ it.pickupM }, { -it.score }))
+        }
+
+    fun observeDriverOffers(uid: String): Flow<List<DriverOffer>> =
+        db.getReference(Nodes.DRIVER_OFFERS).child(uid).snapshots().map { snap -> snap.children.map { DriverOffer.from(it) } }
+
+    /** Saves the wanted ride and matches it straight away; returns its id. */
+    suspend fun create(want: WantedRide): String {
+        val id = wanted(want.uid).push().key ?: error("Couldn't reach the server.")
+        wanted(want.uid).child(id).setValue(want.copy(id = id).toMap()).await()
+        // Matching right away fills the screen the rider lands on; the 10-minute sweep covers a failure.
+        runCatching { api.matchWanted(id) }
+        return id
+    }
+
+    suspend fun cancel(uid: String, id: String) {
+        wanted(uid).child(id).child("status").setValue(WantedStatus.CANCELLED.name).await()
+    }
+
+    suspend fun offer(rideId: String, riderUid: String, wantId: String): String = api.offerSeat(rideId, riderUid, wantId)
+
+    suspend fun respond(offerId: String, accept: Boolean) = api.respondToOffer(offerId, accept)
 }
 
 // ─── Join requests ───────────────────────────────────────────────────────────

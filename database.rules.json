@@ -93,6 +93,35 @@
       }
     },
 
+    "wanted": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid",
+        "$id": {
+          ".read": "auth != null && data.child('visible').val() == true && data.child('status').val() == 'ACTIVE'",
+          ".validate": "!newData.exists() || newData.hasChildren(['originLat', 'originLng', 'destinationLat', 'destinationLng', 'time', 'windowStart', 'windowEnd', 'seats', 'status'])",
+          "seats": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 6" },
+          "status": { ".validate": "newData.val() == 'ACTIVE' || newData.val() == 'CANCELLED' || newData.val() == data.val()" }
+        }
+      }
+    },
+
+    "wantedMatches": {
+      "$uid": { ".read": "auth != null && auth.uid == $uid" }
+    },
+
+    "rideMatches": {
+      "$rideId": { ".read": "auth != null && root.child('ads').child($rideId).child('creatorUid').val() == auth.uid" }
+    },
+
+    "offers": {
+      "$uid": { ".read": "auth != null && auth.uid == $uid" }
+    },
+
+    "driverOffers": {
+      "$uid": { ".read": "auth != null && auth.uid == $uid" }
+    },
+
     "notifications": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
